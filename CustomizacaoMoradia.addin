@@ -7,7 +7,7 @@
 			299E532F-A191-4498-ABC8-873962BBF843
 		</AddInId>
 		<FullClassName>CustomizacaoMoradias.PlaceElements</FullClassName>
-		<Text>PlaceLineElement</Text>
+		<Text>PlaceElements</Text>
 		<Description>Place line element in the document</Description>
 		<VendorId>GustavoHenriqueBrunelli</VendorId>
 		<VendorDescription>Gusatavo H. Brunelli, gustavo.brunelli@usp.br</VendorDescription>
