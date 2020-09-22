@@ -14,7 +14,7 @@ Para instalar o plugin, navegue até o local onde o Revit está instalado. Baixe
 
 ### Usando o plugin
 Para usar o plugin, clique em Add-ins > External Tools > PlaceLineElement:
-![Image of Yaktocat](https://i.ibb.co/rvGYysk/tutorial.png)
+![PlaceElement](https://i.ibb.co/WxNv1Y2/tutorial.png)
 Uma janela do explorer irá aparecer para selecionar o arquvio `.csv` contendo as definições da contrução, selecione o arquivo que deseja integrar no projeto e clique ok.
 
 <sub>Desenvolvido por Gustavo H. Brunelli, sob condição de bolsista PUB da Univerdade de São Paulo.</sub>
