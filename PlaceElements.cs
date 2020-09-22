@@ -15,7 +15,7 @@ namespace CustomizacaoMoradias
     [Transaction(TransactionMode.Manual)]
     [Regeneration(RegenerationOption.Manual)]
     [Journaling(JournalingMode.NoCommandData)]
-    public class PlaceLineElement : IExternalCommand
+    public class PlaceElements : IExternalCommand
     {
         /*
          *  Convert from meters to feet.

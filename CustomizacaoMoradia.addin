@@ -6,7 +6,7 @@
 		<AddInId>
 			299E532F-A191-4498-ABC8-873962BBF843
 		</AddInId>
-		<FullClassName>CustomizacaoMoradias.PlaceLineElement</FullClassName>
+		<FullClassName>CustomizacaoMoradias.PlaceElements</FullClassName>
 		<Text>PlaceLineElement</Text>
 		<Description>Place line element in the document</Description>
 		<VendorId>GustavoHenriqueBrunelli</VendorId>
