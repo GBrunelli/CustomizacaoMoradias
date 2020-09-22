@@ -95,7 +95,7 @@ namespace CustomizacaoMoradias
         }
 
         /*
-         *  Returns the Wall in the XYZ coords. Returns null if no wall was founded.
+         *  Returns the Wall in the XYZ coords. Returns null if no wall was found.
          */
         private Wall FindHostingWall(XYZ xyz, Document doc, Level level)
         {
