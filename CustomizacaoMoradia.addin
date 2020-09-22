@@ -1,13 +1,18 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <RevitAddIns>
 	<AddIn Type="Command">
-		<Text>My Revit Command</Text>
-		<Description>Descripton for my revit addin.</Description>
-		<Assembly>C:\Users\gubru\source\repos\CustomizacaoMoradias\bin\Debug\CustomizacaoMoradias.dll</Assembly>
-		<FullClassName>CustomizacaoMoradias.Command</FullClassName>
-		<ClientId>350a6937-11f2-4e75-8226-a401f83b6229</ClientId>
-		<VendorId>GustavoHB</VendorId>
-		<VendorDesciption>Gusatavo H. Brunelli, gustavo.brunelli@usp.br</VendorDesciption>
+		<Name>MyRevitCommands</Name>
+		<Assembly>CustomizacaoMoradias.dll</Assembly>
+		<AddInId>
+			299E532F-A191-4498-ABC8-873962BBF843
+		</AddInId>
+		<FullClassName>CustomizacaoMoradias.PlaceLineElement</FullClassName>
+		<Text>PlaceLineElement</Text>
+		<Description>Place line element in the document</Description>
+		<VendorId>GustavoHenriqueBrunelli</VendorId>
+		<VendorDescription>Gusatavo H. Brunelli, gustavo.brunelli@usp.br</VendorDescription>
+		<VisibilityMode>NotVisibleWhenNoActiveDocument</VisibilityMode>
 	</AddIn>
 </RevitAddIns>
 
+	
