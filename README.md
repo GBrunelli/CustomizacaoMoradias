@@ -1,6 +1,5 @@
 # Customização de moradias
 #### Plugin para Autodesk Revit® 2021
-#
 Este plugin lê uma tabela `.csv` que contém os parâmetros de elementos do Revit e os contrói no documento ativo.
 
 ### Elementos atualmente suportados
