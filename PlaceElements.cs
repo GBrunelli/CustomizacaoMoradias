@@ -97,7 +97,7 @@ namespace CustomizacaoMoradias
         /*
          *  Returns the Wall in the XYZ coords. Returns null if no wall was founded.
          */
-        public Wall FindHostingWall(XYZ xyz, Document doc, Level level)
+        private Wall FindHostingWall(XYZ xyz, Document doc, Level level)
         {
             FilteredElementCollector collector = new FilteredElementCollector(doc);
             collector.OfClass(typeof(Wall));
@@ -123,7 +123,7 @@ namespace CustomizacaoMoradias
         /*
          *  Creates a hosted element in a wall.
          */
-        public void CreateHostedElement(string[] properties, UIDocument uidoc, Document doc, Level level)
+        private void CreateHostedElement(string[] properties, UIDocument uidoc, Document doc, Level level)
         {
             #region Reding the data from the array
             NumberFormatInfo provider = new NumberFormatInfo();
