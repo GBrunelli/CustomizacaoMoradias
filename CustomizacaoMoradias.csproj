@@ -52,17 +52,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PlaceElementsApplication.cs" />
-    <Compile Include="PlaceElementsForm.cs">
+    <Compile Include="src\PlaceElementsApplication.cs" />
+    <Compile Include="res\forms\PlaceElementsForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="PlaceElementsForm.Designer.cs">
+    <Compile Include="res\forms\PlaceElementsForm.Designer.cs">
       <DependentUpon>PlaceElementsForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="PlaceElementsCommand.cs" />
-    <Compile Include="PlaceElementsUtil.cs" />
+    <Compile Include="src\PlaceElementsCommand.cs" />
+    <Compile Include="src\PlaceElementsUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UserInputHandler.cs" />
+    <Compile Include="src\UserInputHandler.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="CustomizacaoMoradia.addin">
@@ -70,7 +70,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="PlaceElementsForm.resx">
+    <EmbeddedResource Include="res\forms\PlaceElementsForm.resx">
       <DependentUpon>PlaceElementsForm.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
