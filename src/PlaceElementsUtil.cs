@@ -7,6 +7,7 @@ using Autodesk.Revit.Attributes;
 using System.Globalization;
 using System.IO;
 using System.Windows.Forms;
+using Autodesk.Revit.DB.Architecture;
 
 namespace CustomizacaoMoradias
 {
@@ -291,6 +292,57 @@ namespace CustomizacaoMoradias
                 throw e;
             }
             return level;
+        }
+    
+        /// <summary>
+        /// Creates rooms in a level.
+        /// </summary>
+        public static void CreateRoomsAtLevel(Level level, Document doc)
+        {
+            PhaseArray phases = doc.Phases;
+            Phase createRoomsInPhase = phases.get_Item(phases.Size - 1);
+            int x = 0;
+            try
+            {
+                using (Transaction transaction = new Transaction(doc, "Create Rooms"))
+                {
+                    PlanTopology topology = doc.get_PlanTopology(level, createRoomsInPhase);
+                    PlanCircuitSet circuitSet = topology.Circuits;
+                    transaction.Start();
+                    foreach (PlanCircuit circuit in circuitSet)
+                    {
+                        if (!circuit.IsRoomLocated)
+                        {
+                            Room room = doc.Create.NewRoom(null, circuit);
+                            room.Name = "Room name: " + x;
+
+                            #region Floor
+                            SpatialElementBoundaryOptions opt = new SpatialElementBoundaryOptions();
+                            opt.SpatialElementBoundaryLocation = SpatialElementBoundaryLocation.Center;
+                            IList<IList<BoundarySegment>> loops = room.GetBoundarySegments(opt);
+                            if(loops.Count == 1)
+                            {
+                                CurveArray curve = new CurveArray();
+                                foreach (IList<BoundarySegment> loop in loops)
+                                {
+                                    foreach (BoundarySegment seg in loop)
+                                    {
+                                        curve.Append(seg.GetCurve());
+                                    }
+                                    doc.Create.NewFloor(curve, false);
+                                }
+                            }                                  
+                            #endregion
+                            x++;
+                        }
+                    }
+                    transaction.Commit();
+                }
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
         }
     }
 }

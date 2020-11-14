@@ -13,6 +13,7 @@ namespace CustomizacaoMoradias
             string levelName = PlaceElementsForm.levelName;
             Level level = PlaceElementsUtil.GetLevelFromName(levelName, doc);
             PlaceElementsUtil.ReadCSV(path, doc, uidoc, level);
+            PlaceElementsUtil.CreateRoomsAtLevel(level, doc);
             PlaceElementsForm.CloseForm();
         }
 
