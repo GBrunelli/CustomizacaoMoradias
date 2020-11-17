@@ -18,9 +18,9 @@ namespace CustomizacaoMoradias
                 PlaceElementsApplication.thisApp.ShowForm(commandData.Application);
                 return Result.Succeeded;
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                message = ex.Message;
+                message = e.Message;
                 return Result.Failed;
             }
         }

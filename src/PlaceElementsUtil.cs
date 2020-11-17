@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.Attributes;
 using System.Globalization;
@@ -16,7 +17,6 @@ namespace CustomizacaoMoradias
     [Journaling(JournalingMode.NoCommandData)]
     public static class PlaceElementsUtil
     {
- 
         /// <summary>
         /// Convert from meters to feet.
         /// </summary>
@@ -34,10 +34,7 @@ namespace CustomizacaoMoradias
             {
                 Filter = "CSV|*.csv"
             };
-            if (openFileDialog.ShowDialog() == DialogResult.OK)
-            {
-                return openFileDialog.FileName;
-            }
+            if (openFileDialog.ShowDialog() == DialogResult.OK) return openFileDialog.FileName;
             return null;
         }
 
@@ -47,24 +44,13 @@ namespace CustomizacaoMoradias
         public static Result ReadCSV(string path, Document doc, UIDocument uidoc, Level level)
         {
             #region Null parameters test 
-            if (path is null)
-            {
-                throw new ArgumentNullException(nameof(path));
-            }
-            if (doc is null)
-            {
-                throw new ArgumentNullException(nameof(doc));
-            }
+            if (path is null) throw new ArgumentNullException(nameof(path));
 
-            if (uidoc is null)
-            {
-                throw new ArgumentNullException(nameof(uidoc));
-            }
+            if (doc is null) throw new ArgumentNullException(nameof(doc));
 
-            if (level is null)
-            {
-                throw new ArgumentNullException(nameof(level));
-            }
+            if (uidoc is null) throw new ArgumentNullException(nameof(uidoc));
+
+            if (level is null) throw new ArgumentNullException(nameof(level));
             #endregion
 
             if (path != null)
@@ -132,7 +118,9 @@ namespace CustomizacaoMoradias
                 using (Transaction transaction = new Transaction(doc, "Place Wall"))
                 {
                     transaction.Start();
-                    Wall.Create(doc, curve, level.Id, false);
+                    Wall newWall = Wall.Create(doc, curve, level.Id, false);
+                    Level height = PlaceElementsUtil.GetLevelFromName("COBERTURA", doc);
+                    newWall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(height.Id);
                     transaction.Commit();
                 }
             }
@@ -149,20 +137,11 @@ namespace CustomizacaoMoradias
         private static Wall FindHostingWall(XYZ xyz, Document doc, Level level)
         {
             #region Null parameters test 
-            if (xyz is null)
-            {
-                throw new ArgumentNullException(nameof(xyz));
-            }
+            if (xyz is null) throw new ArgumentNullException(nameof(xyz));
 
-            if (doc is null)
-            {
-                throw new ArgumentNullException(nameof(doc));
-            }
+            if (doc is null) throw new ArgumentNullException(nameof(doc));
 
-            if (level is null)
-            {
-                throw new ArgumentNullException(nameof(level));
-            }
+            if (level is null) throw new ArgumentNullException(nameof(level));
             #endregion
 
             FilteredElementCollector collector = new FilteredElementCollector(doc);
@@ -192,25 +171,13 @@ namespace CustomizacaoMoradias
         private static void CreateHostedElement(string[] properties, UIDocument uidoc, Document doc, Level level)
         {
             #region Null parameters test 
-            if (properties is null)
-            {
-                throw new ArgumentNullException(nameof(properties));
-            }
+            if (properties is null) throw new ArgumentNullException(nameof(properties));
 
-            if (uidoc is null)
-            {
-                throw new ArgumentNullException(nameof(uidoc));
-            }
+            if (uidoc is null) throw new ArgumentNullException(nameof(uidoc));
 
-            if (doc is null)
-            {
-                throw new ArgumentNullException(nameof(doc));
-            }
+            if (doc is null) throw new ArgumentNullException(nameof(doc));
 
-            if (level is null)
-            {
-                throw new ArgumentNullException(nameof(level));
-            }
+            if (level is null) throw new ArgumentNullException(nameof(level));
             #endregion
 
             #region Reding the data from the array
@@ -230,8 +197,8 @@ namespace CustomizacaoMoradias
                 FamilySymbol familySymbol = (from fs in new FilteredElementCollector(doc).
                      OfClass(typeof(FamilySymbol)).
                      Cast<FamilySymbol>()
-                                             where (fs.Family.Name == fsFamilyName && fs.Name == fsName)
-                                             select fs).First();
+                     where (fs.Family.Name == fsFamilyName && fs.Name == fsName) 
+                     select fs).First();
                 #endregion
 
                 #region Convert coordinates to double and create XYZ point.
@@ -242,10 +209,7 @@ namespace CustomizacaoMoradias
 
                 #region Find the hosting Wall (nearst wall to the insertion point)
                 Wall wall = FindHostingWall(xyz, doc, level);
-                if (wall == null)
-                {
-                    return;
-                }
+                if (wall == null) return;
                 #endregion
 
                 #region Create the element
@@ -316,10 +280,11 @@ namespace CustomizacaoMoradias
                             Room room = doc.Create.NewRoom(null, circuit);
                             room.Name = "Room name: " + x;
 
-                            #region Floor
                             SpatialElementBoundaryOptions opt = new SpatialElementBoundaryOptions();
                             opt.SpatialElementBoundaryLocation = SpatialElementBoundaryLocation.Center;
                             IList<IList<BoundarySegment>> loops = room.GetBoundarySegments(opt);
+
+                            // creates a floor if in a single room there is only one loop
                             if(loops.Count == 1)
                             {
                                 CurveArray curve = new CurveArray();
@@ -331,8 +296,45 @@ namespace CustomizacaoMoradias
                                     }
                                     doc.Create.NewFloor(curve, false);
                                 }
-                            }                                  
-                            #endregion
+                            }
+                            // creates a ceiling if in a room there is more than one loop,
+                            // and finds the smallest loop
+                            else
+                            {
+                                double minArea = double.MaxValue;
+                                IList<BoundarySegment> ceilingLoop = null;
+                                foreach (IList<BoundarySegment> loop in loops)
+                                {
+                                    double area = 0;
+                                    CurveLoop currentCurve = new CurveLoop();
+                                    foreach (BoundarySegment seg in loop)
+                                        currentCurve.Append(seg.GetCurve());
+                                    IList<CurveLoop> curveLoopList = new List<CurveLoop>();
+                                    curveLoopList.Add(currentCurve);
+                                    area = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoopList);
+
+                                    if (area < minArea)
+                                    {
+                                        minArea = area;
+                                        ceilingLoop = loop;
+                                    }
+                                }
+
+                                CurveArray curve = new CurveArray();
+                                foreach (BoundarySegment seg in ceilingLoop)
+                                {
+                                    curve.Append(seg.GetCurve());
+                                }
+
+                                // create a floor type
+                                FilteredElementCollector collector = new FilteredElementCollector(doc);
+                                collector.OfClass(typeof(FloorType));
+                                FloorType floorType = collector.First(y => y.Name == "20cm concreto") as FloorType;
+
+                                // create the ceiling
+                                Floor ceiling = doc.Create.NewFloor(curve, floorType, level, false);
+                                ElementTransformUtils.MoveElement(doc, ceiling.Id, new XYZ(0, 0, MetersToFeet(2.8)));
+                            }
                             x++;
                         }
                     }

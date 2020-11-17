@@ -36,6 +36,9 @@
       <HintPath>..\..\..\..\..\Program Files\Autodesk\Revit 2021\RevitAPI.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="RevitAPIIFC">
+      <HintPath>..\..\..\..\..\Program Files\Autodesk\Revit 2021\RevitAPIIFC.dll</HintPath>
+    </Reference>
     <Reference Include="RevitAPIUI">
       <HintPath>..\..\..\..\..\Program Files\Autodesk\Revit 2021\RevitAPIUI.dll</HintPath>
       <Private>False</Private>
