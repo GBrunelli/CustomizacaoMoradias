@@ -121,6 +121,7 @@ namespace CustomizacaoMoradias
                     Wall newWall = Wall.Create(doc, curve, level.Id, false);
                     Level height = PlaceElementsUtil.GetLevelFromName("COBERTURA", doc);
                     newWall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(height.Id);
+                    newWall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET).Set(MetersToFeet(-0.15));
                     transaction.Commit();
                 }
             }
