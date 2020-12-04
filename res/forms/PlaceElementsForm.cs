@@ -9,9 +9,10 @@ namespace CustomizacaoMoradias
 
         private ExternalEvent m_ExEvent;
         private UserInputHandler m_Handler;
+        public static PlaceElementsForm form;
         public static string filePath;
         public static string levelName;
-        public static PlaceElementsForm form;
+        public static string topLevelName;
 
         public PlaceElementsForm(ExternalEvent exEvent, UserInputHandler handler)
         {
@@ -61,6 +62,11 @@ namespace CustomizacaoMoradias
         public static void CloseForm()
         {
             form.Close();
+        }
+
+        private void topLevelNametextBox_TextChanged(object sender, EventArgs e)
+        {
+            topLevelName = topLevelNametextBox.Text;
         }
     }
 }

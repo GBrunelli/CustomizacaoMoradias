@@ -41,7 +41,7 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Read a CSV file containing the definitions of the build, then starts and commits a transaction to the open document.
         /// </summary>
-        public static Result ReadCSV(string path, Document doc, UIDocument uidoc, Level level)
+        public static Result ReadCSV(string path, Document doc, UIDocument uidoc, Level level, Level topLevel)
         {
             #region Null parameters test 
             if (path is null) throw new ArgumentNullException(nameof(path));
@@ -53,6 +53,8 @@ namespace CustomizacaoMoradias
             if (level is null) throw new ArgumentNullException(nameof(level));
             #endregion
 
+            double scale = 0.3;
+
             if (path != null)
             {
                 // Get a line from the table
@@ -62,19 +64,31 @@ namespace CustomizacaoMoradias
                     // Split the line into strings
                     string[] columns = line.Split(',');
                     // Analyzes the line
-                    switch (columns[0])
+
+                    try
                     {
-                        case "Parede":
-                            CreateWall(columns, doc, level);
-                            break;
+                        switch (columns[0])
+                        {
+                            case "Parede":
+                                CreateWall(columns, doc, level, topLevel, scale);
+                                break;
 
-                        case "Janela":
-                            CreateHostedElement(columns, uidoc, doc, level);
-                            break;
+                            case "Janela":
+                                CreateHostedElement(columns, uidoc, doc, level, scale);
+                                break;
 
-                        case "Porta":
-                            CreateHostedElement(columns, uidoc, doc, level);
-                            break;
+                            case "Porta":
+                                CreateHostedElement(columns, uidoc, doc, level, scale);
+                                break;
+
+                            case "Mobiliario":
+                                CreateFurniture(columns, doc, level, scale);
+                                break;
+                        }
+                    }
+                    catch(Exception e)
+                    {
+                        MessageBox.Show(e.Message, "Erro");
                     }
                 }
                 return Result.Succeeded;
@@ -83,14 +97,86 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
+        /// Creates a piece of furniture
+        /// </summary>
+        private static void CreateFurniture(string[] properties, Document doc, Level level, double scale)
+        {
+
+            NumberFormatInfo provider = new NumberFormatInfo
+            {
+                NumberDecimalSeparator = "."
+            };
+            string xCoord = properties[1];
+            string yCoord = properties[2];
+            string rotation = properties[3];
+            string fsName = properties[4];
+            string fsFamilyName = properties[5];
+
+            // Get the rotation in radians
+            double radians = 0;
+            switch (rotation)
+            {
+                case "DIREITA":
+                    radians = 0.5;
+                    break;
+
+                case "BAIXO":
+                    radians = 1;
+                    break;
+
+                case "ESQUERDA":
+                    radians = 1.5;
+                    break;
+            }
+            radians *= Math.PI;
+
+            // Convert the values from the csv file
+            double x = MetersToFeet(Convert.ToDouble(xCoord, provider) * scale);
+            double y = MetersToFeet(Convert.ToDouble(yCoord, provider) * scale);
+
+            // Creates the point where the piece of furniture will be inserted
+            XYZ point = new XYZ(x, y, level.Elevation);
+
+            // Creates a point above the furniture to serve as a rotation axis
+            XYZ axisPoint = new XYZ(x, y, level.Elevation + 1);
+            Line axis = Line.CreateBound(point, axisPoint);
+
+            try
+            {
+                // Retrieve the familySymbol of the piece of furniture
+                FamilySymbol familySymbol = (from fs in new FilteredElementCollector(doc).
+                    OfClass(typeof(FamilySymbol)).
+                    Cast<FamilySymbol>()
+                    where (fs.Family.Name == fsFamilyName)
+                    select fs).First();
+
+                using (Transaction transaction = new Transaction(doc, "Place Piece of Furniture"))
+                {
+                    transaction.Start();
+
+                    FamilyInstance furniture = doc.Create.NewFamilyInstance(point, familySymbol, 
+                        Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
+                    
+                    ElementTransformUtils.RotateElement(doc, furniture.Id, axis, radians);
+
+                    transaction.Commit();
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Erro ao inserir mobiliario \"" + fsFamilyName + "\".", e);
+            }
+        }
+
+        /// <summary>
         /// Creates a wall given a array of string containg its properties.
         /// </summary>
-        private static void CreateWall(string[] column, Document doc, Level level)
+        private static void CreateWall(string[] properties, Document doc, Level level, Level topLevel, double scale)
         {
             #region Null parameters test 
-            if (column is null)
+            if (properties is null)
             {
-                throw new ArgumentNullException(nameof(column));
+                throw new ArgumentNullException(nameof(properties));
             }
 
             if (doc is null)
@@ -102,13 +188,25 @@ namespace CustomizacaoMoradias
             {
                 throw new ArgumentNullException(nameof(level));
             }
+
+            if(topLevel is null)
+            {
+                throw new ArgumentNullException(nameof(topLevel));
+            }
             #endregion
 
             #region Reding the data from the array
             NumberFormatInfo provider = new NumberFormatInfo();
             provider.NumberDecimalSeparator = ".";
-            XYZ p1 = new XYZ(MetersToFeet(Convert.ToDouble(column[1], provider)), MetersToFeet(Convert.ToDouble(column[2], provider)), 0);
-            XYZ p2 = new XYZ(MetersToFeet(Convert.ToDouble(column[3], provider)), MetersToFeet(Convert.ToDouble(column[4], provider)), 0);
+
+            XYZ p1 = new XYZ(MetersToFeet(Convert.ToDouble(properties[1], provider)) * scale, // x
+                             MetersToFeet(Convert.ToDouble(properties[2], provider)) * scale, // y
+                             level.Elevation);                                                // z
+
+            XYZ p2 = new XYZ(MetersToFeet(Convert.ToDouble(properties[3], provider)) * scale, // x
+                             MetersToFeet(Convert.ToDouble(properties[4], provider)) * scale, // y
+                             level.Elevation);                                                // z
+
             Curve curve = Line.CreateBound(p1, p2);
             #endregion
 
@@ -119,15 +217,14 @@ namespace CustomizacaoMoradias
                 {
                     transaction.Start();
                     Wall newWall = Wall.Create(doc, curve, level.Id, false);
-                    Level height = PlaceElementsUtil.GetLevelFromName("COBERTURA", doc);
-                    newWall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(height.Id);
+                    newWall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(topLevel.Id);
                     newWall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET).Set(MetersToFeet(-0.15));
                     transaction.Commit();
                 }
             }
             catch (Exception e)
             {
-                throw e;
+                throw new Exception("Erro ao inserir parede de coodenadas: (" + p1 + ", " + p2 + ").", e);
             }
             #endregion
         }
@@ -169,7 +266,7 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Create a hosted element in a wall.
         /// </summary>
-        private static void CreateHostedElement(string[] properties, UIDocument uidoc, Document doc, Level level)
+        private static void CreateHostedElement(string[] properties, UIDocument uidoc, Document doc, Level level, double scale)
         {
             #region Null parameters test 
             if (properties is null) throw new ArgumentNullException(nameof(properties));
@@ -203,8 +300,8 @@ namespace CustomizacaoMoradias
                 #endregion
 
                 #region Convert coordinates to double and create XYZ point.
-                double x = MetersToFeet(Convert.ToDouble(xCoord, provider));
-                double y = MetersToFeet(Convert.ToDouble(yCoord, provider));
+                double x = MetersToFeet(Convert.ToDouble(xCoord, provider) * scale);
+                double y = MetersToFeet(Convert.ToDouble(yCoord, provider) * scale);
                 XYZ xyz = new XYZ(x, y, level.Elevation);
                 #endregion
 
@@ -226,15 +323,18 @@ namespace CustomizacaoMoradias
                     }
 
                     // Create window
-                    FamilyInstance window = doc.Create.NewFamilyInstance(xyz, familySymbol, wall, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
-                    if (properties[0] == "Janela") window.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));
+                    FamilyInstance instance = doc.Create.NewFamilyInstance(xyz, familySymbol, wall, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
+                    if (properties[0] == "Janela") instance.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));
+
+                    
+
                     transaction.Commit();
                 }
                 #endregion
             }
             catch (Exception e)
             {
-                throw e;
+                throw new Exception("Erro ao inserir elemento hospedeiro \"" + fsFamilyName + "\".", e);
             }
         }
 
@@ -254,7 +354,7 @@ namespace CustomizacaoMoradias
             }
             catch (Exception e)
             {
-                throw e;
+                throw new Exception("Nível \"" + levelName + "\" não encontrado.", e);
             }
             return level;
         }
@@ -266,14 +366,20 @@ namespace CustomizacaoMoradias
         {
             PhaseArray phases = doc.Phases;
             Phase createRoomsInPhase = phases.get_Item(phases.Size - 1);
+
+            if (createRoomsInPhase is null)
+                throw new Exception("Não foi encontrada nenhuma fase no documento atual.");
+
             int x = 0;
             try
             {
                 using (Transaction transaction = new Transaction(doc, "Create Rooms"))
                 {
+                    transaction.Start();
+
                     PlanTopology topology = doc.get_PlanTopology(level, createRoomsInPhase);
                     PlanCircuitSet circuitSet = topology.Circuits;
-                    transaction.Start();
+                    
                     foreach (PlanCircuit circuit in circuitSet)
                     {
                         if (!circuit.IsRoomLocated)
@@ -330,7 +436,7 @@ namespace CustomizacaoMoradias
                                 // create a floor type
                                 FilteredElementCollector collector = new FilteredElementCollector(doc);
                                 collector.OfClass(typeof(FloorType));
-                                FloorType floorType = collector.First(y => y.Name == "20cm concreto") as FloorType;
+                                FloorType floorType = collector.First(y => y.Name == "10cm concreto") as FloorType;
 
                                 // create the ceiling
                                 Floor ceiling = doc.Create.NewFloor(curve, floorType, level, false);

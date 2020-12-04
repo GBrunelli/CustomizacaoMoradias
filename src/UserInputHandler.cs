@@ -1,5 +1,7 @@
 ﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
+using System;
+using System.Windows.Forms;
 
 namespace CustomizacaoMoradias
 {
@@ -7,13 +9,27 @@ namespace CustomizacaoMoradias
     {
         public void Execute(UIApplication app)
         {
-            UIDocument uidoc = app.ActiveUIDocument;
-            Document doc = uidoc.Document;
-            string path = PlaceElementsForm.filePath;
-            string levelName = PlaceElementsForm.levelName;
-            Level level = PlaceElementsUtil.GetLevelFromName(levelName, doc);
-            PlaceElementsUtil.ReadCSV(path, doc, uidoc, level);
-            PlaceElementsUtil.CreateRoomsAtLevel(level, doc);
+            try
+            {
+                UIDocument uidoc = app.ActiveUIDocument;
+                Document doc = uidoc.Document;
+
+                string path = PlaceElementsForm.filePath;
+
+                string levelName = PlaceElementsForm.levelName;
+                Level level = PlaceElementsUtil.GetLevelFromName(levelName, doc);
+
+                string topLevelName = PlaceElementsForm.topLevelName;
+                Level topLevel = PlaceElementsUtil.GetLevelFromName(topLevelName, doc);
+
+                PlaceElementsUtil.ReadCSV(path, doc, uidoc, level, topLevel);
+                PlaceElementsUtil.CreateRoomsAtLevel(level, doc);
+            }
+            catch(Exception e)
+            {
+                MessageBox.Show(e.Message, "Erro");
+            }
+
             PlaceElementsForm.CloseForm();
         }
 

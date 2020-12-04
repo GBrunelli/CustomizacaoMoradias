@@ -24,11 +24,10 @@ namespace CustomizacaoMoradias
         {
             selectorForm = null;   // no dialog needed yet; the command will bring it
             thisApp = this;  // static access to this application instance
-
             return Result.Succeeded;
         }
 
-        //   The external command invokes this on the end-user's request
+        // The external command invokes this on the end-user's request
         public void ShowForm(UIApplication uiapp)
         {
             // If we do not have a dialog yet, create and show it
