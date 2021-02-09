@@ -63,8 +63,8 @@ namespace CustomizacaoMoradias
                 {
                     // Split the line into strings
                     string[] columns = line.Split(',');
-                    // Analyzes the line
 
+                    // Analyzes the line
                     try
                     {
                         switch (columns[0])
@@ -362,7 +362,7 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Creates rooms in a level.
         /// </summary>
-        public static void CreateRoomsAtLevel(Level level, Document doc)
+        public static void CreateRoomsAtLevel(Level level, Level topLevel, Document doc)
         {
             PhaseArray phases = doc.Phases;
             Phase createRoomsInPhase = phases.get_Item(phases.Size - 1);
@@ -384,6 +384,9 @@ namespace CustomizacaoMoradias
                     {
                         if (!circuit.IsRoomLocated)
                         {
+
+                            #region Create room
+
                             Room room = doc.Create.NewRoom(null, circuit);
                             room.Name = "Room name: " + x;
 
@@ -404,18 +407,28 @@ namespace CustomizacaoMoradias
                                     doc.Create.NewFloor(curve, false);
                                 }
                             }
+
+                            #endregion
+
+                            
+
                             // creates a ceiling if in a room there is more than one loop,
                             // and finds the smallest loop
-                            else
+                            else if (loops.Count > 1)
                             {
+
+                                #region Create ceiling
+
                                 double minArea = double.MaxValue;
                                 IList<BoundarySegment> ceilingLoop = null;
                                 foreach (IList<BoundarySegment> loop in loops)
                                 {
                                     double area = 0;
                                     CurveLoop currentCurve = new CurveLoop();
+
                                     foreach (BoundarySegment seg in loop)
                                         currentCurve.Append(seg.GetCurve());
+
                                     IList<CurveLoop> curveLoopList = new List<CurveLoop>();
                                     curveLoopList.Add(currentCurve);
                                     area = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoopList);
@@ -441,6 +454,35 @@ namespace CustomizacaoMoradias
                                 // create the ceiling
                                 Floor ceiling = doc.Create.NewFloor(curve, floorType, level, false);
                                 ElementTransformUtils.MoveElement(doc, ceiling.Id, new XYZ(0, 0, MetersToFeet(2.8)));
+
+                                #endregion
+
+                                #region Create roof
+
+                                // create a roof type
+                                collector = new FilteredElementCollector(doc);
+                                collector.OfClass(typeof(RoofType));
+                                RoofType roofType = collector.FirstElement() as RoofType;
+
+                                // create the foot print of the roof
+                                ModelCurveArray footPrintToModelCurveMapping = new ModelCurveArray();    
+                                
+                                FootPrintRoof footprintRoof = doc.Create.NewFootPrintRoof(curve, topLevel, roofType, out footPrintToModelCurveMapping);
+                                
+                                ModelCurveArrayIterator iterator = footPrintToModelCurveMapping.ForwardIterator();
+                                iterator.Reset();
+
+                                while (iterator.MoveNext()) 
+                                {
+                                    ModelCurve modelCurve = iterator.Current as ModelCurve;
+                                    footprintRoof.set_DefinesSlope(modelCurve, true);
+                                    footprintRoof.set_SlopeAngle(modelCurve, 0.3);
+                                    footprintRoof.set_Offset(modelCurve, MetersToFeet(0.6));
+                                    
+                                }
+
+                                #endregion
+
                             }
                             x++;
                         }
