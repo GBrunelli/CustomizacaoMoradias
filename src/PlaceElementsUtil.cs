@@ -358,136 +358,218 @@ namespace CustomizacaoMoradias
             }
             return level;
         }
-    
+
         /// <summary>
-        /// Creates rooms in a level.
+        /// Get all the plan circuits of an level.
         /// </summary>
-        public static void CreateRoomsAtLevel(Level level, Level topLevel, Document doc)
+        public static PlanCircuitSet getDocPlanCircuitSet(Document doc, Level level)
         {
             PhaseArray phases = doc.Phases;
+
+            // get the last phase
             Phase createRoomsInPhase = phases.get_Item(phases.Size - 1);
 
             if (createRoomsInPhase is null)
                 throw new Exception("Não foi encontrada nenhuma fase no documento atual.");
 
+            PlanTopology topology = doc.get_PlanTopology(level, createRoomsInPhase);
+            PlanCircuitSet circuitSet = topology.Circuits;
+
+            return circuitSet;
+        }
+
+        /// <summary>
+        /// Returns the loops in a circuit, if there is a room located in that circuit, returns null.
+        /// </summary>
+        public static IList<IList<BoundarySegment>> GetLoopsInCircuit(Document doc, PlanCircuit circuit)
+        {
+            IList<IList<BoundarySegment>> loops = null;
+
+            using (Transaction transaction = new Transaction(doc, "Create room"))
+            {
+                transaction.Start();
+
+                if (circuit.IsRoomLocated) return null;
+
+                Room room = doc.Create.NewRoom(null, circuit);
+
+                // PROGRAM ROOM NAME
+
+                SpatialElementBoundaryOptions opt = new SpatialElementBoundaryOptions();
+                opt.SpatialElementBoundaryLocation = SpatialElementBoundaryLocation.Center;
+                loops = room.GetBoundarySegments(opt);
+
+                transaction.Commit();
+            }
+
+            return loops;
+        }
+
+        /// <summary>
+        /// Create a floor given the Boundary Segments of the document
+        /// </summary>
+        public static Floor CreateFloorInLoop(Document doc, IList<IList<BoundarySegment>> loops)
+        {
+            Floor floor = null;
+
+            using (Transaction transaction = new Transaction(doc, "Create Floor"))
+            {
+                transaction.Start();
+
+                // creates a floor if in a single room there is only one loop
+                if (loops.Count == 1)
+                {
+                    CurveArray curve = new CurveArray();
+                    foreach (IList<BoundarySegment> loop in loops)
+                    {
+                        foreach (BoundarySegment seg in loop)
+                        {
+                            curve.Append(seg.GetCurve());
+                        }
+                        floor = doc.Create.NewFloor(curve, false);
+                    }
+                }
+                transaction.Commit();
+            }
+
+            return floor;
+        }
+
+        /// <summary>
+        /// Returns a CurveArray that corresponds to the house perimeter
+        /// </summary>
+        public static CurveArray GetHousePerimeterCurveArray(IList<IList<BoundarySegment>> loops)
+        {
+            double minArea = double.MaxValue;
+            IList<BoundarySegment> ceilingLoop = null;
+            foreach (IList<BoundarySegment> loop in loops)
+            {
+                double area = 0;
+                CurveLoop currentCurve = new CurveLoop();
+
+                foreach (BoundarySegment seg in loop)
+                    currentCurve.Append(seg.GetCurve());
+
+                IList<CurveLoop> curveLoopList = new List<CurveLoop>();
+                curveLoopList.Add(currentCurve);
+                area = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoopList);
+
+                if (area < minArea)
+                {
+                    minArea = area;
+                    ceilingLoop = loop;
+                }
+            }
+
+            CurveArray curve = new CurveArray();
+            foreach (BoundarySegment seg in ceilingLoop)
+            {
+                curve.Append(seg.GetCurve());
+            }
+
+            return curve;
+        }
+
+        /// <summary>
+        /// Create the ceiling of a house given the loops of the active document
+        /// </summary>
+        public static Floor CreateCeilingInLoop(Document doc, IList<IList<BoundarySegment>> loops, Level topLevel)
+        {
+            Floor ceiling = null;
+
+            using (Transaction transaction = new Transaction(doc, "Create Ceiling"))
+            {
+                transaction.Start();
+
+                // creates a ceiling if in a room there is more than one loop,
+                // and finds the smallest loop
+                if (loops.Count > 1)
+                {
+
+                    CurveArray curve = GetHousePerimeterCurveArray(loops);
+
+                    // create a floor type
+                    FilteredElementCollector collector = new FilteredElementCollector(doc);
+                    collector.OfClass(typeof(FloorType));
+                    FloorType floorType = collector.First(y => y.Name == "10cm concreto  SEM ACAB") as FloorType;
+
+                    // create the ceiling
+                    ceiling = doc.Create.NewFloor(curve, floorType, topLevel, false);
+                    ElementTransformUtils.MoveElement(doc, ceiling.Id, new XYZ(0, 0, topLevel.Elevation));
+
+
+                }
+                transaction.Commit();
+            }
+            return ceiling;
+        }
+
+        /// <summary>
+        /// Create the roof of a house given the loops of the active document
+        /// </summary>
+        public static FootPrintRoof CreateRoofInLoop(Document doc, IList<IList<BoundarySegment>> loops, Level topLevel)
+        {
+            FootPrintRoof footPrintRoof = null;
+
+            using (Transaction transaction = new Transaction(doc, "Create Roof"))
+            {
+                transaction.Start();
+
+                if (loops.Count > 1)
+                {
+                    CurveArray curve = GetHousePerimeterCurveArray(loops);
+
+                    // create a roof type
+                    FilteredElementCollector collector = new FilteredElementCollector(doc);
+                    collector.OfClass(typeof(RoofType));
+                    RoofType roofType = collector.FirstElement() as RoofType;
+
+                    // create the foot print of the roof
+                    ModelCurveArray footPrintToModelCurveMapping = new ModelCurveArray();
+
+                    footPrintRoof = doc.Create.NewFootPrintRoof(curve, topLevel, roofType, out footPrintToModelCurveMapping);
+
+                    ModelCurveArrayIterator iterator = footPrintToModelCurveMapping.ForwardIterator();
+                    iterator.Reset();
+
+                    while (iterator.MoveNext())
+                    {
+                        ModelCurve modelCurve = iterator.Current as ModelCurve;
+                        footPrintRoof.set_DefinesSlope(modelCurve, true);
+                        footPrintRoof.set_SlopeAngle(modelCurve, 0.3);
+
+
+                        // CRIAR O OVERHANG
+                    }
+                }
+                transaction.Commit();
+            }
+
+            return footPrintRoof;
+        }
+
+        /// <summary>
+        /// Creates rooms in a level.
+        /// </summary>
+        public static void CreateRoomsAtLevel(Level level, Level topLevel, Document doc)
+        {
+            PlanCircuitSet circuitSet = getDocPlanCircuitSet(doc, level);
+
             int x = 0;
             try
             {
-                using (Transaction transaction = new Transaction(doc, "Create Rooms"))
+                foreach (PlanCircuit circuit in circuitSet)
                 {
-                    transaction.Start();
 
-                    PlanTopology topology = doc.get_PlanTopology(level, createRoomsInPhase);
-                    PlanCircuitSet circuitSet = topology.Circuits;
-                    
-                    foreach (PlanCircuit circuit in circuitSet)
-                    {
-                        if (!circuit.IsRoomLocated)
-                        {
+                    IList<IList<BoundarySegment>> loops = GetLoopsInCircuit(doc, circuit);
 
-                            #region Create room
+                    CreateFloorInLoop(doc, loops);
 
-                            Room room = doc.Create.NewRoom(null, circuit);
-                            room.Name = "Room name: " + x;
+                    CreateCeilingInLoop(doc, loops, topLevel);
 
-                            SpatialElementBoundaryOptions opt = new SpatialElementBoundaryOptions();
-                            opt.SpatialElementBoundaryLocation = SpatialElementBoundaryLocation.Center;
-                            IList<IList<BoundarySegment>> loops = room.GetBoundarySegments(opt);
-
-                            // creates a floor if in a single room there is only one loop
-                            if(loops.Count == 1)
-                            {
-                                CurveArray curve = new CurveArray();
-                                foreach (IList<BoundarySegment> loop in loops)
-                                {
-                                    foreach (BoundarySegment seg in loop)
-                                    {
-                                        curve.Append(seg.GetCurve());
-                                    }
-                                    doc.Create.NewFloor(curve, false);
-                                }
-                            }
-
-                            #endregion
-
-                            
-
-                            // creates a ceiling if in a room there is more than one loop,
-                            // and finds the smallest loop
-                            else if (loops.Count > 1)
-                            {
-
-                                #region Create ceiling
-
-                                double minArea = double.MaxValue;
-                                IList<BoundarySegment> ceilingLoop = null;
-                                foreach (IList<BoundarySegment> loop in loops)
-                                {
-                                    double area = 0;
-                                    CurveLoop currentCurve = new CurveLoop();
-
-                                    foreach (BoundarySegment seg in loop)
-                                        currentCurve.Append(seg.GetCurve());
-
-                                    IList<CurveLoop> curveLoopList = new List<CurveLoop>();
-                                    curveLoopList.Add(currentCurve);
-                                    area = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoopList);
-
-                                    if (area < minArea)
-                                    {
-                                        minArea = area;
-                                        ceilingLoop = loop;
-                                    }
-                                }
-
-                                CurveArray curve = new CurveArray();
-                                foreach (BoundarySegment seg in ceilingLoop)
-                                {
-                                    curve.Append(seg.GetCurve());
-                                }
-
-                                // create a floor type
-                                FilteredElementCollector collector = new FilteredElementCollector(doc);
-                                collector.OfClass(typeof(FloorType));
-                                FloorType floorType = collector.First(y => y.Name == "10cm concreto") as FloorType;
-
-                                // create the ceiling
-                                Floor ceiling = doc.Create.NewFloor(curve, floorType, level, false);
-                                ElementTransformUtils.MoveElement(doc, ceiling.Id, new XYZ(0, 0, MetersToFeet(2.8)));
-
-                                #endregion
-
-                                #region Create roof
-
-                                // create a roof type
-                                collector = new FilteredElementCollector(doc);
-                                collector.OfClass(typeof(RoofType));
-                                RoofType roofType = collector.FirstElement() as RoofType;
-
-                                // create the foot print of the roof
-                                ModelCurveArray footPrintToModelCurveMapping = new ModelCurveArray();    
-                                
-                                FootPrintRoof footprintRoof = doc.Create.NewFootPrintRoof(curve, topLevel, roofType, out footPrintToModelCurveMapping);
-                                
-                                ModelCurveArrayIterator iterator = footPrintToModelCurveMapping.ForwardIterator();
-                                iterator.Reset();
-
-                                while (iterator.MoveNext()) 
-                                {
-                                    ModelCurve modelCurve = iterator.Current as ModelCurve;
-                                    footprintRoof.set_DefinesSlope(modelCurve, true);
-                                    footprintRoof.set_SlopeAngle(modelCurve, 0.3);
-                                    footprintRoof.set_Offset(modelCurve, MetersToFeet(0.6));
-                                    
-                                }
-
-                                #endregion
-
-                            }
-                            x++;
-                        }
-                    }
-                    transaction.Commit();
+                    CreateRoofInLoop(doc, loops, topLevel);
+                   
+                    x++;
                 }
             }
             catch (Exception e)
