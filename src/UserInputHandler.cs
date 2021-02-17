@@ -23,7 +23,7 @@ namespace CustomizacaoMoradias
                 Level topLevel = PlaceElementsUtil.GetLevelFromName(topLevelName, doc);
 
                 PlaceElementsUtil.ReadCSV(path, doc, uidoc, level, topLevel);
-
+ 
                 PlaceElementsUtil.CreateRoomsAtLevel(level, topLevel, doc);
             }
             catch(Exception e)
