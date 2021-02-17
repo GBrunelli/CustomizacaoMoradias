@@ -575,26 +575,5 @@ namespace CustomizacaoMoradias
             }
             return footPrintRoof;
         }
-
-        /// <summary>
-        /// Creates rooms in a level.
-        /// </summary>
-        public static void CreateRoomsAtLevel(Level level, Level topLevel, Document doc)
-        {
-            try
-            {
-
-                CreateFloorInLoop(doc, level);
-
-                CreateCeilingInLoop(doc, level, topLevel);
-
-                CreateRoofInLoop(doc, level, topLevel);
-
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
-        }
     }
 }

@@ -24,7 +24,11 @@ namespace CustomizacaoMoradias
 
                 PlaceElementsUtil.ReadCSV(path, doc, uidoc, level, topLevel);
  
-                PlaceElementsUtil.CreateRoomsAtLevel(level, topLevel, doc);
+                PlaceElementsUtil.CreateFloorInLoop(doc, level);
+
+                PlaceElementsUtil.CreateCeilingInLoop(doc, level, topLevel);
+
+                PlaceElementsUtil.CreateRoofInLoop(doc, level, topLevel);
             }
             catch(Exception e)
             {
