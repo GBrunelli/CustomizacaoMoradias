@@ -534,6 +534,23 @@ namespace CustomizacaoMoradias
             return ceiling;
         }
 
+        
+        private static XYZ GetModelCurveMiddlePoint(ModelCurve modelCurve)
+        {
+            if (modelCurve is null) throw new ArgumentNullException(nameof(modelCurve));
+
+            XYZ curveStartPoint = modelCurve.GeometryCurve.GetEndPoint(0);
+            XYZ curveEndPoint = modelCurve.GeometryCurve.GetEndPoint(1);
+
+            double cordX, cordY, cordZ;
+
+            cordX = (curveStartPoint.X + curveEndPoint.X) / 2;
+            cordY = (curveStartPoint.Y + curveEndPoint.Y) / 2;
+            cordZ = (curveStartPoint.Z + curveEndPoint.Z) / 2;
+
+            return new XYZ(cordX, cordY, cordZ);
+        }
+
         /// <summary>
         /// Create the roof of a house given the loops of the active document
         /// </summary>
@@ -573,6 +590,20 @@ namespace CustomizacaoMoradias
                                 ModelCurve modelCurve = iterator.Current as ModelCurve;
                                 footPrintRoof.set_DefinesSlope(modelCurve, true);
                                 footPrintRoof.set_SlopeAngle(modelCurve, 0.3);
+
+                                // get curve middle point   
+                                XYZ curveMiddlePoint = GetModelCurveMiddlePoint(modelCurve);
+
+                                XYZ curveMiddlePointWithoutZ = new XYZ(curveMiddlePoint.X, curveMiddlePoint.Y, 0);
+
+                                // retrieves the wall corresponding to that point
+                                Wall perimeterWall = FindHostingWall(curveMiddlePointWithoutZ, doc, level);
+
+                                //double height = level.Elevation + MetersToFeet(0.8);                            
+
+                                //set the new height
+                                perimeterWall.get_Parameter(BuiltInParameter.WALL_TOP_OFFSET).Set(MetersToFeet(0.8));
+
                                 // TODO: OVERHANG
                             }
                         }
