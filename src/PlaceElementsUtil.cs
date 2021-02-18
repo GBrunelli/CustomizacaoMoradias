@@ -541,6 +541,7 @@ namespace CustomizacaoMoradias
         {
             FootPrintRoof footPrintRoof = null;
             PlanCircuitSet circuitSet = getDocPlanCircuitSet(doc, level);
+
             foreach (PlanCircuit circuit in circuitSet)
             {
                 IList<IList<BoundarySegment>> loops = GetLoopsInCircuit(doc, circuit);
@@ -549,26 +550,33 @@ namespace CustomizacaoMoradias
                     using (Transaction transaction = new Transaction(doc, "Create Roof"))
                     {
                         transaction.Start();
+
                         if (loops.Count > 1)
                         {
                             CurveArray curve = GetHousePerimeterCurveArray(loops);
+
                             // create a roof type
                             FilteredElementCollector collector = new FilteredElementCollector(doc);
                             collector.OfClass(typeof(RoofType));
                             RoofType roofType = collector.FirstElement() as RoofType;
+
                             // create the foot print of the roof
                             ModelCurveArray footPrintToModelCurveMapping = new ModelCurveArray();
                             footPrintRoof = doc.Create.NewFootPrintRoof(curve, topLevel, roofType, out footPrintToModelCurveMapping);
+
+                            // creates a iterator to add the roof slope
                             ModelCurveArrayIterator iterator = footPrintToModelCurveMapping.ForwardIterator();
                             iterator.Reset();
+
                             while (iterator.MoveNext())
                             {
                                 ModelCurve modelCurve = iterator.Current as ModelCurve;
                                 footPrintRoof.set_DefinesSlope(modelCurve, true);
                                 footPrintRoof.set_SlopeAngle(modelCurve, 0.3);
-                                // CRIAR O OVERHANG
+                                // TODO: OVERHANG
                             }
                         }
+
                         transaction.Commit();
                     }
                 }
