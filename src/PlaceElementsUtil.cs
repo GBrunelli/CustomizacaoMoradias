@@ -400,7 +400,42 @@ namespace CustomizacaoMoradias
 
                     room = doc.Create.NewRoom(null, circuit);
 
-                    // PROGRAM ROOM NAME
+                    
+                    ViewFamilyType viewFamilyType = null;
+
+                    FilteredElementCollector collector = new FilteredElementCollector(doc);
+                    ICollection<Element> views = collector.OfClass(typeof(ViewFamilyType)).ToElements();                   
+
+                    foreach(Element element in views)
+                    {
+                        if (element.Name == "Floor Plan")
+                        {
+                            viewFamilyType = element as ViewFamilyType;
+                        }
+                    }
+
+                    BoundingBoxXYZ roomBoundingBox = room.get_BoundingBox(null);
+                    XYZ center = (roomBoundingBox.Max + roomBoundingBox.Min) / 2;
+                    
+
+                    /*
+
+                    ViewFamilyType viewFamilyType;
+                    FilteredElementCollector collector = new FilteredElementCollector(doc);
+                    collector.OfClass(typeof(ViewFamilyType));
+                    List<ViewFamilyType> viewFamilyTypes = collector.Cast<ViewFamilyType>().Where(view => view.Name == "Plantas de piso").ToList();
+                    viewFamilyType = viewFamilyTypes.First();
+
+                    BoundingBoxXYZ roomBoundingBox = room.get_BoundingBox(null);
+                    XYZ center = (roomBoundingBox.Max + roomBoundingBox.Min) / 2;
+
+                    */
+
+                    ElevationMarker marker = ElevationMarker.CreateElevationMarker(doc, viewFamilyType.Id, center, 2);
+
+                    
+
+                    // TODO: ROOM NAME
 
                     transaction.Commit();
                 }
@@ -593,13 +628,10 @@ namespace CustomizacaoMoradias
 
                                 // get curve middle point   
                                 XYZ curveMiddlePoint = GetModelCurveMiddlePoint(modelCurve);
-
                                 XYZ curveMiddlePointWithoutZ = new XYZ(curveMiddlePoint.X, curveMiddlePoint.Y, 0);
 
                                 // retrieves the wall corresponding to that point
-                                Wall perimeterWall = FindHostingWall(curveMiddlePointWithoutZ, doc, level);
-
-                                //double height = level.Elevation + MetersToFeet(0.8);                            
+                                Wall perimeterWall = FindHostingWall(curveMiddlePointWithoutZ, doc, level);                      
 
                                 //set the new height
                                 perimeterWall.get_Parameter(BuiltInParameter.WALL_TOP_OFFSET).Set(MetersToFeet(0.8));
