@@ -642,16 +642,9 @@ namespace CustomizacaoMoradias
                         transaction.Start();
 
                         if (loops.Count > 1)
-                        {
-
-                            #region TEST
-
+                        {                       
                             CurveArray curve = GetHousePerimeterCurveArray(loops);
-                            CurveLoop loop = CurveArrayToCurveLoop(curve);
-                            TransformCurveLoop(loop);
-                            curve = CurveLoopToCurveArray(loop);
 
-                            #endregion
 
                             // create a roof type
                             FilteredElementCollector collector = new FilteredElementCollector(doc);
@@ -671,6 +664,7 @@ namespace CustomizacaoMoradias
                                 ModelCurve modelCurve = iterator.Current as ModelCurve;
                                 footPrintRoof.set_DefinesSlope(modelCurve, true);
                                 footPrintRoof.set_SlopeAngle(modelCurve, 0.3);
+                                
 
                                 #region Platibanda
                                 /*
