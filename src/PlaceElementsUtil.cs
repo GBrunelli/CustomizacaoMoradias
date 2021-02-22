@@ -400,7 +400,9 @@ namespace CustomizacaoMoradias
 
                     room = doc.Create.NewRoom(null, circuit);
 
-                    
+                    #region Elevation Mark TEST
+
+                    /* TEST 1
                     ViewFamilyType viewFamilyType = null;
 
                     FilteredElementCollector collector = new FilteredElementCollector(doc);
@@ -417,8 +419,9 @@ namespace CustomizacaoMoradias
                     BoundingBoxXYZ roomBoundingBox = room.get_BoundingBox(null);
                     XYZ center = (roomBoundingBox.Max + roomBoundingBox.Min) / 2;
                     
+                    */
 
-                    /*
+                    /* TEST 2
 
                     ViewFamilyType viewFamilyType;
                     FilteredElementCollector collector = new FilteredElementCollector(doc);
@@ -431,9 +434,10 @@ namespace CustomizacaoMoradias
 
                     */
 
-                    ElevationMarker marker = ElevationMarker.CreateElevationMarker(doc, viewFamilyType.Id, center, 2);
 
-                    
+                    // ElevationMarker marker = ElevationMarker.CreateElevationMarker(doc, viewFamilyType.Id, center, 2);
+
+                    #endregion
 
                     // TODO: ROOM NAME
 
@@ -501,7 +505,9 @@ namespace CustomizacaoMoradias
                 CurveLoop currentCurve = new CurveLoop();
 
                 foreach (BoundarySegment seg in loop)
+                {
                     currentCurve.Append(seg.GetCurve());
+                }                             
 
                 IList<CurveLoop> curveLoopList = new List<CurveLoop>();
                 curveLoopList.Add(currentCurve);
@@ -521,6 +527,36 @@ namespace CustomizacaoMoradias
             }
 
             return curve;
+        }
+
+
+        public static void TransformCurveLoop(CurveLoop curveLoop)
+        {
+            Transform transform;
+            transform = Transform.CreateTranslation(new XYZ(0, 0, 0));
+            transform = transform.ScaleBasis(1.1);
+
+            curveLoop.Transform(transform);
+        }
+
+        public static CurveArray CurveLoopToCurveArray(CurveLoop loop)
+        {
+            CurveArray array = new CurveArray();
+            foreach(Curve curve in loop)
+            {
+                array.Append(curve);
+            }
+            return array;
+        }
+
+        public static CurveLoop CurveArrayToCurveLoop(CurveArray array)
+        {
+            CurveLoop loop = new CurveLoop();
+            foreach (Curve curve in array)
+            {
+                loop.Append(curve);
+            }
+            return loop;
         }
 
         /// <summary>
@@ -569,7 +605,9 @@ namespace CustomizacaoMoradias
             return ceiling;
         }
 
-        
+        /// <summary>
+        /// Returns the middle point of a Model Curve
+        /// </summary>
         private static XYZ GetModelCurveMiddlePoint(ModelCurve modelCurve)
         {
             if (modelCurve is null) throw new ArgumentNullException(nameof(modelCurve));
@@ -605,7 +643,15 @@ namespace CustomizacaoMoradias
 
                         if (loops.Count > 1)
                         {
+
+                            #region TEST
+
                             CurveArray curve = GetHousePerimeterCurveArray(loops);
+                            CurveLoop loop = CurveArrayToCurveLoop(curve);
+                            TransformCurveLoop(loop);
+                            curve = CurveLoopToCurveArray(loop);
+
+                            #endregion
 
                             // create a roof type
                             FilteredElementCollector collector = new FilteredElementCollector(doc);
@@ -626,6 +672,8 @@ namespace CustomizacaoMoradias
                                 footPrintRoof.set_DefinesSlope(modelCurve, true);
                                 footPrintRoof.set_SlopeAngle(modelCurve, 0.3);
 
+                                #region Platibanda
+                                /*
                                 // get curve middle point   
                                 XYZ curveMiddlePoint = GetModelCurveMiddlePoint(modelCurve);
                                 XYZ curveMiddlePointWithoutZ = new XYZ(curveMiddlePoint.X, curveMiddlePoint.Y, 0);
@@ -635,6 +683,8 @@ namespace CustomizacaoMoradias
 
                                 //set the new height
                                 perimeterWall.get_Parameter(BuiltInParameter.WALL_TOP_OFFSET).Set(MetersToFeet(0.8));
+                                */
+                                #endregion
 
                                 // TODO: OVERHANG
                             }
