@@ -495,7 +495,7 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Returns a CurveArray that corresponds to the house perimeter
         /// </summary>
-        public static CurveArray GetHousePerimeterCurveArray(Document doc, Level level, IList<IList<BoundarySegment>> loops)
+        public static CurveArray GetHousePerimeterCurveArray(Document doc, Level level, IList<IList<BoundarySegment>> loops, bool offset)
         {
             double minArea = double.MaxValue;
             IList<BoundarySegment> ceilingLoop = null;
@@ -525,18 +525,22 @@ namespace CustomizacaoMoradias
             {
                 Curve curve = seg.GetCurve();
 
-                // finds the middle point of the current edge of the roof
-                XYZ middlePoint = GetModelCurveMiddlePoint(curve);
+                if(offset)
+                {
+                    // finds the middle point of the current edge of the roof
+                    XYZ middlePoint = GetCurveMiddlePoint(curve);
 
-                // subtracts de Z value of the point
-                middlePoint = middlePoint.Subtract(new XYZ(0, 0, middlePoint.Z));
+                    // subtracts de Z value of the point
+                    middlePoint = middlePoint.Subtract(new XYZ(0, 0, middlePoint.Z));
 
-                // finds the wall below that edge
-                Wall wall = FindHostingWall(middlePoint, doc, level);
+                    // finds the wall below that edge
+                    Wall wall = FindHostingWall(middlePoint, doc, level);
 
-                XYZ wallNormalVector = wall.Orientation;
+                    XYZ wallNormalVector = wall.Orientation;
 
-                curve = curve.CreateOffset(MetersToFeet(0.6), wallNormalVector);
+                    curve = curve.CreateOffset(MetersToFeet(0.6), wallNormalVector);
+                }
+               
 
                 housePerimeter.Append(curve);
             }
@@ -588,7 +592,7 @@ namespace CustomizacaoMoradias
                         if (loops.Count > 1)
                         {
 
-                            CurveArray curve = GetHousePerimeterCurveArray(loops);
+                            CurveArray curve = GetHousePerimeterCurveArray(doc, level, loops, false);
 
                             // create a floor type
 
@@ -613,7 +617,7 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Returns the middle point of a Model Curve
         /// </summary>
-        private static XYZ GetModelCurveMiddlePoint(Curve curve)
+        private static XYZ GetCurveMiddlePoint(Curve curve)
         {
             if (curve is null) throw new ArgumentNullException(nameof(curve));
 
@@ -648,7 +652,7 @@ namespace CustomizacaoMoradias
 
                         if (loops.Count > 1)
                         {
-                            CurveArray curve = GetHousePerimeterCurveArray(doc, level, loops);
+                            CurveArray curve = GetHousePerimeterCurveArray(doc, level, loops, true);
 
                             // create a roof type
                             FilteredElementCollector collector = new FilteredElementCollector(doc);
