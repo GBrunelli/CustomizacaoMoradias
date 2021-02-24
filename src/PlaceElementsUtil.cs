@@ -529,16 +529,6 @@ namespace CustomizacaoMoradias
             return curve;
         }
 
-
-        public static void TransformCurveLoop(CurveLoop curveLoop)
-        {
-            Transform transform;
-            transform = Transform.CreateTranslation(new XYZ(0, 0, 0));
-            transform = transform.ScaleBasis(1.1);
-
-            curveLoop.Transform(transform);
-        }
-
         public static CurveArray CurveLoopToCurveArray(CurveLoop loop)
         {
             CurveArray array = new CurveArray();
@@ -644,7 +634,6 @@ namespace CustomizacaoMoradias
                         if (loops.Count > 1)
                         {                       
                             CurveArray curve = GetHousePerimeterCurveArray(loops);
-
 
                             // create a roof type
                             FilteredElementCollector collector = new FilteredElementCollector(doc);
