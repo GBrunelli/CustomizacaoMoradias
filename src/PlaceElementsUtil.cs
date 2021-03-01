@@ -385,32 +385,77 @@ namespace CustomizacaoMoradias
         {
             Room room;
             IList<IList<BoundarySegment>> loops = null;
+            SpatialElementBoundaryOptions opt = new SpatialElementBoundaryOptions
+            {
+                SpatialElementBoundaryLocation = SpatialElementBoundaryLocation.Center
+            };
 
             using (Transaction transaction = new Transaction(doc, "Create room"))
             {
+                
+
                 if (circuit.IsRoomLocated)
                 {
                     UV point2D = circuit.GetPointInside();
                     XYZ point = new XYZ(point2D.U, point2D.V, 0);
                     room = doc.GetRoomAtPoint(point);
+                    loops = room.GetBoundarySegments(opt);
                 }
                 else
                 {
                     transaction.Start();
-
                     room = doc.Create.NewRoom(null, circuit);
+                    loops = room.GetBoundarySegments(opt);
 
-                    // PROGRAM ROOM NAME
+                    if (loops.Count > 1)
+                    {
+                        room.Name = "Exterior";
+                        room.Number = "0";
+                    }
 
+                    #region Elevation Mark TEST
+
+                    /* TEST 1
+                    ViewFamilyType viewFamilyType = null;
+
+                    FilteredElementCollector collector = new FilteredElementCollector(doc);
+                    ICollection<Element> views = collector.OfClass(typeof(ViewFamilyType)).ToElements();                   
+
+                    foreach(Element element in views)
+                    {
+                        if (element.Name == "Floor Plan")
+                        {
+                            viewFamilyType = element as ViewFamilyType;
+                        }
+                    }
+
+                    BoundingBoxXYZ roomBoundingBox = room.get_BoundingBox(null);
+                    XYZ center = (roomBoundingBox.Max + roomBoundingBox.Min) / 2;
+                    
+                    */
+
+                    /* TEST 2
+
+                    ViewFamilyType viewFamilyType;
+                    FilteredElementCollector collector = new FilteredElementCollector(doc);
+                    collector.OfClass(typeof(ViewFamilyType));
+                    List<ViewFamilyType> viewFamilyTypes = collector.Cast<ViewFamilyType>().Where(view => view.Name == "Plantas de piso").ToList();
+                    viewFamilyType = viewFamilyTypes.First();
+
+                    BoundingBoxXYZ roomBoundingBox = room.get_BoundingBox(null);
+                    XYZ center = (roomBoundingBox.Max + roomBoundingBox.Min) / 2;
+
+                    */
+
+
+                    // ElevationMarker marker = ElevationMarker.CreateElevationMarker(doc, viewFamilyType.Id, center, 2);
+
+                    #endregion
+
+                    // TODO: ROOM NAME     
                     transaction.Commit();
-                }
-
-                SpatialElementBoundaryOptions opt = new SpatialElementBoundaryOptions();
-                opt.SpatialElementBoundaryLocation = SpatialElementBoundaryLocation.Center;
-                loops = room.GetBoundarySegments(opt);
-
+                }  
             }
-
             return loops;
         }
 
@@ -456,7 +501,7 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Returns a CurveArray that corresponds to the house perimeter
         /// </summary>
-        public static CurveArray GetHousePerimeterCurveArray(IList<IList<BoundarySegment>> loops)
+        public static CurveArray GetHousePerimeterCurveArray(Document doc, Level level, IList<IList<BoundarySegment>> loops, double offset)
         {
             double minArea = double.MaxValue;
             IList<BoundarySegment> ceilingLoop = null;
@@ -466,7 +511,9 @@ namespace CustomizacaoMoradias
                 CurveLoop currentCurve = new CurveLoop();
 
                 foreach (BoundarySegment seg in loop)
+                {
                     currentCurve.Append(seg.GetCurve());
+                }                             
 
                 IList<CurveLoop> curveLoopList = new List<CurveLoop>();
                 curveLoopList.Add(currentCurve);
@@ -479,13 +526,120 @@ namespace CustomizacaoMoradias
                 }
             }
 
-            CurveArray curve = new CurveArray();
+            CurveArray housePerimeter = new CurveArray();
             foreach (BoundarySegment seg in ceilingLoop)
             {
-                curve.Append(seg.GetCurve());
+                Curve curve = seg.GetCurve();
+
+                if(offset > 0)
+                    curve = CreateOffsetedCurve(doc, level, housePerimeter, curve, offset);
+
+                housePerimeter.Append(curve);
+            }
+
+            return housePerimeter;
+        }
+
+        private static Curve CreateOffsetedCurve(Document doc, Level level, CurveArray housePerimeter, Curve curve, double offset)
+        {
+            // finds the middle point of the current edge of the roof
+            XYZ middlePoint = GetCurveMiddlePoint(curve);
+
+            // subtracts de Z value of the point
+            middlePoint = middlePoint.Subtract(new XYZ(0, 0, middlePoint.Z));
+
+            // finds the wall below that edge, and retrives it's normal vector
+            Wall wall = FindHostingWall(middlePoint, doc, level);
+            XYZ wallNormalVector = wall.Orientation;
+
+            // Makes sure that the exterior of the wall is pointed to the exterior of the house
+            XYZ roomPoint = middlePoint.Add(wallNormalVector);
+            Room room = doc.GetRoomAtPoint(roomPoint);
+            if (room.Name != "Exterior 0")
+            {
+                wall.Flip();
+                wallNormalVector = wall.Orientation;
+            }
+
+            // makes the edge 60cm bigger at each end
+            curve.MakeBound(curve.GetEndParameter(0) - offset, curve.GetEndParameter(1) + offset);
+
+            // aplies the offset
+            wallNormalVector = wallNormalVector.Multiply(offset);
+            Transform transform = Transform.CreateTranslation(wallNormalVector);
+            curve = curve.CreateTransformed(transform);
+
+            foreach (Curve iterationCurve in housePerimeter)
+            {
+                IntersectionResultArray intersectionResultArray;
+                SetComparisonResult setComparisonResult = curve.Intersect(iterationCurve, out intersectionResultArray);
+                if (setComparisonResult == SetComparisonResult.Overlap)
+                {
+                    IntersectionResultArrayIterator iterator = intersectionResultArray.ForwardIterator();
+                    while (iterator.MoveNext())
+                    {
+                        IntersectionResult result = iterator.Current as IntersectionResult;
+                        XYZ intersectionPoint = result.XYZPoint;
+
+                        RemoveCurveOverlap(curve, offset, intersectionPoint);
+
+                        RemoveCurveOverlap(iterationCurve, offset, intersectionPoint);
+                    }
+                }
             }
 
             return curve;
+        }
+
+        private static void RemoveCurveOverlap(Curve curve, double offset, XYZ intersectionPoint)
+        {
+            if ((curve.GetEndPoint(0).DistanceTo(intersectionPoint) != 0) &&
+               (curve.GetEndPoint(1).DistanceTo(intersectionPoint) != 0))
+            {
+                // case the start point is closer
+                if (curve.GetEndPoint(0).DistanceTo(intersectionPoint) <
+                    curve.GetEndPoint(1).DistanceTo(intersectionPoint))
+                {
+                    curve.MakeBound(curve.GetEndParameter(0) + offset * 2, curve.GetEndParameter(1));
+                }
+                // case the end point is closer
+                else
+                {
+                    curve.MakeBound(curve.GetEndParameter(0), curve.GetEndParameter(1) - offset * 2);
+                }
+            }
+        }
+
+        public static void DrawCurveArray(Document doc, CurveArray curveArray)
+        {
+            Autodesk.Revit.DB.View currentView = doc.ActiveView;
+            foreach (Curve curve in curveArray)
+            {
+                XYZ startPoint = curve.GetEndPoint(0);
+                XYZ endPoint = curve.GetEndPoint(1);
+                Line L1 = Line.CreateBound(startPoint, endPoint);
+                doc.Create.NewDetailCurve(currentView, L1);
+            }
+        }
+
+        public static CurveArray CurveLoopToCurveArray(CurveLoop loop)
+        {
+            CurveArray array = new CurveArray();
+            foreach(Curve curve in loop)
+            {
+                array.Append(curve);
+            }
+            return array;
+        }
+
+        public static CurveLoop CurveArrayToCurveLoop(CurveArray array)
+        {
+            CurveLoop loop = new CurveLoop();
+            foreach (Curve curve in array)
+            {
+                loop.Append(curve);
+            }
+            return loop;
         }
 
         /// <summary>
@@ -511,14 +665,12 @@ namespace CustomizacaoMoradias
                         // and finds the smallest loop
                         if (loops.Count > 1)
                         {
-
-                            CurveArray curve = GetHousePerimeterCurveArray(loops);
-
-                            // create a floor type
+                            CurveArray curve = GetHousePerimeterCurveArray(doc, level, loops, 0);
 
                             //
                             // TIRAR DAQUI
                             //
+                            // create a floor type
                             FilteredElementCollector collector = new FilteredElementCollector(doc);
                             collector.OfClass(typeof(FloorType));
                             FloorType floorType = collector.First(y => y.Name == "10cm concreto  SEM ACAB") as FloorType;
@@ -532,6 +684,25 @@ namespace CustomizacaoMoradias
                 }
             }              
             return ceiling;
+        }
+
+        /// <summary>
+        /// Returns the middle point of a Model Curve
+        /// </summary>
+        private static XYZ GetCurveMiddlePoint(Curve curve)
+        {
+            if (curve is null) throw new ArgumentNullException(nameof(curve));
+
+            XYZ curveStartPoint = curve.GetEndPoint(0);
+            XYZ curveEndPoint = curve.GetEndPoint(1);
+
+            double cordX, cordY, cordZ;
+
+            cordX = (curveStartPoint.X + curveEndPoint.X) / 2;
+            cordY = (curveStartPoint.Y + curveEndPoint.Y) / 2;
+            cordZ = (curveStartPoint.Z + curveEndPoint.Z) / 2;
+
+            return new XYZ(cordX, cordY, cordZ);
         }
 
         /// <summary>
@@ -553,7 +724,7 @@ namespace CustomizacaoMoradias
 
                         if (loops.Count > 1)
                         {
-                            CurveArray curve = GetHousePerimeterCurveArray(loops);
+                            CurveArray curve = GetHousePerimeterCurveArray(doc, level, loops, MetersToFeet(0.6));
 
                             // create a roof type
                             FilteredElementCollector collector = new FilteredElementCollector(doc);
@@ -573,7 +744,20 @@ namespace CustomizacaoMoradias
                                 ModelCurve modelCurve = iterator.Current as ModelCurve;
                                 footPrintRoof.set_DefinesSlope(modelCurve, true);
                                 footPrintRoof.set_SlopeAngle(modelCurve, 0.3);
-                                // TODO: OVERHANG
+
+                                #region Platibanda
+                                /*
+                                // get curve middle point   
+                                XYZ curveMiddlePoint = GetModelCurveMiddlePoint(modelCurve);
+                                XYZ curveMiddlePointWithoutZ = new XYZ(curveMiddlePoint.X, curveMiddlePoint.Y, 0);
+
+                                // retrieves the wall corresponding to that point
+                                Wall perimeterWall = FindHostingWall(curveMiddlePointWithoutZ, doc, level);                      
+
+                                //set the new height
+                                perimeterWall.get_Parameter(BuiltInParameter.WALL_TOP_OFFSET).Set(MetersToFeet(0.8));
+                                */
+                                #endregion
                             }
                         }
 
