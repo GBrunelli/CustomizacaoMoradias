@@ -20,14 +20,21 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Convert from meters to feet.
         /// </summary>
+        /// <param name="meters"></param>
+        /// <returns>
+        /// Returns the measurement in feet.
+        /// </returns>
         private static double MetersToFeet(double meters)
         {
             return UnitUtils.Convert(meters, UnitTypeId.Meters, UnitTypeId.Feet);
         }
 
         /// <summary>
-        /// Opens the Explorer to the user select a file, returns the file path.
+        /// Opens the Explorer to the user select a file.
         /// </summary>
+        /// <returns>
+        /// Returns a string with the file path.
+        /// </returns>
         public static string SelectFile()
         {
             OpenFileDialog openFileDialog = new OpenFileDialog
@@ -39,9 +46,14 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Read a CSV file containing the definitions of the build, then starts and commits a transaction to the open document.
+        /// Read a CSV file containing the definitions of the building, then starts and commits a transaction to the open document.
         /// </summary>
-        public static Result ReadCSV(string path, Document doc, UIDocument uidoc, Level level, Level topLevel)
+        /// <param name="path"></param>
+        /// <param name="doc"></param>
+        /// <param name="uidoc"></param>
+        /// <param name="level"></param>
+        /// <param name="topLevel"></param>
+        public static void ReadCSV(string path, Document doc, UIDocument uidoc, Level level, Level topLevel)
         {
             #region Null parameters test 
             if (path is null) throw new ArgumentNullException(nameof(path));
@@ -51,56 +63,62 @@ namespace CustomizacaoMoradias
             if (uidoc is null) throw new ArgumentNullException(nameof(uidoc));
 
             if (level is null) throw new ArgumentNullException(nameof(level));
+
+            if (topLevel is null) throw new ArgumentNullException(nameof(topLevel));
             #endregion
 
             double scale = 0.3;
 
-            if (path != null)
+            // Get a line from the table
+            string[] lines = File.ReadAllLines(path);
+            foreach (string line in lines)
             {
-                // Get a line from the table
-                string[] lines = File.ReadAllLines(path);
-                foreach (string line in lines)
+                // Split the line into strings
+                string[] columns = line.Split(',');
+
+                // Analyzes the line
+                try
                 {
-                    // Split the line into strings
-                    string[] columns = line.Split(',');
-
-                    // Analyzes the line
-                    try
+                    switch (columns[0])
                     {
-                        switch (columns[0])
-                        {
-                            case "Parede":
-                                CreateWall(columns, doc, level, topLevel, scale);
-                                break;
+                        case "Parede":
+                            CreateWall(columns, doc, level, topLevel, scale);
+                            break;
 
-                            case "Janela":
-                                CreateHostedElement(columns, uidoc, doc, level, scale);
-                                break;
+                        case "Janela":
+                            CreateHostedElement(columns, uidoc, doc, level, scale);
+                            break;
 
-                            case "Porta":
-                                CreateHostedElement(columns, uidoc, doc, level, scale);
-                                break;
+                        case "Porta":
+                            CreateHostedElement(columns, uidoc, doc, level, scale);
+                            break;
 
-                            case "Mobiliario":
-                                CreateFurniture(columns, doc, level, scale);
-                                break;
-                        }
-                    }
-                    catch(Exception e)
-                    {
-                        MessageBox.Show(e.Message, "Erro");
+                        case "Mobiliario":
+                            CreateFurniture(columns, doc, level, scale);
+                            break;
                     }
                 }
-                return Result.Succeeded;
+                catch(Exception e)
+                {
+                    MessageBox.Show(e.Message, "Erro");
+                }
             }
-            return Result.Failed;
         }
 
         /// <summary>
-        /// Creates a piece of furniture
+        /// Creates a piece of furniture.
         /// </summary>
+        /// <param name="properties"></param>
+        /// <param name="doc"></param>
+        /// <param name="level"></param>
+        /// <param name="scale"></param>
         private static void CreateFurniture(string[] properties, Document doc, Level level, double scale)
         {
+            if (properties is null) throw new ArgumentNullException(nameof(properties));
+
+            if (doc is null) throw new ArgumentNullException(nameof(doc));
+
+            if (level is null) throw new ArgumentNullException(nameof(level));
 
             NumberFormatInfo provider = new NumberFormatInfo
             {
@@ -171,28 +189,21 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Creates a wall given a array of string containg its properties.
         /// </summary>
+        /// <param name="properties"></param>
+        /// <param name="doc"></param>
+        /// <param name="level"></param>
+        /// <param name="topLevel"></param>
+        /// <param name="scale"></param>
         private static void CreateWall(string[] properties, Document doc, Level level, Level topLevel, double scale)
         {
             #region Null parameters test 
-            if (properties is null)
-            {
-                throw new ArgumentNullException(nameof(properties));
-            }
+            if (properties is null) throw new ArgumentNullException(nameof(properties));
 
-            if (doc is null)
-            {
-                throw new ArgumentNullException(nameof(doc));
-            }
+            if (doc is null) throw new ArgumentNullException(nameof(doc));
 
-            if (level is null)
-            {
-                throw new ArgumentNullException(nameof(level));
-            }
+            if (level is null) throw new ArgumentNullException(nameof(level));
 
-            if(topLevel is null)
-            {
-                throw new ArgumentNullException(nameof(topLevel));
-            }
+            if(topLevel is null) throw new ArgumentNullException(nameof(topLevel));
             #endregion
 
             #region Reding the data from the array
@@ -230,8 +241,14 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Returns the Wall in the XYZ coords. Returns null if no wall was founded.
+        /// Get the wall in an specific coordinate.
         /// </summary>
+        /// <param name="xyz"></param>
+        /// <param name="doc"></param>
+        /// <param name="level"></param>
+        /// <returns>
+        /// Returns the Wall in the XYZ coords. Returns null if no wall was found.
+        /// </returns>
         private static Wall FindHostingWall(XYZ xyz, Document doc, Level level)
         {
             #region Null parameters test 
@@ -264,8 +281,13 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Create a hosted element in a wall.
+        /// Create a hosted element on a wall.
         /// </summary>
+        /// <param name="properties"></param>
+        /// <param name="uidoc"></param>
+        /// <param name="doc"></param>
+        /// <param name="level"></param>
+        /// <param name="scale"></param>
         private static void CreateHostedElement(string[] properties, UIDocument uidoc, Document doc, Level level, double scale)
         {
             #region Null parameters test 
@@ -324,9 +346,7 @@ namespace CustomizacaoMoradias
 
                     // Create window
                     FamilyInstance instance = doc.Create.NewFamilyInstance(xyz, familySymbol, wall, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
-                    if (properties[0] == "Janela") instance.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));
-
-                    
+                    if (properties[0] == "Janela") instance.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));  
 
                     transaction.Commit();
                 }
@@ -339,8 +359,13 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Returns a Level from its name.
+        /// Finds a level from its name
         /// </summary>
+        /// <param name="levelName"></param>
+        /// <param name="doc"></param>
+        /// <returns>
+        /// Returns the Level.
+        /// </returns>
         public static Level GetLevelFromName(string levelName, Document doc)
         {
             Level level;
@@ -362,7 +387,12 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Get all the plan circuits of an level.
         /// </summary>
-        public static PlanCircuitSet getDocPlanCircuitSet(Document doc, Level level)
+        /// <param name="doc"></param>
+        /// <param name="level"></param>
+        /// <returns>
+        /// Return a PlanCircuitSet with all circuits of the level.
+        /// </returns>
+        public static PlanCircuitSet GetDocPlanCircuitSet(Document doc, Level level)
         {
             PhaseArray phases = doc.Phases;
 
@@ -379,8 +409,13 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Returns the loops in a circuit, if there is a room located in that circuit, returns null.
+        /// Get the the loops in a determined circuit.
         /// </summary>
+        /// <param name="doc"></param>
+        /// <param name="circuit"></param>
+        /// <returns>
+        /// Returns the loops in a circuit, if there is a room located in that circuit, returns null.
+        /// </returns>
         public static IList<IList<BoundarySegment>> GetLoopsInCircuit(Document doc, PlanCircuit circuit)
         {
             Room room;
@@ -460,13 +495,18 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Create a floor given the Boundary Segments of the document
+        /// Create a floor given the Boundary Segments of the document.
         /// </summary>
+        /// <param name="doc"></param>
+        /// <param name="level"></param>
+        /// <returns>
+        /// Retuns the created floor.
+        /// </returns>
         public static Floor CreateFloorInLoop(Document doc, Level level)
         {
             Floor floor = null;
 
-            PlanCircuitSet circuitSet = getDocPlanCircuitSet(doc, level);
+            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(doc, level);
 
             foreach (PlanCircuit circuit in circuitSet)
             {
@@ -499,8 +539,15 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Returns a CurveArray that corresponds to the house perimeter
+        /// Calculates a CurveArray that corresponds the perimeter of a building given all its internal loops.
         /// </summary>
+        /// <param name="doc"></param>
+        /// <param name="level"></param>
+        /// <param name="loops"></param>
+        /// <param name="offset"></param>
+        /// <returns>
+        /// Returns a CurveArray that corresponds to the house perimeter.
+        /// </returns>
         public static CurveArray GetHousePerimeterCurveArray(Document doc, Level level, IList<IList<BoundarySegment>> loops, double offset)
         {
             double minArea = double.MaxValue;
@@ -540,6 +587,17 @@ namespace CustomizacaoMoradias
             return housePerimeter;
         }
 
+        /// <summary>
+        /// Transform a curve to be offsetted
+        /// </summary>
+        /// <param name="doc"></param>
+        /// <param name="level"></param>
+        /// <param name="housePerimeter"></param>
+        /// <param name="curve"></param>
+        /// <param name="offset"></param>
+        /// <returns>
+        /// Returns the offsetted curve.
+        /// </returns>
         private static Curve CreateOffsetedCurve(Document doc, Level level, CurveArray housePerimeter, Curve curve, double offset)
         {
             // finds the middle point of the current edge of the roof
@@ -591,6 +649,12 @@ namespace CustomizacaoMoradias
             return curve;
         }
 
+        /// <summary>
+        /// Set the bound of a curve to remove overlaps. This method is used to make CurveLoops.
+        /// </summary>
+        /// <param name="curve"></param>
+        /// <param name="offset"></param>
+        /// <param name="intersectionPoint"></param>
         private static void RemoveCurveOverlap(Curve curve, double offset, XYZ intersectionPoint)
         {
             if ((curve.GetEndPoint(0).DistanceTo(intersectionPoint) != 0) &&
@@ -610,6 +674,11 @@ namespace CustomizacaoMoradias
             }
         }
 
+        /// <summary>
+        /// Draw lines in the current view that matches the given curve array.
+        /// </summary>
+        /// <param name="doc"></param>
+        /// <param name="curveArray"></param>
         public static void DrawCurveArray(Document doc, CurveArray curveArray)
         {
             Autodesk.Revit.DB.View currentView = doc.ActiveView;
@@ -622,6 +691,13 @@ namespace CustomizacaoMoradias
             }
         }
 
+        /// <summary>
+        /// Converts a CurveLoop to CurveArray.
+        /// </summary>
+        /// <param name="loop"></param>
+        /// <returns>
+        /// Returns a CurveArray with the same curves of the CurveLoop.
+        /// </returns>
         public static CurveArray CurveLoopToCurveArray(CurveLoop loop)
         {
             CurveArray array = new CurveArray();
@@ -632,6 +708,13 @@ namespace CustomizacaoMoradias
             return array;
         }
 
+        /// <summary>
+        /// Converts a CurveArray to a CurveLoop.
+        /// </summary>
+        /// <param name="array"></param>
+        /// <returns> 
+        /// Returns a CurveLoop with the same curves of the CurveArray.
+        /// </returns>
         public static CurveLoop CurveArrayToCurveLoop(CurveArray array)
         {
             CurveLoop loop = new CurveLoop();
@@ -648,7 +731,7 @@ namespace CustomizacaoMoradias
         public static Floor CreateCeilingInLoop(Document doc, Level level, Level topLevel)
         {
             Floor ceiling = null;
-            PlanCircuitSet circuitSet = getDocPlanCircuitSet(doc, level);
+            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(doc, level);
 
             foreach (PlanCircuit circuit in circuitSet)
             {
@@ -706,12 +789,12 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Create the roof of a house given the loops of the active document
+        /// Create a generic roof in a building given the level of the walls.
         /// </summary>
         public static FootPrintRoof CreateRoofInLoop(Document doc, Level level, Level topLevel)
         {
             FootPrintRoof footPrintRoof = null;
-            PlanCircuitSet circuitSet = getDocPlanCircuitSet(doc, level);
+            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(doc, level);
 
             foreach (PlanCircuit circuit in circuitSet)
             {
