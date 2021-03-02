@@ -172,9 +172,9 @@ namespace CustomizacaoMoradias
                 {
                     transaction.Start();
 
-                    FamilyInstance furniture = doc.Create.NewFamilyInstance(point, familySymbol, 
+                    FamilyInstance furniture = doc.Create.NewFamilyInstance(point, familySymbol,
                         Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
-                    
+
                     ElementTransformUtils.RotateElement(doc, furniture.Id, axis, radians);
 
                     transaction.Commit();
@@ -203,7 +203,7 @@ namespace CustomizacaoMoradias
 
             if (level is null) throw new ArgumentNullException(nameof(level));
 
-            if(topLevel is null) throw new ArgumentNullException(nameof(topLevel));
+            if (topLevel is null) throw new ArgumentNullException(nameof(topLevel));
             #endregion
 
             #region Reding the data from the array
@@ -317,8 +317,8 @@ namespace CustomizacaoMoradias
                 FamilySymbol familySymbol = (from fs in new FilteredElementCollector(doc).
                      OfClass(typeof(FamilySymbol)).
                      Cast<FamilySymbol>()
-                     where (fs.Family.Name == fsFamilyName && fs.Name == fsName) 
-                     select fs).First();
+                                             where (fs.Family.Name == fsFamilyName && fs.Name == fsName)
+                                             select fs).First();
                 #endregion
 
                 #region Convert coordinates to double and create XYZ point.
@@ -346,7 +346,7 @@ namespace CustomizacaoMoradias
 
                     // Create window
                     FamilyInstance instance = doc.Create.NewFamilyInstance(xyz, familySymbol, wall, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
-                    if (properties[0] == "Janela") instance.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));  
+                    if (properties[0] == "Janela") instance.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));
 
                     transaction.Commit();
                 }
@@ -427,7 +427,7 @@ namespace CustomizacaoMoradias
 
             using (Transaction transaction = new Transaction(doc, "Create room"))
             {
-                
+
 
                 if (circuit.IsRoomLocated)
                 {
@@ -489,7 +489,7 @@ namespace CustomizacaoMoradias
 
                     // TODO: ROOM NAME     
                     transaction.Commit();
-                }  
+                }
             }
             return loops;
         }
@@ -512,7 +512,7 @@ namespace CustomizacaoMoradias
             {
                 IList<IList<BoundarySegment>> loops = GetLoopsInCircuit(doc, circuit);
 
-                if(loops != null)
+                if (loops != null)
                 {
                     using (Transaction transaction = new Transaction(doc, "Create Floor"))
                     {
@@ -560,7 +560,7 @@ namespace CustomizacaoMoradias
                 foreach (BoundarySegment seg in loop)
                 {
                     currentCurve.Append(seg.GetCurve());
-                }                             
+                }
 
                 IList<CurveLoop> curveLoopList = new List<CurveLoop>();
                 curveLoopList.Add(currentCurve);
@@ -578,7 +578,7 @@ namespace CustomizacaoMoradias
             {
                 Curve curve = seg.GetCurve();
 
-                if(offset > 0)
+                if (offset > 0)
                     curve = CreateOffsetedCurve(doc, level, housePerimeter, curve, offset);
 
                 housePerimeter.Append(curve);
@@ -701,7 +701,7 @@ namespace CustomizacaoMoradias
         public static CurveArray CurveLoopToCurveArray(CurveLoop loop)
         {
             CurveArray array = new CurveArray();
-            foreach(Curve curve in loop)
+            foreach (Curve curve in loop)
             {
                 array.Append(curve);
             }
@@ -744,7 +744,7 @@ namespace CustomizacaoMoradias
 
                 IList<IList<BoundarySegment>> loops = GetLoopsInCircuit(doc, circuit);
 
-                if(loops != null)
+                if (loops != null)
                 {
                     using (Transaction transaction = new Transaction(doc, "Create Ceiling"))
                     {
@@ -771,7 +771,7 @@ namespace CustomizacaoMoradias
                         transaction.Commit();
                     }
                 }
-            }              
+            }
             return ceiling;
         }
 
@@ -815,7 +815,7 @@ namespace CustomizacaoMoradias
             foreach (PlanCircuit circuit in circuitSet)
             {
                 IList<IList<BoundarySegment>> loops = GetLoopsInCircuit(doc, circuit);
-                if(loops != null)
+                if (loops != null)
                 {
                     using (Transaction transaction = new Transaction(doc, "Create Roof"))
                     {
@@ -865,6 +865,11 @@ namespace CustomizacaoMoradias
                 }
             }
             return footPrintRoof;
+        }
+
+        public static void ClassifyRooms(Document doc, Level level)
+        {
+
         }
     }
 }
