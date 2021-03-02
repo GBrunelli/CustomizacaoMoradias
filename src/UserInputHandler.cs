@@ -33,12 +33,7 @@ namespace CustomizacaoMoradias
             catch(Exception e)
             {
                 MessageBox.Show(e.Message, "Erro");
-                System.Reflection.MethodBase info;
-                info = typeof(PlaceElementsUtil).GetMethod("GetLevelFromName");
-                if (e.TargetSite.Equals(info))
-                {                   
-                    throw e;
-                }            
+                throw e;
             }
 
             PlaceElementsForm.CloseForm();
