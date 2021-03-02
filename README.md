@@ -1,12 +1,13 @@
 # Customização de Moradias - Plugin para Autodesk Revit® 2021
 
-Este plugin lê uma tabela `.csv` que contém os parâmetros de elementos do Revit e os contrói no documento ativo.
+Este plugin lê uma tabela `.csv` que contém os parâmetros de elementos do Revit e os contrói no documento ativo. Também constrói de forma automática o piso, laje e um telhado genérico com queda para todos os lados.
 
 ### Elementos atualmente suportados
 
   - Paredes
   - Janelas
   - Portas
+  - Mobiliário
 
 ### Instalação
 
@@ -15,7 +16,7 @@ Para instalar o plugin, navegue até o local onde o Revit está instalado. Baixe
 ### Usando o plugin
 Para usar o plugin, clique em Add-Ins > External Tools > Place Element:
 ![PlaceElement](https://i.ibb.co/WxNv1Y2/tutorial.png)
-Uma janela do explorer irá aparecer para selecionar o arquvio `.csv` contendo as definições da contrução, selecione o arquivo que deseja integrar no projeto e clique ok.
+Uma janela irá aparecer e você deve selecionar o caminho para o arquivo `.csv` contendo as definições da contrução, assim como informar o nível em que as paredes devem ser contruídas, e o nível da laje.
 
 <sub>Desenvolvido por Gustavo H. Brunelli, sob condição de bolsista PUB da Univerdade de São Paulo.</sub>
 
