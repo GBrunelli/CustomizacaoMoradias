@@ -726,8 +726,14 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Create the ceiling of a house given the loops of the active document
+        /// Create the ceiling of a building given the loops of the active document. The buildding must be surrounded by walls.
         /// </summary>
+        /// <param name="doc"></param>
+        /// <param name="level"></param>
+        /// <param name="topLevel"></param>
+        /// <returns>
+        /// Returns the created floor.
+        /// </returns>
         public static Floor CreateCeilingInLoop(Document doc, Level level, Level topLevel)
         {
             Floor ceiling = null;
@@ -770,8 +776,12 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Returns the middle point of a Model Curve
+        /// Calculates the middle point of a Curve.
         /// </summary>
+        /// <param name="curve"></param>
+        /// <returns>
+        /// Returns the XYZ coords.
+        /// </returns>
         private static XYZ GetCurveMiddlePoint(Curve curve)
         {
             if (curve is null) throw new ArgumentNullException(nameof(curve));
@@ -791,6 +801,12 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Create a generic roof in a building given the level of the walls.
         /// </summary>
+        /// <param name="doc"></param>
+        /// <param name="level"></param>
+        /// <param name="topLevel"></param>
+        /// <returns>
+        /// Returns the created FootPrintRood.
+        /// </returns>
         public static FootPrintRoof CreateRoofInLoop(Document doc, Level level, Level topLevel)
         {
             FootPrintRoof footPrintRoof = null;
