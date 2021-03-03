@@ -33,6 +33,7 @@ namespace CustomizacaoMoradias
             catch(Exception e)
             {
                 MessageBox.Show(e.Message, "Erro");
+                throw e;
             }
 
             PlaceElementsForm.CloseForm();
