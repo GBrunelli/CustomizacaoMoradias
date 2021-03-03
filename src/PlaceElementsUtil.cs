@@ -392,7 +392,7 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Return a PlanCircuitSet with all circuits of the level.
         /// </returns>
-        public static PlanCircuitSet GetDocPlanCircuitSet(Document doc, Level level)
+        private static PlanCircuitSet GetDocPlanCircuitSet(Document doc, Level level)
         {
             PhaseArray phases = doc.Phases;
 
@@ -416,7 +416,7 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns the loops in a circuit, if there is a room located in that circuit, returns null.
         /// </returns>
-        public static IList<IList<BoundarySegment>> GetLoopsInCircuit(Document doc, PlanCircuit circuit)
+        private static IList<IList<BoundarySegment>> GetLoopsInCircuit(Document doc, PlanCircuit circuit)
         {
             Room room;
             IList<IList<BoundarySegment>> loops = null;
@@ -698,7 +698,7 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns a CurveArray with the same curves of the CurveLoop.
         /// </returns>
-        public static CurveArray CurveLoopToCurveArray(CurveLoop loop)
+        private static CurveArray CurveLoopToCurveArray(CurveLoop loop)
         {
             CurveArray array = new CurveArray();
             foreach (Curve curve in loop)
@@ -715,7 +715,7 @@ namespace CustomizacaoMoradias
         /// <returns> 
         /// Returns a CurveLoop with the same curves of the CurveArray.
         /// </returns>
-        public static CurveLoop CurveArrayToCurveLoop(CurveArray array)
+        private static CurveLoop CurveArrayToCurveLoop(CurveArray array)
         {
             CurveLoop loop = new CurveLoop();
             foreach (Curve curve in array)
@@ -867,9 +867,80 @@ namespace CustomizacaoMoradias
             return footPrintRoof;
         }
 
+        /// <summary>
+        /// Classify the rooms of a project based on the elements inside it.
+        /// </summary>
+        /// <param name="doc"></param>
+        /// <param name="level"></param>
         public static void ClassifyRooms(Document doc, Level level)
         {
+            IEnumerable<Room> rooms = GetRoomsAtLevel(doc, level);
+            foreach (Room room in rooms)
+            {
+                List<Element> elements = GetFurniture(room);
+                foreach (Element element in elements)
+                {
+                    // TODO: implemet element classifier
+                }
+            }
+        }
 
+        /// <summary>
+        /// Get all the rooms in a determined level.
+        /// </summary>
+        /// <param name="doc"></param>
+        /// <param name="level"></param>
+        /// <returns>
+        /// Returns a IEnumarable list of the the rooms.
+        /// </returns>
+        private static IEnumerable<Room> GetRoomsAtLevel(Document doc, Level level)
+        {
+            ElementId levelId = level.Id;
+
+            FilteredElementCollector collector = new FilteredElementCollector(doc);
+
+            IEnumerable<Room> rooms = collector
+              .WhereElementIsNotElementType()
+              .OfClass(typeof(SpatialElement))
+              .Where(e => e.GetType() == typeof(Room))
+              .Where(e => e.LevelId.IntegerValue.Equals(
+               levelId.IntegerValue))
+              .Cast<Room>();
+            return rooms;
+        }
+
+        /// <summary>
+        /// Get all furniture elements inside a room.
+        /// </summary>
+        /// <param name="room"></param>
+        /// <returns>
+        /// Returns a List with those elements.
+        /// </returns>
+        public static List<Element> GetFurniture(Room room)
+        {
+            Document doc = room.Document;
+            BoundingBoxXYZ boundingBox = room.get_BoundingBox(null);
+            Outline outline = new Outline(boundingBox.Min, boundingBox.Max);
+            BoundingBoxIntersectsFilter filter = new BoundingBoxIntersectsFilter(outline);
+
+            FilteredElementCollector collector
+              = new FilteredElementCollector(doc)
+                .WhereElementIsNotElementType()
+                .WhereElementIsViewIndependent()
+                .OfClass(typeof(FamilyInstance))
+                .WherePasses(filter);
+
+            int roomid = room.Id.IntegerValue;
+            List<Element> elementsInsideTheRoom = new List<Element>();
+
+            foreach (FamilyInstance instance in collector)
+            {
+                if (instance.Room.Id.IntegerValue.Equals(roomid))
+                {
+                    elementsInsideTheRoom.Add(instance);
+                }
+            }
+            return elementsInsideTheRoom;
         }
     }
 }

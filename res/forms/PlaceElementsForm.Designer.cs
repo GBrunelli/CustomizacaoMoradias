@@ -47,7 +47,7 @@
             this.fileLabel.Location = new System.Drawing.Point(12, 9);
             this.fileLabel.Name = "fileLabel";
             this.fileLabel.Size = new System.Drawing.Size(23, 13);
-            this.fileLabel.TabIndex = 0;
+            this.fileLabel.TabIndex = 6;
             this.fileLabel.Text = "File";
             // 
             // fileTextBox
@@ -57,7 +57,7 @@
             this.fileTextBox.Location = new System.Drawing.Point(15, 25);
             this.fileTextBox.Name = "fileTextBox";
             this.fileTextBox.Size = new System.Drawing.Size(341, 20);
-            this.fileTextBox.TabIndex = 1;
+            this.fileTextBox.TabIndex = 0;
             this.fileTextBox.TextChanged += new System.EventHandler(this.fileTextBox_TextChanged);
             // 
             // openButton
@@ -67,7 +67,7 @@
             this.openButton.Location = new System.Drawing.Point(362, 23);
             this.openButton.Name = "openButton";
             this.openButton.Size = new System.Drawing.Size(52, 23);
-            this.openButton.TabIndex = 2;
+            this.openButton.TabIndex = 1;
             this.openButton.Text = "Open";
             this.openButton.UseVisualStyleBackColor = true;
             this.openButton.Click += new System.EventHandler(this.openButton_Click);
@@ -78,7 +78,7 @@
             this.levelNameLabel.Location = new System.Drawing.Point(12, 48);
             this.levelNameLabel.Name = "levelNameLabel";
             this.levelNameLabel.Size = new System.Drawing.Size(91, 13);
-            this.levelNameLabel.TabIndex = 3;
+            this.levelNameLabel.TabIndex = 7;
             this.levelNameLabel.Text = "Base Level Name";
             // 
             // levelNameTextBox
@@ -88,12 +88,13 @@
             this.levelNameTextBox.Location = new System.Drawing.Point(15, 64);
             this.levelNameTextBox.Name = "levelNameTextBox";
             this.levelNameTextBox.Size = new System.Drawing.Size(399, 20);
-            this.levelNameTextBox.TabIndex = 4;
+            this.levelNameTextBox.TabIndex = 2;
             this.levelNameTextBox.TextChanged += new System.EventHandler(this.levelNameTextBox_TextChanged);
             // 
             // cancelButton
             // 
             this.cancelButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.cancelButton.Location = new System.Drawing.Point(343, 156);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(75, 23);
@@ -105,10 +106,11 @@
             // okButton
             // 
             this.okButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.okButton.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.okButton.Location = new System.Drawing.Point(262, 156);
             this.okButton.Name = "okButton";
             this.okButton.Size = new System.Drawing.Size(75, 23);
-            this.okButton.TabIndex = 6;
+            this.okButton.TabIndex = 4;
             this.okButton.Text = "Ok";
             this.okButton.UseVisualStyleBackColor = true;
             this.okButton.Click += new System.EventHandler(this.okButton_Click);
@@ -119,7 +121,7 @@
             this.topLevelNameLabel.Location = new System.Drawing.Point(12, 87);
             this.topLevelNameLabel.Name = "topLevelNameLabel";
             this.topLevelNameLabel.Size = new System.Drawing.Size(86, 13);
-            this.topLevelNameLabel.TabIndex = 7;
+            this.topLevelNameLabel.TabIndex = 8;
             this.topLevelNameLabel.Text = "Top Level Name";
             // 
             // contextMenuStrip1
@@ -134,7 +136,7 @@
             this.topLevelNametextBox.Location = new System.Drawing.Point(15, 103);
             this.topLevelNametextBox.Name = "topLevelNametextBox";
             this.topLevelNametextBox.Size = new System.Drawing.Size(399, 20);
-            this.topLevelNametextBox.TabIndex = 9;
+            this.topLevelNametextBox.TabIndex = 3;
             this.topLevelNametextBox.TextChanged += new System.EventHandler(this.topLevelNametextBox_TextChanged);
             // 
             // PlaceElementsForm
@@ -142,6 +144,7 @@
             this.AcceptButton = this.okButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+            this.AutoValidate = System.Windows.Forms.AutoValidate.EnableAllowFocusChange;
             this.CancelButton = this.cancelButton;
             this.ClientSize = new System.Drawing.Size(430, 191);
             this.Controls.Add(this.topLevelNametextBox);
