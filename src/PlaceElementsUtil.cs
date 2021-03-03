@@ -916,7 +916,7 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns a List with those elements.
         /// </returns>
-        public static List<Element> GetFurniture(Room room)
+        private static List<Element> GetFurniture(Room room)
         {
             Document doc = room.Document;
             BoundingBoxXYZ boundingBox = room.get_BoundingBox(null);
