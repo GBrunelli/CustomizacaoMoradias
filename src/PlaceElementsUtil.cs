@@ -548,43 +548,57 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns a CurveArray that corresponds to the house perimeter.
         /// </returns>
-        public static CurveArray GetHousePerimeterCurveArray(Document doc, Level level, IList<IList<BoundarySegment>> loops, double offset)
+        public static CurveArray GetHousePerimeterCurveArray(Document doc, Level level, double offset)
         {
-            double minArea = double.MaxValue;
-            IList<BoundarySegment> ceilingLoop = null;
-            foreach (IList<BoundarySegment> loop in loops)
+            // retrives the circuit set of the active document
+            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(doc, level);
+
+            foreach (PlanCircuit circuit in circuitSet)
             {
-                double area = 0;
-                CurveLoop currentCurve = new CurveLoop();
+                // get all the closed loops in the circuit
+                IList<IList<BoundarySegment>> loops = GetLoopsInCircuit(doc, circuit);
 
-                foreach (BoundarySegment seg in loop)
+                // if there more than 1 loop, that means that this circuit is the perimeter circuit
+                if(loops.Count > 1)
                 {
-                    currentCurve.Append(seg.GetCurve());
-                }
+                    // first of all we find the closed loop with the smaller area
+                    double minArea = double.MaxValue;
+                    IList<BoundarySegment> ceilingLoop = null;
+                    foreach (IList<BoundarySegment> loop in loops)
+                    {
+                        double area = 0;
+                        CurveLoop currentCurve = new CurveLoop();
+                        foreach (BoundarySegment seg in loop)
+                        {
+                            currentCurve.Append(seg.GetCurve());
+                        }
+                        IList<CurveLoop> curveLoopList = new List<CurveLoop>();
+                        curveLoopList.Add(currentCurve);
+                        area = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoopList);
+                        if (area < minArea)
+                        {
+                            minArea = area;
+                            ceilingLoop = loop;
+                        }
+                    }
 
-                IList<CurveLoop> curveLoopList = new List<CurveLoop>();
-                curveLoopList.Add(currentCurve);
-                area = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoopList);
+                    // and then we create a curve array with that loop
+                    CurveArray housePerimeter = new CurveArray();
+                    foreach (BoundarySegment seg in ceilingLoop)
+                    {
+                        Curve curve = seg.GetCurve();
 
-                if (area < minArea)
-                {
-                    minArea = area;
-                    ceilingLoop = loop;
+                        // aplies the offset for each curve
+                        if (offset > 0)
+                            curve = CreateOffsetedCurve(doc, level, housePerimeter, curve, offset);
+
+                        housePerimeter.Append(curve);
+                    }
+
+                    return housePerimeter;
                 }
             }
-
-            CurveArray housePerimeter = new CurveArray();
-            foreach (BoundarySegment seg in ceilingLoop)
-            {
-                Curve curve = seg.GetCurve();
-
-                if (offset > 0)
-                    curve = CreateOffsetedCurve(doc, level, housePerimeter, curve, offset);
-
-                housePerimeter.Append(curve);
-            }
-
-            return housePerimeter;
+            return null;
         }
 
         /// <summary>
@@ -739,39 +753,27 @@ namespace CustomizacaoMoradias
             Floor ceiling = null;
             PlanCircuitSet circuitSet = GetDocPlanCircuitSet(doc, level);
 
-            foreach (PlanCircuit circuit in circuitSet)
+            using (Transaction transaction = new Transaction(doc, "Create Ceiling"))
             {
+                transaction.Start();
 
-                IList<IList<BoundarySegment>> loops = GetLoopsInCircuit(doc, circuit);
+                // creates a ceiling if in a room there is more than one loop,
+                // and finds the smallest loop
 
-                if (loops != null)
-                {
-                    using (Transaction transaction = new Transaction(doc, "Create Ceiling"))
-                    {
-                        transaction.Start();
+                CurveArray curve = GetHousePerimeterCurveArray(doc, level, 0);
 
-                        // creates a ceiling if in a room there is more than one loop,
-                        // and finds the smallest loop
-                        if (loops.Count > 1)
-                        {
-                            CurveArray curve = GetHousePerimeterCurveArray(doc, level, loops, 0);
+                // create a floor type
+                FilteredElementCollector collector = new FilteredElementCollector(doc);
+                collector.OfClass(typeof(FloorType));
+                FloorType floorType = collector.First(y => y.Name == "10cm concreto  SEM ACAB") as FloorType;
 
-                            //
-                            // TIRAR DAQUI
-                            //
-                            // create a floor type
-                            FilteredElementCollector collector = new FilteredElementCollector(doc);
-                            collector.OfClass(typeof(FloorType));
-                            FloorType floorType = collector.First(y => y.Name == "10cm concreto  SEM ACAB") as FloorType;
+                // create the ceiling
+                ceiling = doc.Create.NewFloor(curve, floorType, topLevel, false);
+                ElementTransformUtils.MoveElement(doc, ceiling.Id, new XYZ(0, 0, topLevel.Elevation));
 
-                            // create the ceiling
-                            ceiling = doc.Create.NewFloor(curve, floorType, topLevel, false);
-                            ElementTransformUtils.MoveElement(doc, ceiling.Id, new XYZ(0, 0, topLevel.Elevation));
-                        }
-                        transaction.Commit();
-                    }
-                }
+                transaction.Commit();
             }
+
             return ceiling;
         }
 
@@ -812,39 +814,32 @@ namespace CustomizacaoMoradias
             FootPrintRoof footPrintRoof = null;
             PlanCircuitSet circuitSet = GetDocPlanCircuitSet(doc, level);
 
-            foreach (PlanCircuit circuit in circuitSet)
+            using (Transaction transaction = new Transaction(doc, "Create Roof"))
             {
-                IList<IList<BoundarySegment>> loops = GetLoopsInCircuit(doc, circuit);
-                if (loops != null)
+                transaction.Start();
+
+                CurveArray curve = GetHousePerimeterCurveArray(doc, level, MetersToFeet(0.6));
+
+                // create a roof type
+                FilteredElementCollector collector = new FilteredElementCollector(doc);
+                collector.OfClass(typeof(RoofType));
+                RoofType roofType = collector.FirstElement() as RoofType;
+
+                // create the foot print of the roof
+                ModelCurveArray footPrintToModelCurveMapping = new ModelCurveArray();
+                footPrintRoof = doc.Create.NewFootPrintRoof(curve, topLevel, roofType, out footPrintToModelCurveMapping);
+
+                // creates a iterator to add the roof slope
+                ModelCurveArrayIterator iterator = footPrintToModelCurveMapping.ForwardIterator();
+                iterator.Reset();
+
+                while (iterator.MoveNext())
                 {
-                    using (Transaction transaction = new Transaction(doc, "Create Roof"))
-                    {
-                        transaction.Start();
+                    ModelCurve modelCurve = iterator.Current as ModelCurve;
+                    footPrintRoof.set_DefinesSlope(modelCurve, true);
+                    footPrintRoof.set_SlopeAngle(modelCurve, 0.3);
 
-                        if (loops.Count > 1)
-                        {
-                            CurveArray curve = GetHousePerimeterCurveArray(doc, level, loops, MetersToFeet(0.6));
-
-                            // create a roof type
-                            FilteredElementCollector collector = new FilteredElementCollector(doc);
-                            collector.OfClass(typeof(RoofType));
-                            RoofType roofType = collector.FirstElement() as RoofType;
-
-                            // create the foot print of the roof
-                            ModelCurveArray footPrintToModelCurveMapping = new ModelCurveArray();
-                            footPrintRoof = doc.Create.NewFootPrintRoof(curve, topLevel, roofType, out footPrintToModelCurveMapping);
-
-                            // creates a iterator to add the roof slope
-                            ModelCurveArrayIterator iterator = footPrintToModelCurveMapping.ForwardIterator();
-                            iterator.Reset();
-
-                            while (iterator.MoveNext())
-                            {
-                                ModelCurve modelCurve = iterator.Current as ModelCurve;
-                                footPrintRoof.set_DefinesSlope(modelCurve, true);
-                                footPrintRoof.set_SlopeAngle(modelCurve, 0.3);
-
-                                #region Platibanda
+                    #region Platibanda
                                 /*
                                 // get curve middle point   
                                 XYZ curveMiddlePoint = GetModelCurveMiddlePoint(modelCurve);
@@ -857,12 +852,9 @@ namespace CustomizacaoMoradias
                                 perimeterWall.get_Parameter(BuiltInParameter.WALL_TOP_OFFSET).Set(MetersToFeet(0.8));
                                 */
                                 #endregion
-                            }
-                        }
-
-                        transaction.Commit();
-                    }
                 }
+
+                transaction.Commit();
             }
             return footPrintRoof;
         }
@@ -942,5 +934,32 @@ namespace CustomizacaoMoradias
             }
             return elementsInsideTheRoom;
         }
+
+        public static void CreateNewSheet(Document doc)
+        {
+
+            using (Transaction transaction = new Transaction(doc, "New Sheet"))
+            {
+                transaction.Start();
+
+                // create a filter to get all the title block type
+                FilteredElementCollector collector = new FilteredElementCollector(doc);
+                collector.OfCategory(BuiltInCategory.OST_TitleBlocks);
+                collector.WhereElementIsElementType();
+
+                // get elementid of first title block type
+                ElementId titleblockid = collector.FirstElementId();
+
+                // create the sheet
+                ViewSheet viewSheet = ViewSheet.Create(doc, titleblockid);
+                viewSheet.Name = "NEW SHEET TEST";
+                viewSheet.SheetNumber = "A-01";
+
+                Viewport viewport = Viewport.Create(doc, viewSheet.Id, doc.ActiveView.Id, new XYZ(0, 2, 0));
+
+                transaction.Commit();
+            }
+        }
+
     }
 }

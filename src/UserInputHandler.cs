@@ -29,6 +29,8 @@ namespace CustomizacaoMoradias
                 PlaceElementsUtil.CreateCeilingInLoop(doc, level, topLevel);
 
                 PlaceElementsUtil.CreateRoofInLoop(doc, level, topLevel);
+
+                PlaceElementsUtil.CreateNewSheet(doc);
             }
             catch(Exception e)
             {
