@@ -556,35 +556,38 @@ namespace CustomizacaoMoradias
             foreach (PlanCircuit circuit in circuitSet)
             {
                 // get all the closed loops in the circuit
-                IList<IList<BoundarySegment>> loops = GetLoopsInCircuit(doc, circuit);
+                IList<IList<BoundarySegment>> loopsSegments = GetLoopsInCircuit(doc, circuit);
 
                 // if there more than 1 loop, that means that this circuit is the perimeter circuit
-                if(loops.Count > 1)
+                if(loopsSegments.Count > 1)
                 {
                     // first of all we find the closed loop with the smaller area
                     double minArea = double.MaxValue;
-                    IList<BoundarySegment> ceilingLoop = null;
-                    foreach (IList<BoundarySegment> loop in loops)
+                    IList<BoundarySegment> perimeterSegments = null;
+                    foreach (IList<BoundarySegment> singleLoop in loopsSegments)
                     {
                         double area = 0;
+
+                        // transforms the boundary segments in a CurveLoop
                         CurveLoop currentCurve = new CurveLoop();
-                        foreach (BoundarySegment seg in loop)
+                        foreach (BoundarySegment seg in singleLoop)
                         {
                             currentCurve.Append(seg.GetCurve());
                         }
+
                         IList<CurveLoop> curveLoopList = new List<CurveLoop>();
                         curveLoopList.Add(currentCurve);
                         area = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoopList);
                         if (area < minArea)
                         {
                             minArea = area;
-                            ceilingLoop = loop;
+                            perimeterSegments = singleLoop;
                         }
                     }
 
                     // and then we create a curve array with that loop
                     CurveArray housePerimeter = new CurveArray();
-                    foreach (BoundarySegment seg in ceilingLoop)
+                    foreach (BoundarySegment seg in perimeterSegments)
                     {
                         Curve curve = seg.GetCurve();
 
@@ -594,7 +597,6 @@ namespace CustomizacaoMoradias
 
                         housePerimeter.Append(curve);
                     }
-
                     return housePerimeter;
                 }
             }
@@ -614,13 +616,14 @@ namespace CustomizacaoMoradias
         /// </returns>
         private static Curve CreateOffsetedCurve(Document doc, Level level, CurveArray housePerimeter, Curve curve, double offset)
         {
-            // finds the middle point of the current edge of the roof
+            // finds the middle point of the current curve
             XYZ middlePoint = GetCurveMiddlePoint(curve);
 
-            // subtracts de Z value of the point
+            // subtracts de Z value of the point, because the method FindHosringWall 
+            // calculates the distance based on the base of the wall
             middlePoint = middlePoint.Subtract(new XYZ(0, 0, middlePoint.Z));
 
-            // finds the wall below that edge, and retrives it's normal vector
+            // finds the wall below that curve, and retrives its normal vector
             Wall wall = FindHostingWall(middlePoint, doc, level);
             XYZ wallNormalVector = wall.Orientation;
 
@@ -633,7 +636,7 @@ namespace CustomizacaoMoradias
                 wallNormalVector = wall.Orientation;
             }
 
-            // makes the edge 60cm bigger at each end
+            // makes the curve 60cm bigger at each end, since we assume that all walls are in right angles
             curve.MakeBound(curve.GetEndParameter(0) - offset, curve.GetEndParameter(1) + offset);
 
             // aplies the offset
@@ -641,8 +644,11 @@ namespace CustomizacaoMoradias
             Transform transform = Transform.CreateTranslation(wallNormalVector);
             curve = curve.CreateTransformed(transform);
 
+            // verifies that the new curve intersects with other curves in the array,
+            // if that happens, both curves are ajusted to align perfectly 
             foreach (Curve iterationCurve in housePerimeter)
             {
+                // calculates and analyzes the intersections
                 IntersectionResultArray intersectionResultArray;
                 SetComparisonResult setComparisonResult = curve.Intersect(iterationCurve, out intersectionResultArray);
                 if (setComparisonResult == SetComparisonResult.Overlap)
