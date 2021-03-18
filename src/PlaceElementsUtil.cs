@@ -24,7 +24,7 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns the measurement in feet.
         /// </returns>
-        private static double MetersToFeet(double meters)
+        public static double MetersToFeet(double meters)
         {
             return UnitUtils.Convert(meters, UnitTypeId.Meters, UnitTypeId.Feet);
         }
@@ -229,8 +229,9 @@ namespace CustomizacaoMoradias
                     transaction.Start();
                     Wall newWall = Wall.Create(doc, curve, level.Id, false);
                     newWall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(topLevel.Id);
-                    newWall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET).Set(MetersToFeet(-0.15));
+                    newWall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET).Set(MetersToFeet(-0.10));
                     transaction.Commit();
+                    
                 }
             }
             catch (Exception e)
@@ -545,10 +546,11 @@ namespace CustomizacaoMoradias
         /// <param name="level"></param>
         /// <param name="loops"></param>
         /// <param name="offset"></param>
+        /// <param name="offsetVector"></param>
         /// <returns>
         /// Returns a CurveArray that corresponds to the house perimeter.
         /// </returns>
-        public static CurveArray GetHousePerimeterCurveArray(Document doc, Level level, double offset)
+        public static CurveArray GetHousePerimeterCurveArray(Document doc, Level level, double offset, XYZ offsetVector)
         {
             // retrives the circuit set of the active document
             PlanCircuitSet circuitSet = GetDocPlanCircuitSet(doc, level);
@@ -593,7 +595,7 @@ namespace CustomizacaoMoradias
 
                         // aplies the offset for each curve
                         if (offset > 0)
-                            curve = CreateOffsetedCurve(doc, level, housePerimeter, curve, offset);
+                            curve = CreateOffsetedCurve(doc, level, housePerimeter, curve, offset, offsetVector);
 
                         housePerimeter.Append(curve);
                     }
@@ -611,10 +613,11 @@ namespace CustomizacaoMoradias
         /// <param name="housePerimeter"></param>
         /// <param name="curve"></param>
         /// <param name="offset"></param>
+        /// <param name="offsetVector"></param>
         /// <returns>
         /// Returns the offsetted curve.
         /// </returns>
-        private static Curve CreateOffsetedCurve(Document doc, Level level, CurveArray housePerimeter, Curve curve, double offset)
+        private static Curve CreateOffsetedCurve(Document doc, Level level, CurveArray housePerimeter, Curve curve, double offset, XYZ offsetVector)
         {
             // finds the middle point of the current curve
             XYZ middlePoint = GetCurveMiddlePoint(curve);
@@ -639,10 +642,13 @@ namespace CustomizacaoMoradias
             // makes the curve 60cm bigger at each end, since we assume that all walls are in right angles
             curve.MakeBound(curve.GetEndParameter(0) - offset, curve.GetEndParameter(1) + offset);
 
-            // aplies the offset
-            wallNormalVector = wallNormalVector.Multiply(offset);
-            Transform transform = Transform.CreateTranslation(wallNormalVector);
-            curve = curve.CreateTransformed(transform);
+            if (wallNormalVector.CrossProduct(offsetVector).IsZeroLength())
+            {
+                // aplies the offset
+                wallNormalVector = wallNormalVector.Multiply(offset);
+                Transform transform = Transform.CreateTranslation(wallNormalVector);
+                curve = curve.CreateTransformed(transform);
+            }       
 
             // verifies that the new curve intersects with other curves in the array,
             // if that happens, both curves are ajusted to align perfectly 
@@ -659,38 +665,35 @@ namespace CustomizacaoMoradias
                         IntersectionResult result = iterator.Current as IntersectionResult;
                         XYZ intersectionPoint = result.XYZPoint;
 
-                        RemoveCurveOverlap(curve, offset, intersectionPoint);
-
-                        RemoveCurveOverlap(iterationCurve, offset, intersectionPoint);
+                        // remove the overlap of the both curves
+                        RemoveCurveOverlap(curve, intersectionPoint);
+                        RemoveCurveOverlap(iterationCurve, intersectionPoint);
                     }
                 }
             }
-
             return curve;
         }
 
         /// <summary>
         /// Set the bound of a curve to remove overlaps. This method is used to make CurveLoops.
         /// </summary>
+        /// <seealso cref="CreateOffsetedCurve(Document, Level, CurveArray, Curve, double, XYZ)"/>
         /// <param name="curve"></param>
-        /// <param name="offset"></param>
         /// <param name="intersectionPoint"></param>
-        private static void RemoveCurveOverlap(Curve curve, double offset, XYZ intersectionPoint)
+        private static void RemoveCurveOverlap(Curve curve, XYZ intersectionPoint)
         {
-            if ((curve.GetEndPoint(0).DistanceTo(intersectionPoint) != 0) &&
-               (curve.GetEndPoint(1).DistanceTo(intersectionPoint) != 0))
+            double distanceToStart = curve.GetEndPoint(0).DistanceTo(intersectionPoint);
+            double distanceToEnd = curve.GetEndPoint(1).DistanceTo(intersectionPoint);
+
+            // case the star point is closer
+            if (distanceToStart < distanceToEnd)
             {
-                // case the start point is closer
-                if (curve.GetEndPoint(0).DistanceTo(intersectionPoint) <
-                    curve.GetEndPoint(1).DistanceTo(intersectionPoint))
-                {
-                    curve.MakeBound(curve.GetEndParameter(0) + offset * 2, curve.GetEndParameter(1));
-                }
-                // case the end point is closer
-                else
-                {
-                    curve.MakeBound(curve.GetEndParameter(0), curve.GetEndParameter(1) - offset * 2);
-                }
+                curve.MakeBound(curve.GetEndParameter(0) + distanceToStart, curve.GetEndParameter(1));
+            }
+            // case the end point is closer
+            else
+            {
+                curve.MakeBound(curve.GetEndParameter(0), curve.GetEndParameter(1) - distanceToEnd);
             }
         }
 
@@ -766,7 +769,7 @@ namespace CustomizacaoMoradias
                 // creates a ceiling if in a room there is more than one loop,
                 // and finds the smallest loop
 
-                CurveArray curve = GetHousePerimeterCurveArray(doc, level, 0);
+                CurveArray curve = GetHousePerimeterCurveArray(doc, level, 0, new XYZ(0, 0, 0));
 
                 // create a floor type
                 FilteredElementCollector collector = new FilteredElementCollector(doc);
@@ -815,7 +818,7 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns the created FootPrintRood.
         /// </returns>
-        public static FootPrintRoof CreateRoofInLoop(Document doc, Level level, Level topLevel)
+        public static FootPrintRoof CreateRoofInLoop(Document doc, Level level, Level topLevel, double offset, XYZ offsetVector)
         {
             FootPrintRoof footPrintRoof = null;
             PlanCircuitSet circuitSet = GetDocPlanCircuitSet(doc, level);
@@ -824,7 +827,7 @@ namespace CustomizacaoMoradias
             {
                 transaction.Start();
 
-                CurveArray curve = GetHousePerimeterCurveArray(doc, level, MetersToFeet(0.6));
+                CurveArray footPrintCurve = GetHousePerimeterCurveArray(doc, level, offset, offsetVector);
 
                 // create a roof type
                 FilteredElementCollector collector = new FilteredElementCollector(doc);
@@ -833,33 +836,31 @@ namespace CustomizacaoMoradias
 
                 // create the foot print of the roof
                 ModelCurveArray footPrintToModelCurveMapping = new ModelCurveArray();
-                footPrintRoof = doc.Create.NewFootPrintRoof(curve, topLevel, roofType, out footPrintToModelCurveMapping);
+                footPrintRoof = doc.Create.NewFootPrintRoof(footPrintCurve, topLevel, roofType, out footPrintToModelCurveMapping);
 
                 // creates a iterator to add the roof slope
                 ModelCurveArrayIterator iterator = footPrintToModelCurveMapping.ForwardIterator();
                 iterator.Reset();
 
                 while (iterator.MoveNext())
-                {
+                {                           
                     ModelCurve modelCurve = iterator.Current as ModelCurve;
-                    footPrintRoof.set_DefinesSlope(modelCurve, true);
-                    footPrintRoof.set_SlopeAngle(modelCurve, 0.3);
 
-                    #region Platibanda
-                                /*
-                                // get curve middle point   
-                                XYZ curveMiddlePoint = GetModelCurveMiddlePoint(modelCurve);
-                                XYZ curveMiddlePointWithoutZ = new XYZ(curveMiddlePoint.X, curveMiddlePoint.Y, 0);
+                    Curve curve = modelCurve.GeometryCurve;
+                    XYZ startPoint = curve.GetEndPoint(0);
+                    XYZ endPoint = curve.GetEndPoint(1);
+                    XYZ curveDirection = new XYZ(startPoint.X - endPoint.X, startPoint.Y - endPoint.Y, 0);
 
-                                // retrieves the wall corresponding to that point
-                                Wall perimeterWall = FindHostingWall(curveMiddlePointWithoutZ, doc, level);                      
+                    if(curveDirection.DotProduct(offsetVector) == 0)
+                    {
+                        footPrintRoof.set_DefinesSlope(modelCurve, true);
+                        footPrintRoof.set_SlopeAngle(modelCurve, 0.3);
+                    }
 
-                                //set the new height
-                                perimeterWall.get_Parameter(BuiltInParameter.WALL_TOP_OFFSET).Set(MetersToFeet(0.8));
-                                */
-                                #endregion
+                    double elevation = - (offset - MetersToFeet(0.1)) / 3;
+
+                    footPrintRoof.set_Offset(modelCurve, elevation);
                 }
-
                 transaction.Commit();
             }
             return footPrintRoof;
@@ -966,6 +967,5 @@ namespace CustomizacaoMoradias
                 transaction.Commit();
             }
         }
-
     }
 }

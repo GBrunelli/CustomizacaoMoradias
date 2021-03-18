@@ -28,7 +28,9 @@ namespace CustomizacaoMoradias
 
                 PlaceElementsUtil.CreateCeilingInLoop(doc, level, topLevel);
 
-                PlaceElementsUtil.CreateRoofInLoop(doc, level, topLevel);
+                double offset = PlaceElementsUtil.MetersToFeet(0.6);
+                XYZ offsetVector = new XYZ(1, 0, 0);
+                PlaceElementsUtil.CreateRoofInLoop(doc, level, topLevel, offset, offsetVector);
 
                 PlaceElementsUtil.CreateNewSheet(doc);
             }
