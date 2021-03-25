@@ -34,10 +34,15 @@ namespace CustomizacaoMoradias
 
                 PlaceElementsUtil.CreateNewSheet(doc);
             }
+            catch(LevelNotFoundException lvlEx)
+            {
+                MessageBox.Show(lvlEx.Message, "Erro");
+                throw lvlEx;
+
+            }
             catch(Exception e)
             {
                 MessageBox.Show(e.Message, "Erro");
-                throw e;
             }
 
             PlaceElementsForm.CloseForm();

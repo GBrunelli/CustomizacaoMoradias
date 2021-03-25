@@ -374,7 +374,6 @@ namespace CustomizacaoMoradias
         /// </returns>
         public static Level GetLevelFromName(string levelName, Document doc)
         {
-            // TODO: create new exception
             Level level;
             try
             {
@@ -386,7 +385,7 @@ namespace CustomizacaoMoradias
             }
             catch (Exception e)
             {
-                throw new Exception("Nível \"" + levelName + "\" não encontrado.", e);
+                throw new LevelNotFoundException("Nível \"" + levelName + "\" não encontrado.", e);
             }
             return level;
         }

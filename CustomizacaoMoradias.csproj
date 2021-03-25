@@ -55,6 +55,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\LevelNotFoundException.cs" />
     <Compile Include="src\PlaceElementsApplication.cs" />
     <Compile Include="res\forms\PlaceElementsForm.cs">
       <SubType>Form</SubType>
