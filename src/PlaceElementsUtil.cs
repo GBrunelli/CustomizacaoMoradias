@@ -82,7 +82,7 @@ namespace CustomizacaoMoradias
                     switch (columns[0])
                     {
                         case "Parede":
-                            CreateWall(columns, doc, level, topLevel, scale);
+                            CreateWall(columns, doc, level, topLevel, scale, "parede 15 cm - branca");
                             break;
 
                         case "Janela":
@@ -194,7 +194,7 @@ namespace CustomizacaoMoradias
         /// <param name="level"></param>
         /// <param name="topLevel"></param>
         /// <param name="scale"></param>
-        private static void CreateWall(string[] properties, Document doc, Level level, Level topLevel, double scale)
+        private static void CreateWall(string[] properties, Document doc, Level level, Level topLevel, double scale, string wallTypeName)
         {
             #region Null parameters test 
             if (properties is null) throw new ArgumentNullException(nameof(properties));
@@ -224,6 +224,11 @@ namespace CustomizacaoMoradias
             #region Creating the wall
             try
             {
+                // sllect wall type
+                FilteredElementCollector collector = new FilteredElementCollector(doc);
+                collector.OfClass(typeof(WallType));
+                WallType wallType = collector.First(y => y.Name == wallTypeName) as WallType;
+
                 using (Transaction transaction = new Transaction(doc, "Place Wall"))
                 {
                     transaction.Start();
@@ -369,6 +374,7 @@ namespace CustomizacaoMoradias
         /// </returns>
         public static Level GetLevelFromName(string levelName, Document doc)
         {
+            // TODO: create new exception
             Level level;
             try
             {
@@ -503,11 +509,15 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Retuns the created floor.
         /// </returns>
-        public static Floor CreateFloorInLoop(Document doc, Level level)
+        public static Floor CreateFloorInLoop(Document doc, Level level, string floorTypeName)
         {
             Floor floor = null;
-
             PlanCircuitSet circuitSet = GetDocPlanCircuitSet(doc, level);
+
+            // get the floorType
+            FilteredElementCollector collector = new FilteredElementCollector(doc);
+            collector.OfClass(typeof(FloorType));
+            FloorType floorType = collector.First(y => y.Name == floorTypeName) as FloorType;
 
             foreach (PlanCircuit circuit in circuitSet)
             {
@@ -757,7 +767,7 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns the created floor.
         /// </returns>
-        public static Floor CreateCeilingInLoop(Document doc, Level level, Level topLevel)
+        public static Floor CreateCeilingInLoop(Document doc, Level level, Level topLevel, string floorTypeName)
         {
             Floor ceiling = null;
             PlanCircuitSet circuitSet = GetDocPlanCircuitSet(doc, level);
@@ -774,7 +784,7 @@ namespace CustomizacaoMoradias
                 // create a floor type
                 FilteredElementCollector collector = new FilteredElementCollector(doc);
                 collector.OfClass(typeof(FloorType));
-                FloorType floorType = collector.First(y => y.Name == "10cm concreto  SEM ACAB") as FloorType;
+                FloorType floorType = collector.First(y => y.Name == floorTypeName) as FloorType;
 
                 // create the ceiling
                 ceiling = doc.Create.NewFloor(curve, floorType, topLevel, false);

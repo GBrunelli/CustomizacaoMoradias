@@ -24,12 +24,12 @@ namespace CustomizacaoMoradias
 
                 PlaceElementsUtil.ReadCSV(path, doc, uidoc, level, topLevel);
  
-                PlaceElementsUtil.CreateFloorInLoop(doc, level);
+                PlaceElementsUtil.CreateFloorInLoop(doc, level, "piso 10 cm - ceramico 40x40");
 
-                PlaceElementsUtil.CreateCeilingInLoop(doc, level, topLevel);
+                PlaceElementsUtil.CreateCeilingInLoop(doc, level, topLevel, "laje 10 cm - branca");
 
                 double offset = PlaceElementsUtil.MetersToFeet(0.6);
-                XYZ offsetVector = new XYZ(1, 0, 0);
+                XYZ offsetVector = new XYZ(0, 1, 0);
                 PlaceElementsUtil.CreateRoofInLoop(doc, level, topLevel, offset, offsetVector);
 
                 PlaceElementsUtil.CreateNewSheet(doc);
