@@ -32,7 +32,9 @@ namespace CustomizacaoMoradias
                 XYZ offsetVector = new XYZ(0, 1, 0);
                 PlaceElementsUtil.CreateRoofInLoop(doc, level, topLevel, offset, offsetVector);
 
-                PlaceElementsUtil.CreateNewSheet(doc);
+                PlaceElementsUtil.ClassifyRooms(doc, level);
+
+                //PlaceElementsUtil.CreateNewSheet(doc);
             }
             catch(LevelNotFoundException lvlEx)
             {

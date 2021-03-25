@@ -9,6 +9,7 @@ using System.Globalization;
 using System.IO;
 using System.Windows.Forms;
 using Autodesk.Revit.DB.Architecture;
+using Newtonsoft.Json;
 
 namespace CustomizacaoMoradias
 {
@@ -492,8 +493,7 @@ namespace CustomizacaoMoradias
                     // ElevationMarker marker = ElevationMarker.CreateElevationMarker(doc, viewFamilyType.Id, center, 2);
 
                     #endregion
-
-                    // TODO: ROOM NAME     
+ 
                     transaction.Commit();
                 }
             }
@@ -538,7 +538,7 @@ namespace CustomizacaoMoradias
                                 {
                                     curve.Append(seg.GetCurve());
                                 }
-                                floor = doc.Create.NewFloor(curve, false);
+                                floor = doc.Create.NewFloor(curve, floorType, level, true);
                             }
                         }
                         transaction.Commit();
@@ -882,13 +882,39 @@ namespace CustomizacaoMoradias
         /// <param name="level"></param>
         public static void ClassifyRooms(Document doc, Level level)
         {
-            IEnumerable<Room> rooms = GetRoomsAtLevel(doc, level);
+            string jsonElementClassifier = File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + "elementClassifier.json");
+            List<RoomClassifier> deserializedRoomClassifier = JsonConvert.DeserializeObject<List<RoomClassifier>>(jsonElementClassifier);         
+
+            List<Room> rooms = GetRoomsAtLevel(doc, level).ToList();
             foreach (Room room in rooms)
             {
-                List<Element> elements = GetFurniture(room);
-                foreach (Element element in elements)
+                if(room.Area > 0)
                 {
-                    // TODO: implemet element classifier
+                    int roomScore = 0;
+
+                    List<Element> elements = GetFurniture(room);
+                    foreach (Element element in elements)
+                    {
+                        foreach (RoomClassifier roomClassifier in deserializedRoomClassifier)
+                        {
+                            foreach (RoomElement furniture in roomClassifier.Element)
+                            {
+                                if (furniture.Name == element.Name)
+                                {
+                                    roomClassifier.RoomScore += furniture.Score;
+                                }
+                            }
+                            if (roomClassifier.RoomScore > roomScore)
+                            {
+                                using(Transaction transaction = new Transaction(doc, "Classify Room"))
+                                {
+                                    transaction.Start();
+                                    room.Name = roomClassifier.Name;
+                                    transaction.Commit();
+                                }                              
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -943,9 +969,12 @@ namespace CustomizacaoMoradias
 
             foreach (FamilyInstance instance in collector)
             {
-                if (instance.Room.Id.IntegerValue.Equals(roomid))
+                if(instance.Room != null)
                 {
-                    elementsInsideTheRoom.Add(instance);
+                    if (instance.Room.Id.IntegerValue.Equals(roomid))
+                    {
+                        elementsInsideTheRoom.Add(instance);
+                    }
                 }
             }
             return elementsInsideTheRoom;
