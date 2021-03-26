@@ -18,7 +18,6 @@ namespace CustomizacaoMoradias
     [Journaling(JournalingMode.NoCommandData)]
     public class ElementPlacer
     {
-
         private UIDocument uidoc;
         private Level level;
         private Level topLevel;
@@ -65,7 +64,9 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Read a CSV file containing the definitions of the building, then starts and commits a transaction to the open document.
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="path">
+        /// The complete path to the CSV file.
+        /// </param>
         public void BuildCSV(string path)
         {
             if (path is null) throw new ArgumentNullException(nameof(path));
@@ -111,7 +112,14 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Creates a piece of furniture.
         /// </summary>
-        /// <param name="properties"></param>
+        /// <param name="properties">
+        /// [0]: Name of the element;
+        /// [1]: x coordinate;
+        /// [2]: y coordinate;
+        /// [3]: rotation;
+        /// [4]: type;
+        /// [5]: family name;
+        /// </param>
         private void CreateFurniture(string[] properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
@@ -187,7 +195,13 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Creates a wall given a array of string containg its properties.
         /// </summary>
-        /// <param name="properties"></param>
+        /// <param name="properties">
+        /// [0]: "Parede"
+        /// [1]: x1;
+        /// [2]: y1;
+        /// [3]: x2;
+        /// [4]: y2;
+        /// </param>
         private void CreateWall(string[] properties, string wallTypeName)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
@@ -237,7 +251,9 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Get the wall in an specific coordinate.
         /// </summary>
-        /// <param name="xyz"></param>
+        /// <param name="xyz">
+        /// The Z compenent must be in the same level of the wall.
+        /// </param>
         /// <returns>
         /// Returns the Wall in the XYZ coords. Returns null if no wall was found.
         /// </returns>
@@ -271,7 +287,13 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Create a hosted element on a wall.
         /// </summary>
-        /// <param name="properties"></param>
+        /// <param name="properties">
+        /// [0]: Element type
+        /// [1]: x coordinate;
+        /// [2]: y coordinate;
+        /// [3]: type;
+        /// [4}: family name;
+        /// </param>
         private void CreateHostedElement(string[] properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
@@ -339,7 +361,9 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Finds a level from its name
         /// </summary>
-        /// <param name="levelName"></param>
+        /// <param name="levelName">
+        /// The name as it is on Revit.
+        /// </param>
         /// <returns>
         /// Returns the Level.
         /// </returns>
@@ -363,10 +387,12 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Get all the plan circuits of an level. If the update flag is true, the circuit will be recalculated,
-        /// use it if new walls were added after the last time that this method was called.
+        /// Get all the plan circuits of an level. 
         /// </summary>
-        /// <param name="update"></param>
+        /// <param name="update">
+        /// If the update flag is true, the circuit will be recalculated,
+        /// use it if new walls were added after the last time that this method was called.
+        /// </param>
         /// <returns>
         /// Return a PlanCircuitSet with all circuits of the level.
         /// </returns>
@@ -397,8 +423,9 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Get the the loops in a determined circuit.
         /// </summary>
-        /// <param name="doc"></param>
-        /// <param name="circuit"></param>
+        /// <param name="circuit">
+        /// The PlanCircuit of the active document. See also GetDocPlanCircuitSet().
+        /// </param>
         /// <returns>
         /// Returns the loops in a circuit, if there is a room located in that circuit, returns null.
         /// </returns>
@@ -486,6 +513,9 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Retuns the created floor.
         /// </returns>
+        /// <param name="floorTypeName">
+        /// The name of the floorType as it is on Revit.
+        /// </param>
         public Floor CreateFloor(string floorTypeName)
         {
             Document doc = uidoc.Document;
@@ -530,8 +560,14 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Calculates a CurveArray that corresponds the perimeter of a building given all its internal loops.
         /// </summary>
-        /// <param name="offset"></param>
-        /// <param name="offsetVector"></param>
+        /// <param name="offset">
+        /// A real value that reprends the offset of the perimeter.
+        /// </param>
+        /// <param name="offsetVector">
+        /// A vector that will defines the offset. The spacing will be applied on the orthogonal edges to the offsetVector. 
+        /// The magnitude of the vector doesn't matter, just the direction will affect the offset.
+        /// If the vector is 0, the offset will be applied for all the sides. 
+        /// </param>
         /// <returns>
         /// Returns a CurveArray that corresponds to the house perimeter.
         /// </returns>
@@ -592,7 +628,7 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Transform a curve to be offsetted
+        /// Transform a curve to be offsetted.
         /// </summary>
         /// <param name="housePerimeter"></param>
         /// <param name="curve"></param>
