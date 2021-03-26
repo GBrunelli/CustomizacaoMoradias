@@ -17,22 +17,22 @@ namespace CustomizacaoMoradias
                 string path = PlaceElementsForm.filePath;
 
                 string levelName = PlaceElementsForm.levelName;
-                Level level = PlaceElementsUtil.GetLevelFromName(levelName, doc);
 
                 string topLevelName = PlaceElementsForm.topLevelName;
-                Level topLevel = PlaceElementsUtil.GetLevelFromName(topLevelName, doc);
 
-                PlaceElementsUtil.BuildCSV(path, doc, uidoc, level, topLevel);
+                ElementPlacer elementPlacer = new ElementPlacer(uidoc, levelName, topLevelName, 0.3);
+
+                elementPlacer.BuildCSV(path);
  
-                PlaceElementsUtil.CreateFloor(doc, level, "piso 10 cm - ceramico 40x40");
+                elementPlacer.CreateFloor("piso 10 cm - ceramico 40x40");
 
-                PlaceElementsUtil.CreateCeiling(doc, level, topLevel, "laje 10 cm - branca");
+                elementPlacer.CreateCeiling("laje 10 cm - branca");
 
-                double offset = PlaceElementsUtil.MetersToFeet(0.6);
+                double offset = ElementPlacer.MetersToFeet(0.6);
                 XYZ offsetVector = new XYZ(0, 1, 0);
-                PlaceElementsUtil.CreateRoof(doc, level, topLevel, offset, offsetVector);
+                elementPlacer.CreateRoof(offset, offsetVector);
 
-                PlaceElementsUtil.ClassifyRooms(doc, level);
+                elementPlacer.ClassifyRooms();
 
                 //PlaceElementsUtil.CreateNewSheet(doc);
             }
