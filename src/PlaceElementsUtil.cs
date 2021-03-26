@@ -54,7 +54,7 @@ namespace CustomizacaoMoradias
         /// <param name="uidoc"></param>
         /// <param name="level"></param>
         /// <param name="topLevel"></param>
-        public static void ReadCSV(string path, Document doc, UIDocument uidoc, Level level, Level topLevel)
+        public static void BuildCSV(string path, Document doc, UIDocument uidoc, Level level, Level topLevel)
         {
             #region Null parameters test 
             if (path is null) throw new ArgumentNullException(nameof(path));
@@ -66,7 +66,7 @@ namespace CustomizacaoMoradias
             if (level is null) throw new ArgumentNullException(nameof(level));
 
             if (topLevel is null) throw new ArgumentNullException(nameof(topLevel));
-            #endregion
+            #endregion            
 
             double scale = 0.3;
 
@@ -508,7 +508,7 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Retuns the created floor.
         /// </returns>
-        public static Floor CreateFloorInLoop(Document doc, Level level, string floorTypeName)
+        public static Floor CreateFloor(Document doc, Level level, string floorTypeName)
         {
             Floor floor = null;
             PlanCircuitSet circuitSet = GetDocPlanCircuitSet(doc, level);
@@ -766,7 +766,7 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns the created floor.
         /// </returns>
-        public static Floor CreateCeilingInLoop(Document doc, Level level, Level topLevel, string floorTypeName)
+        public static Floor CreateCeiling(Document doc, Level level, Level topLevel, string floorTypeName)
         {
             Floor ceiling = null;
             PlanCircuitSet circuitSet = GetDocPlanCircuitSet(doc, level);
@@ -827,7 +827,7 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns the created FootPrintRood.
         /// </returns>
-        public static FootPrintRoof CreateRoofInLoop(Document doc, Level level, Level topLevel, double offset, XYZ offsetVector)
+        public static FootPrintRoof CreateRoof(Document doc, Level level, Level topLevel, double offset, XYZ offsetVector)
         {
             FootPrintRoof footPrintRoof = null;
             PlanCircuitSet circuitSet = GetDocPlanCircuitSet(doc, level);
