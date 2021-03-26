@@ -23,6 +23,7 @@ namespace CustomizacaoMoradias
         private Level level;
         private Level topLevel;
         private double scale;
+        private PlanCircuitSet docPlanCircuitSet;
 
         public ElementPlacer(UIDocument uidoc, string level, string topLevel, double scale)
         {
@@ -30,6 +31,7 @@ namespace CustomizacaoMoradias
             this.level = GetLevelFromName(level);
             this.topLevel = GetLevelFromName(topLevel);
             this.scale = scale;
+            docPlanCircuitSet = null;
         }
 
         /// <summary>
@@ -64,10 +66,6 @@ namespace CustomizacaoMoradias
         /// Read a CSV file containing the definitions of the building, then starts and commits a transaction to the open document.
         /// </summary>
         /// <param name="path"></param>
-        /// <param name="doc"></param>
-        /// <param name="uidoc"></param>
-        /// <param name="level"></param>
-        /// <param name="topLevel"></param>
         public void BuildCSV(string path)
         {
             if (path is null) throw new ArgumentNullException(nameof(path));
@@ -114,9 +112,6 @@ namespace CustomizacaoMoradias
         /// Creates a piece of furniture.
         /// </summary>
         /// <param name="properties"></param>
-        /// <param name="doc"></param>
-        /// <param name="level"></param>
-        /// <param name="scale"></param>
         private void CreateFurniture(string[] properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
@@ -193,10 +188,6 @@ namespace CustomizacaoMoradias
         /// Creates a wall given a array of string containg its properties.
         /// </summary>
         /// <param name="properties"></param>
-        /// <param name="doc"></param>
-        /// <param name="level"></param>
-        /// <param name="topLevel"></param>
-        /// <param name="scale"></param>
         private void CreateWall(string[] properties, string wallTypeName)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
@@ -229,7 +220,7 @@ namespace CustomizacaoMoradias
                 using (Transaction transaction = new Transaction(doc, "Place Wall"))
                 {
                     transaction.Start();
-                    Wall newWall = Wall.Create(doc, curve, level.Id, false);
+                    Wall newWall = Wall.Create(doc, curve, wallType.Id, level.Id, MetersToFeet(2.8), 0, false, false);
                     newWall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(topLevel.Id);
                     newWall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET).Set(MetersToFeet(-0.10));
                     transaction.Commit();
@@ -247,8 +238,6 @@ namespace CustomizacaoMoradias
         /// Get the wall in an specific coordinate.
         /// </summary>
         /// <param name="xyz"></param>
-        /// <param name="doc"></param>
-        /// <param name="level"></param>
         /// <returns>
         /// Returns the Wall in the XYZ coords. Returns null if no wall was found.
         /// </returns>
@@ -283,10 +272,6 @@ namespace CustomizacaoMoradias
         /// Create a hosted element on a wall.
         /// </summary>
         /// <param name="properties"></param>
-        /// <param name="uidoc"></param>
-        /// <param name="doc"></param>
-        /// <param name="level"></param>
-        /// <param name="scale"></param>
         private void CreateHostedElement(string[] properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
@@ -355,7 +340,6 @@ namespace CustomizacaoMoradias
         /// Finds a level from its name
         /// </summary>
         /// <param name="levelName"></param>
-        /// <param name="doc"></param>
         /// <returns>
         /// Returns the Level.
         /// </returns>
@@ -379,28 +363,35 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Get all the plan circuits of an level.
+        /// Get all the plan circuits of an level. If the update flag is true, the circuit will be recalculated,
+        /// use it if new walls were added after the last time that this method was called.
         /// </summary>
-        /// <param name="doc"></param>
-        /// <param name="level"></param>
+        /// <param name="update"></param>
         /// <returns>
         /// Return a PlanCircuitSet with all circuits of the level.
         /// </returns>
-        private PlanCircuitSet GetDocPlanCircuitSet()
+        private PlanCircuitSet GetDocPlanCircuitSet(bool update)
         {
-            Document doc = uidoc.Document;
-            PhaseArray phases = doc.Phases;
+            if (docPlanCircuitSet == null || update == true)
+            {
+                Document doc = uidoc.Document;
+                PhaseArray phases = doc.Phases;
 
-            // get the last phase
-            Phase createRoomsInPhase = phases.get_Item(phases.Size - 1);
+                // get the last phase
+                Phase createRoomsInPhase = phases.get_Item(phases.Size - 1);
 
-            if (createRoomsInPhase is null)
-                throw new Exception("Não foi encontrada nenhuma fase no documento atual.");
+                if (createRoomsInPhase is null)
+                    throw new Exception("Não foi encontrada nenhuma fase no documento atual.");
 
-            PlanTopology topology = doc.get_PlanTopology(level, createRoomsInPhase);
-            PlanCircuitSet circuitSet = topology.Circuits;
+                PlanTopology topology = doc.get_PlanTopology(level, createRoomsInPhase);
+                PlanCircuitSet circuitSet = topology.Circuits;
 
-            return circuitSet;
+                return circuitSet;
+            }
+            else
+            {
+                return docPlanCircuitSet;
+            }
         }
 
         /// <summary>
@@ -492,8 +483,6 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Create a floor given the Boundary Segments of the document.
         /// </summary>
-        /// <param name="doc"></param>
-        /// <param name="level"></param>
         /// <returns>
         /// Retuns the created floor.
         /// </returns>
@@ -501,7 +490,7 @@ namespace CustomizacaoMoradias
         {
             Document doc = uidoc.Document;
             Floor floor = null;
-            PlanCircuitSet circuitSet = GetDocPlanCircuitSet();
+            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(false);
 
             // get the floorType
             FilteredElementCollector collector = new FilteredElementCollector(doc);
@@ -541,9 +530,6 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Calculates a CurveArray that corresponds the perimeter of a building given all its internal loops.
         /// </summary>
-        /// <param name="doc"></param>
-        /// <param name="level"></param>
-        /// <param name="loops"></param>
         /// <param name="offset"></param>
         /// <param name="offsetVector"></param>
         /// <returns>
@@ -553,7 +539,7 @@ namespace CustomizacaoMoradias
         {
             Document doc = uidoc.Document;
             // retrives the circuit set of the active document
-            PlanCircuitSet circuitSet = GetDocPlanCircuitSet();
+            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(false);
 
             foreach (PlanCircuit circuit in circuitSet)
             {
@@ -608,8 +594,6 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Transform a curve to be offsetted
         /// </summary>
-        /// <param name="doc"></param>
-        /// <param name="level"></param>
         /// <param name="housePerimeter"></param>
         /// <param name="curve"></param>
         /// <param name="offset"></param>
@@ -678,7 +662,7 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Set the bound of a curve to remove overlaps. This method is used to make CurveLoops.
         /// </summary>
-        /// <seealso cref="CreateOffsetedCurve(Document, Level, CurveArray, Curve, double, XYZ)"/>
+        /// <seealso cref="CreateOffsetedCurve(CurveArray, Curve, double, XYZ)"/>
         /// <param name="curve"></param>
         /// <param name="intersectionPoint"></param>
         private static void RemoveCurveOverlap(Curve curve, XYZ intersectionPoint)
@@ -701,7 +685,6 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Draw lines in the current view that matches the given curve array.
         /// </summary>
-        /// <param name="doc"></param>
         /// <param name="curveArray"></param>
         public void DrawCurveArray(CurveArray curveArray)
         {
@@ -753,9 +736,7 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Create the ceiling of a building given the loops of the active document. The buildding must be surrounded by walls.
         /// </summary>
-        /// <param name="doc"></param>
-        /// <param name="level"></param>
-        /// <param name="topLevel"></param>
+        /// <param name="floorTypeName"></param>
         /// <returns>
         /// Returns the created floor.
         /// </returns>
@@ -763,7 +744,7 @@ namespace CustomizacaoMoradias
         {
             Document doc = uidoc.Document;
             Floor ceiling = null;
-            PlanCircuitSet circuitSet = GetDocPlanCircuitSet();
+            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(false);
 
             using (Transaction transaction = new Transaction(doc, "Create Ceiling"))
             {
@@ -815,9 +796,8 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Create a generic roof in a building given the level of the walls.
         /// </summary>
-        /// <param name="doc"></param>
-        /// <param name="level"></param>
-        /// <param name="topLevel"></param>
+        /// <param name="offset"></param>
+        /// <param name="offsetVector"></param>
         /// <returns>
         /// Returns the created FootPrintRood.
         /// </returns>
@@ -825,7 +805,7 @@ namespace CustomizacaoMoradias
         {
             Document doc = uidoc.Document;
             FootPrintRoof footPrintRoof = null;
-            PlanCircuitSet circuitSet = GetDocPlanCircuitSet();
+            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(false);
 
             using (Transaction transaction = new Transaction(doc, "Create Roof"))
             {
@@ -873,8 +853,6 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Classify the rooms of a project based on the elements inside it.
         /// </summary>
-        /// <param name="doc"></param>
-        /// <param name="level"></param>
         public void ClassifyRooms()
         {
             Document doc = uidoc.Document;
@@ -918,7 +896,6 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Get all the rooms in a determined level.
         /// </summary>
-        /// <param name="doc"></param>
         /// <param name="level"></param>
         /// <returns>
         /// Returns a IEnumarable list of the the rooms.

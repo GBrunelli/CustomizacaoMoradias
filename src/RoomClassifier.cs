@@ -18,7 +18,5 @@ namespace CustomizacaoMoradias
         public string Name { get; set; }
         public List<RoomElement> Element { get; set; }
         public int RoomScore { get; set; }
-
-
     }
 }
