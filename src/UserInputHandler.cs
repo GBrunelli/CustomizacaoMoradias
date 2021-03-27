@@ -12,20 +12,15 @@ namespace CustomizacaoMoradias
             try
             {
                 UIDocument uidoc = app.ActiveUIDocument;
-                Document doc = uidoc.Document;
 
                 string path = PlaceElementsForm.filePath;
-
                 string levelName = PlaceElementsForm.levelName;
-
                 string topLevelName = PlaceElementsForm.topLevelName;
 
                 ElementPlacer elementPlacer = new ElementPlacer(uidoc, levelName, topLevelName, 0.3);
 
                 elementPlacer.BuildCSV(path);
- 
                 elementPlacer.CreateFloor("piso 10 cm - ceramico 40x40");
-
                 elementPlacer.CreateCeiling("laje 10 cm - branca");
 
                 double offset = ElementPlacer.MetersToFeet(0.6);

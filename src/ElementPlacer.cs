@@ -37,9 +37,6 @@ namespace CustomizacaoMoradias
         /// Convert from meters to feet.
         /// </summary>
         /// <param name="meters"></param>
-        /// <returns>
-        /// Returns the measurement in feet.
-        /// </returns>
         public static double MetersToFeet(double meters)
         {
             return UnitUtils.Convert(meters, UnitTypeId.Meters, UnitTypeId.Feet);
@@ -421,14 +418,13 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Get the the loops in a determined circuit.
+        /// Get the the loops in a determined circuit, if there is not room located in that circuit, 
+        /// it will create a room with a genetic name. If the room is composed by more than 1 loop,
+        /// it will name the room "Exterior 0".
         /// </summary>
         /// <param name="circuit">
         /// The PlanCircuit of the active document. See also GetDocPlanCircuitSet().
         /// </param>
-        /// <returns>
-        /// Returns the loops in a circuit, if there is a room located in that circuit, returns null.
-        /// </returns>
         private IList<IList<BoundarySegment>> GetLoopsInCircuit(PlanCircuit circuit)
         {
             Document doc = uidoc.Document;
@@ -508,18 +504,17 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Create a floor given the Boundary Segments of the document.
+        /// Create a floor in every circuit of the document at the base level.
         /// </summary>
         /// <returns>
-        /// Retuns the created floor.
+        /// Retuns the new floor.
         /// </returns>
         /// <param name="floorTypeName">
         /// The name of the floorType as it is on Revit.
         /// </param>
-        public Floor CreateFloor(string floorTypeName)
+        public void CreateFloor(string floorTypeName)
         {
             Document doc = uidoc.Document;
-            Floor floor = null;
             PlanCircuitSet circuitSet = GetDocPlanCircuitSet(false);
 
             // get the floorType
@@ -547,14 +542,13 @@ namespace CustomizacaoMoradias
                                 {
                                     curve.Append(seg.GetCurve());
                                 }
-                                floor = doc.Create.NewFloor(curve, floorType, level, true);
+                                doc.Create.NewFloor(curve, floorType, level, true);
                             }
                         }
                         transaction.Commit();
                     }
                 }
             }
-            return floor;
         }
 
         /// <summary>
