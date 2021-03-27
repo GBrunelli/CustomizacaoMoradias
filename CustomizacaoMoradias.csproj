@@ -75,7 +75,6 @@
     <Compile Include="res\forms\PlaceElementsForm.Designer.cs">
       <DependentUpon>PlaceElementsForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="src\PlaceElementsCommand.cs" />
     <Compile Include="src\ElementPlacer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\UserInputHandler.cs" />
