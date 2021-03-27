@@ -1,20 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <RevitAddIns>
-	
-	<AddIn Type="Command">
-		<Name>MyRevitCommands</Name>
-		<Assembly>CustomizacaoMoradias.dll</Assembly>
-		<AddInId>
-			299E532F-A191-4498-ABC8-873962BBF843
-		</AddInId>
-		<FullClassName>CustomizacaoMoradias.PlaceElementsCommand</FullClassName>
-		<Text>Place Elements</Text>
-		<Description>Select a CSV file to place elements in the current document.</Description>
-		<VendorId>GustavoHenriqueBrunelli</VendorId>
-		<VendorDescription>Gusatavo H. Brunelli, gustavo.brunelli@usp.br</VendorDescription>
-		<VisibilityMode>NotVisibleWhenNoActiveDocument</VisibilityMode>
-	</AddIn>
-
 	<AddIn Type="Application">
 		<Name>ApplicationPlugin</Name>
 		<Assembly>CustomizacaoMoradias.dll</Assembly>
