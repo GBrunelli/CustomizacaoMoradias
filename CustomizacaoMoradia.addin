@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <RevitAddIns>
+	
 	<AddIn Type="Command">
 		<Name>MyRevitCommands</Name>
 		<Assembly>CustomizacaoMoradias.dll</Assembly>
@@ -13,7 +14,18 @@
 		<VendorDescription>Gusatavo H. Brunelli, gustavo.brunelli@usp.br</VendorDescription>
 		<VisibilityMode>NotVisibleWhenNoActiveDocument</VisibilityMode>
 	</AddIn>
-	
+
+	<AddIn Type="Application">
+		<Name>ApplicationPlugin</Name>
+		<Assembly>CustomizacaoMoradias.dll</Assembly>
+		<AddInId>
+			78B43DCB-4D9C-4883-A539-5B23BF731FC3
+		</AddInId>
+		<FullClassName>CustomizacaoMoradias.PlaceElementsApplication</FullClassName>
+		<VendorId>GustavoHenriqueBrunelli</VendorId>
+		<VendorDescription>@Learndynamo</VendorDescription>
+	</AddIn>
+
 </RevitAddIns>
 
 	
