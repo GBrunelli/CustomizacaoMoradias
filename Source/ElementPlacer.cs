@@ -894,11 +894,15 @@ namespace CustomizacaoMoradias
             {
                 if(room.Area > 0)
                 {
-                    int roomScore = 0;
+                    
+                    string roomName = null;
 
                     List<Element> elements = GetFurniture(room);
                     foreach (Element element in elements)
                     {
+
+                        int roomScore = 0;
+
                         foreach (RoomClassifier roomClassifier in deserializedRoomClassifier)
                         {
                             foreach (RoomElement furniture in roomClassifier.Element)
@@ -910,14 +914,18 @@ namespace CustomizacaoMoradias
                             }
                             if (roomClassifier.RoomScore > roomScore)
                             {
-                                using(Transaction transaction = new Transaction(doc, "Classify Room"))
-                                {
-                                    transaction.Start();
-                                    room.Name = roomClassifier.Name;
-                                    transaction.Commit();
-                                }                              
+                                 roomName = roomClassifier.Name;                             
                             }
                         }
+                    }
+                    using (Transaction transaction = new Transaction(doc, "Classify Room"))
+                    {
+                        transaction.Start();
+                        if (roomName != null)
+                        {
+                            room.Name = roomName;
+                        }                        
+                        transaction.Commit();
                     }
                 }
             }
