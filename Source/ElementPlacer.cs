@@ -841,7 +841,7 @@ namespace CustomizacaoMoradias
             {
                 transaction.Start();
 
-                CurveArray footPrintCurve = GetHousePerimeterCurveArray(offset, offsetVector);
+                CurveArray footPrintCurve = GetHousePerimeterCurveArray(offset, new XYZ(0, 0, 0));
 
                 // create a roof type
                 FilteredElementCollector collector = new FilteredElementCollector(doc);
@@ -872,7 +872,6 @@ namespace CustomizacaoMoradias
                     }
 
                     double elevation = - (offset - MetersToFeet(0.1)) / 3;
-
                     footPrintRoof.set_Offset(modelCurve, elevation);
                 }
                 transaction.Commit();
