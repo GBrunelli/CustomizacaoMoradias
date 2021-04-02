@@ -13,6 +13,7 @@ namespace CustomizacaoMoradias
         public static string filePath;
         public static string levelName;
         public static string topLevelName;
+        public static string roofType;
 
         public PlaceElementsForm(ExternalEvent exEvent, UserInputHandler handler)
         {
@@ -35,6 +36,7 @@ namespace CustomizacaoMoradias
 
         private void okButton_Click(object sender, EventArgs e)
         {
+            roofType = roofTypeComboBox.Text;
             m_ExEvent.Raise();
         }
 

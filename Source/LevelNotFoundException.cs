@@ -21,4 +21,23 @@ namespace CustomizacaoMoradias
         {
         }
     }
+
+    class RoofNotDefinedException : Exception
+    {
+        public RoofNotDefinedException()
+        {
+        }
+
+        public RoofNotDefinedException(string message) : base(message)
+        {
+        }
+
+        public RoofNotDefinedException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+
+        protected RoofNotDefinedException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
+    }
 }

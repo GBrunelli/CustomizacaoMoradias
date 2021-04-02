@@ -39,6 +39,8 @@
             this.topLevelNameLabel = new System.Windows.Forms.Label();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.topLevelNametextBox = new System.Windows.Forms.TextBox();
+            this.roofTypeComboBox = new System.Windows.Forms.ComboBox();
+            this.roofTypeLabel = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // fileLabel
@@ -95,7 +97,7 @@
             // 
             this.cancelButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cancelButton.Location = new System.Drawing.Point(343, 156);
+            this.cancelButton.Location = new System.Drawing.Point(343, 207);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(75, 23);
             this.cancelButton.TabIndex = 5;
@@ -107,7 +109,7 @@
             // 
             this.okButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.okButton.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.okButton.Location = new System.Drawing.Point(262, 156);
+            this.okButton.Location = new System.Drawing.Point(262, 207);
             this.okButton.Name = "okButton";
             this.okButton.Size = new System.Drawing.Size(75, 23);
             this.okButton.TabIndex = 4;
@@ -139,6 +141,28 @@
             this.topLevelNametextBox.TabIndex = 3;
             this.topLevelNametextBox.TextChanged += new System.EventHandler(this.topLevelNametextBox_TextChanged);
             // 
+            // roofTypeComboBox
+            // 
+            this.roofTypeComboBox.FormattingEnabled = true;
+            this.roofTypeComboBox.IntegralHeight = false;
+            this.roofTypeComboBox.Items.AddRange(new object[] {
+            "(0, 0, 0)",
+            "(1, 0, 0)",
+            "(0, 1, 0) "});
+            this.roofTypeComboBox.Location = new System.Drawing.Point(15, 144);
+            this.roofTypeComboBox.Name = "roofTypeComboBox";
+            this.roofTypeComboBox.Size = new System.Drawing.Size(121, 21);
+            this.roofTypeComboBox.TabIndex = 9;
+            // 
+            // roofTypeLabel
+            // 
+            this.roofTypeLabel.AutoSize = true;
+            this.roofTypeLabel.Location = new System.Drawing.Point(12, 126);
+            this.roofTypeLabel.Name = "roofTypeLabel";
+            this.roofTypeLabel.Size = new System.Drawing.Size(54, 13);
+            this.roofTypeLabel.TabIndex = 10;
+            this.roofTypeLabel.Text = "RoofType";
+            // 
             // PlaceElementsForm
             // 
             this.AcceptButton = this.okButton;
@@ -146,7 +170,9 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.AutoValidate = System.Windows.Forms.AutoValidate.EnableAllowFocusChange;
             this.CancelButton = this.cancelButton;
-            this.ClientSize = new System.Drawing.Size(430, 191);
+            this.ClientSize = new System.Drawing.Size(430, 242);
+            this.Controls.Add(this.roofTypeLabel);
+            this.Controls.Add(this.roofTypeComboBox);
             this.Controls.Add(this.topLevelNametextBox);
             this.Controls.Add(this.topLevelNameLabel);
             this.Controls.Add(this.okButton);
@@ -181,5 +207,7 @@
         private System.Windows.Forms.Label topLevelNameLabel;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.TextBox topLevelNametextBox;
+        private System.Windows.Forms.ComboBox roofTypeComboBox;
+        private System.Windows.Forms.Label roofTypeLabel;
     }
 }

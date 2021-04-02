@@ -99,8 +99,10 @@ namespace CustomizacaoMoradias
             {
                 return Imaging.CreateBitmapSourceFromHBitmap(handle, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
             }
-            finally { DeleteObject(handle); }
+            finally 
+            { 
+                DeleteObject(handle); 
+            }
         }
-
     }
 }

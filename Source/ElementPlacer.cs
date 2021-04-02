@@ -23,6 +23,7 @@ namespace CustomizacaoMoradias
         private Level topLevel;
         private double scale;
         private PlanCircuitSet docPlanCircuitSet;
+        private FootPrintRoof roof;
 
         public ElementPlacer(UIDocument uidoc, string level, string topLevel, double scale)
         {
@@ -30,7 +31,8 @@ namespace CustomizacaoMoradias
             this.level = GetLevelFromName(level);
             this.topLevel = GetLevelFromName(topLevel);
             this.scale = scale;
-            docPlanCircuitSet = null;
+            this.docPlanCircuitSet = null;
+            this.roof = null;
         }
 
         /// <summary>
@@ -235,7 +237,6 @@ namespace CustomizacaoMoradias
                     newWall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(topLevel.Id);
                     newWall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET).Set(MetersToFeet(-0.10));
                     transaction.Commit();
-                    
                 }
             }
             catch (Exception e)
@@ -259,10 +260,8 @@ namespace CustomizacaoMoradias
             if (xyz is null) throw new ArgumentNullException(nameof(xyz));
 
             Document doc = uidoc.Document;
+            List<Wall> walls = GetWalls();
 
-            FilteredElementCollector collector = new FilteredElementCollector(doc);
-            collector.OfClass(typeof(Wall));
-            List<Wall> walls = collector.Cast<Wall>().Where(wl => wl.LevelId == level.Id).ToList();
             Wall wall = null;
             double distance = double.MaxValue;
             foreach (Wall w in walls)
@@ -279,6 +278,19 @@ namespace CustomizacaoMoradias
                 return wall;
             }
             return null;
+        }
+
+        /// <summary>
+        /// Get all walls in the document.
+        /// </summary>
+        /// <returns></returns>
+        private List<Wall> GetWalls()
+        {
+            Document doc = uidoc.Document;
+            FilteredElementCollector collector = new FilteredElementCollector(doc);
+            collector.OfClass(typeof(Wall));
+            List<Wall> walls = collector.Cast<Wall>().Where(wl => wl.LevelId == level.Id).ToList();
+            return walls;
         }
 
         /// <summary>
@@ -835,7 +847,7 @@ namespace CustomizacaoMoradias
         {
             Document doc = uidoc.Document;
             FootPrintRoof footPrintRoof = null;
-            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(false);
+            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(false);     
 
             using (Transaction transaction = new Transaction(doc, "Create Roof"))
             {
@@ -873,9 +885,13 @@ namespace CustomizacaoMoradias
 
                     double elevation = - (offset - MetersToFeet(0.1)) / 3;
                     footPrintRoof.set_Offset(modelCurve, elevation);
-                }
+                }              
                 transaction.Commit();
             }
+            this.roof = footPrintRoof;
+
+            CreateGableWall();
+
             return footPrintRoof;
         }
 
@@ -1015,6 +1031,28 @@ namespace CustomizacaoMoradias
 
                 transaction.Commit();
             }
+        }
+
+        public void CreateGableWall()
+        {
+            if (roof == null) throw new RoofNotDefinedException();
+            Options op = new Options
+            {
+                ComputeReferences = true
+            };
+
+            GeometryElement roofGeometry = roof.get_Geometry(op);
+
+            List<Wall> walls = GetWalls();
+            using(Transaction transaction = new Transaction(uidoc.Document, "Create Gable Walls"))
+            {
+                transaction.Start();
+                foreach (Wall wall in walls)
+                {
+                    GeometryElement wallGeometry = wall.get_Geometry(op);
+                }
+                transaction.Commit();
+            }           
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using System;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace CustomizacaoMoradias
@@ -16,6 +18,7 @@ namespace CustomizacaoMoradias
                 string path = PlaceElementsForm.filePath;
                 string levelName = PlaceElementsForm.levelName;
                 string topLevelName = PlaceElementsForm.topLevelName;
+                XYZ roofVector = GetXYZFromString(PlaceElementsForm.roofType);
 
                 ElementPlacer elementPlacer = new ElementPlacer(uidoc, levelName, topLevelName, 0.3);
 
@@ -24,10 +27,15 @@ namespace CustomizacaoMoradias
                 elementPlacer.CreateCeiling("laje 10 cm - branca");
 
                 double offset = ElementPlacer.MetersToFeet(0.6);
-                XYZ offsetVector = new XYZ(0, 1, 0);
-                elementPlacer.CreateRoof(offset, offsetVector);
+                if(roofVector == null)
+                {
+                    roofVector = new XYZ(0, 0, 0);
+                }
+                elementPlacer.CreateRoof(offset, roofVector);
 
                 elementPlacer.ClassifyRooms();
+
+                elementPlacer.CreateGableWall();
 
                 //PlaceElementsUtil.CreateNewSheet(doc);
             }
@@ -48,6 +56,30 @@ namespace CustomizacaoMoradias
         public string GetName()
         {
             return "External User Input Event";
+        }
+
+        private XYZ GetXYZFromString(string s)
+        {
+            try
+            {
+                XYZ coordinate = null;
+                string[] splitedString = Regex.Split(s, @"\D+");
+
+                int j = 0;
+                int[] numbers = new int[3];
+                for (int i = 0; i < splitedString.Length; i++)
+                {
+                    bool isValid = int.TryParse(splitedString[i], out int currentNumber);
+                    if (isValid)
+                        numbers[j++] = currentNumber;
+                }
+                coordinate = new XYZ(numbers[0], numbers[1], numbers[2]);
+                return coordinate;
+            }
+            catch(Exception)
+            {
+                return null;
+            }
         }
     }
 }
