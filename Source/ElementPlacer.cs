@@ -1049,7 +1049,7 @@ namespace CustomizacaoMoradias
         /// </summary>
         /// <param name="vectorDirection">
         /// The gable walls will be construct at the walls that its normal 
-        /// vector is parallel with the vectorDiretcion.
+        /// vector is parallel with the vectorDirection.
         /// </param>
         /// <param name="slope">
         /// The slope of the gable, must match the slope of the roof.
