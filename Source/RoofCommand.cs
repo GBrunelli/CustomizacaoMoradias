@@ -20,7 +20,7 @@ namespace CustomizacaoMoradias
 
                 double offset = ElementPlacer.MetersToFeet(0.6);
 
-                elementPlacer.CreateRoof(offset, new XYZ(1, 0, 0));
+                elementPlacer.CreateRoof(offset, 0.3, new XYZ(1, 0, 0));
 
                 return Result.Succeeded;
             }

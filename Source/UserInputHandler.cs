@@ -31,11 +31,9 @@ namespace CustomizacaoMoradias
                 {
                     roofVector = new XYZ(0, 0, 0);
                 }
-                elementPlacer.CreateRoof(offset, roofVector);
+                elementPlacer.CreateRoof(offset, 0.3, roofVector);
 
                 elementPlacer.ClassifyRooms();
-
-                elementPlacer.CreateGableWall();
 
                 //PlaceElementsUtil.CreateNewSheet(doc);
             }

@@ -225,10 +225,8 @@ namespace CustomizacaoMoradias
             #region Creating the wall
             try
             {
-                // sllect wall type
-                FilteredElementCollector collector = new FilteredElementCollector(doc);
-                collector.OfClass(typeof(WallType));
-                WallType wallType = collector.First(y => y.Name == wallTypeName) as WallType;
+                // sellect wall type
+                WallType wallType = GetWallType(wallTypeName);
 
                 using (Transaction transaction = new Transaction(doc, "Place Wall"))
                 {
@@ -244,6 +242,15 @@ namespace CustomizacaoMoradias
                 throw new Exception("Erro ao inserir parede de coodenadas: (" + p1 + ", " + p2 + ").", e);
             }
             #endregion
+        }
+
+        private WallType GetWallType(string wallTypeName)
+        {
+            Document doc = uidoc.Document;
+            FilteredElementCollector collector = new FilteredElementCollector(doc);
+            collector.OfClass(typeof(WallType));
+            WallType wallType = collector.First(y => y.Name == wallTypeName) as WallType;
+            return wallType;
         }
 
         /// <summary>
@@ -572,7 +579,7 @@ namespace CustomizacaoMoradias
         /// <param name="offsetVector">
         /// A vector that will defines the offset. The spacing will be applied on the orthogonal edges to the offsetVector. 
         /// The magnitude of the vector doesn't matter, just the direction will affect the offset.
-        /// If the vector is 0, the offset will be applied for all the sides. 
+        /// If the vector is 0, the offset will be applied for all sides. 
         /// </param>
         /// <returns>
         /// Returns a CurveArray that corresponds to the house perimeter.
@@ -843,11 +850,10 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns the created FootPrintRood.
         /// </returns>
-        public FootPrintRoof CreateRoof(double offset, XYZ offsetVector)
+        public FootPrintRoof CreateRoof(double offset, double slope, XYZ offsetVector)
         {
             Document doc = uidoc.Document;
             FootPrintRoof footPrintRoof = null;
-            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(false);     
 
             using (Transaction transaction = new Transaction(doc, "Create Roof"))
             {
@@ -869,30 +875,35 @@ namespace CustomizacaoMoradias
                 iterator.Reset();
 
                 while (iterator.MoveNext())
-                {                           
+                {
                     ModelCurve modelCurve = iterator.Current as ModelCurve;
-
                     Curve curve = modelCurve.GeometryCurve;
-                    XYZ startPoint = curve.GetEndPoint(0);
-                    XYZ endPoint = curve.GetEndPoint(1);
-                    XYZ curveDirection = new XYZ(startPoint.X - endPoint.X, startPoint.Y - endPoint.Y, 0);
+                    XYZ curveDirection = GetCurveDirection(curve);
 
-                    if(curveDirection.DotProduct(offsetVector) == 0)
+                    if (curveDirection.DotProduct(offsetVector) == 0)
                     {
                         footPrintRoof.set_DefinesSlope(modelCurve, true);
-                        footPrintRoof.set_SlopeAngle(modelCurve, 0.3);
+                        footPrintRoof.set_SlopeAngle(modelCurve, slope);          
                     }
 
-                    double elevation = - (offset - MetersToFeet(0.1)) / 3;
+                    double elevation = -(offset - MetersToFeet(0.1)) / 3;
                     footPrintRoof.set_Offset(modelCurve, elevation);
-                }              
+                }
                 transaction.Commit();
             }
-            this.roof = footPrintRoof;
+            roof = footPrintRoof;
 
-            CreateGableWall();
+            CreateAllGableWalls(offsetVector, slope);
 
             return footPrintRoof;
+        }
+
+        private static XYZ GetCurveDirection(Curve curve)
+        {
+            XYZ startPoint = curve.GetEndPoint(0);
+            XYZ endPoint = curve.GetEndPoint(1);
+            XYZ curveDirection = new XYZ(startPoint.X - endPoint.X, startPoint.Y - endPoint.Y, 0);
+            return curveDirection;
         }
 
         /// <summary>
@@ -1033,26 +1044,80 @@ namespace CustomizacaoMoradias
             }
         }
 
-        public void CreateGableWall()
+        /// <summary>
+        /// Create the gables walls of a building.
+        /// </summary>
+        /// <param name="vectorDirection">
+        /// The gable walls will be construct at the walls that its normal 
+        /// vector is parallel with the vectorDiretcion.
+        /// </param>
+        /// <param name="slope">
+        /// The slope of the gable, must match the slope of the roof.
+        /// </param>
+        public void CreateAllGableWalls(XYZ vectorDirection, double slope)
         {
-            if (roof == null) throw new RoofNotDefinedException();
-            Options op = new Options
-            {
-                ComputeReferences = true
-            };
-
-            GeometryElement roofGeometry = roof.get_Geometry(op);
-
-            List<Wall> walls = GetWalls();
-            using(Transaction transaction = new Transaction(uidoc.Document, "Create Gable Walls"))
+            Document doc = uidoc.Document;
+            CurveArray perimeter = GetHousePerimeterCurveArray(0, null);
+            using (Transaction transaction = new Transaction(doc, "Create Gable Wall"))
             {
                 transaction.Start();
-                foreach (Wall wall in walls)
+
+                foreach (Curve line in perimeter)
                 {
-                    GeometryElement wallGeometry = wall.get_Geometry(op);
+                    XYZ lineDirection = GetCurveDirection(line);
+                    if (lineDirection.CrossProduct(vectorDirection).IsZeroLength())
+                    {
+                        CreateGableWall(line, slope);
+                    }
                 }
                 transaction.Commit();
-            }           
+            }
+        }
+
+        /// <summary>
+        /// Create a single gable wall.
+        /// </summary>
+        /// <param name="line">
+        /// The base line of the gable wall.
+        /// </param>
+        /// <param name="slope">
+        /// The slope of this gable wall.
+        /// </param>
+        /// <returns></returns>
+        private Wall CreateGableWall(Curve line, double slope)
+        {
+            Document doc = uidoc.Document;
+
+            // create the gable wall profile
+            XYZ p0 = line.GetEndPoint(0);
+            XYZ p1 = line.GetEndPoint(1);
+            XYZ p2 = FormTriangle(slope, p0, p1);
+            IList<Curve> profile = new List<Curve>(3);
+            profile.Add(Line.CreateBound(p0, p1));
+            profile.Add(Line.CreateBound(p1, p2));
+            profile.Add(Line.CreateBound(p2, p0));
+
+            // get the wall type
+            WallType type = GetWallType("parede 15 cm - branca");
+
+            // create the gable wall
+            return Wall.Create(doc, profile, type.Id, topLevel.Id, false);
+        }
+
+        /// <summary>
+        /// Calculate the third point to form a triangle that obein the expression: tan(slope) = 2 * height / base.
+        /// </summary>
+        private static XYZ FormTriangle(double slope, XYZ p0, XYZ p1)
+        {
+            double p2x = (p0.X + p1.X) / 2;
+            double p2y = (p0.Y + p1.Y) / 2;
+
+            XYZ baseVector = p1.Subtract(p0);
+
+            double p2z = (slope * baseVector.GetLength()) / 2;
+
+            XYZ p2 = new XYZ(p2x, p2y, p2z);
+            return p2;
         }
     }
 }
