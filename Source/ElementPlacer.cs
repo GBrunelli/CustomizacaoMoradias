@@ -264,6 +264,7 @@ namespace CustomizacaoMoradias
         /// </returns>
         private Wall FindHostingWall(XYZ xyz)
         {
+            xyz = xyz.Subtract(new XYZ(0, 0, xyz.Z));
             if (xyz is null) throw new ArgumentNullException(nameof(xyz));
 
             Document doc = uidoc.Document;
@@ -571,7 +572,8 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Calculates a CurveArray that corresponds the perimeter of a building given all its internal loops.
+        /// Calculates a CurveArray that corresponds the perimeter of a building given all its internal loops. 
+        /// The building MUST be surround by walls.
         /// </summary>
         /// <param name="offset">
         /// A real value that reprends the offset of the perimeter.
@@ -595,7 +597,7 @@ namespace CustomizacaoMoradias
                 // get all the closed loops in the circuit
                 IList<IList<BoundarySegment>> loopsSegments = GetLoopsInCircuit(circuit);
 
-                // if there more than 1 loop, that means that this circuit is the perimeter circuit
+                // if there more than 1 loop, that means that this circuit is the perimeter circuit,
                 if(loopsSegments.Count > 1)
                 {
                     // first of all we find the closed loop with the smaller area
@@ -622,7 +624,7 @@ namespace CustomizacaoMoradias
                         }
                     }
 
-                    // and then we create a curve array with that loop
+                    // and then we create a curve array with the boundary segments of that loop
                     CurveArray housePerimeter = new CurveArray();
                     foreach (BoundarySegment seg in perimeterSegments)
                     {
@@ -655,10 +657,6 @@ namespace CustomizacaoMoradias
             Document doc = uidoc.Document;
             // finds the middle point of the current curve
             XYZ middlePoint = GetCurveMiddlePoint(curve);
-
-            // subtracts de Z value of the point, because the method FindHosringWall 
-            // calculates the distance based on the base of the wall
-            middlePoint = middlePoint.Subtract(new XYZ(0, 0, middlePoint.Z));
 
             // finds the wall below that curve, and retrives its normal vector
             Wall wall = FindHostingWall(middlePoint);
@@ -893,7 +891,8 @@ namespace CustomizacaoMoradias
             }
             roof = footPrintRoof;
 
-            CreateAllGableWalls(offsetVector, slope);
+            if(!offsetVector.IsZeroLength())
+                CreateAllGableWalls(offsetVector, slope);
 
             return footPrintRoof;
         }
@@ -1058,7 +1057,7 @@ namespace CustomizacaoMoradias
         {
             Document doc = uidoc.Document;
             CurveArray perimeter = GetHousePerimeterCurveArray(0, null);
-            using (Transaction transaction = new Transaction(doc, "Create Gable Wall"))
+            using (Transaction transaction = new Transaction(doc, "Create Gable Walls"))
             {
                 transaction.Start();
 
@@ -1119,5 +1118,8 @@ namespace CustomizacaoMoradias
             XYZ p2 = new XYZ(p2x, p2y, p2z);
             return p2;
         }
+    
+        // fazer a linha unbounded e comparar com as outras linhas do poligono, se houver encontro, significa que essa curva pode deve ser estendida até  
+    
     }
 }
