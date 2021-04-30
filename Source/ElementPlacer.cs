@@ -89,11 +89,11 @@ namespace CustomizacaoMoradias
                             break;
 
                         case "Janela":
-                            CreateHostedElement(columns);
+                            //CreateHostedElement(columns);
                             break;
 
                         case "Porta":
-                            CreateHostedElement(columns);
+                            //CreateHostedElement(columns);
                             break;
 
                         case "Mobiliario":
@@ -108,81 +108,9 @@ namespace CustomizacaoMoradias
             }
         }
 
-        public void BuildJSON(string path)
-        {
-            if (path is null) throw new ArgumentNullException(nameof(path));
-
-            string jsonText = File.ReadAllText(path);
-            ElementDeserializer deserializedElements = JsonConvert.DeserializeObject<ElementDeserializer>(jsonText);
-
-            foreach (WallProperty wall in deserializedElements.WallProperties)
-            {
-                CreateWall(wall, Properties.Settings.Default.WallTypeName);
-            }
-            foreach(WindowProperty window in deserializedElements.WindowProperties)
-            {
-
-            }
-            foreach(DoorProperty door in deserializedElements.DoorProperties)
-            {
-
-            }
-            foreach(HostedProperty element in deserializedElements.HostedProperties)
-            {
-
-            }
-            foreach(FurnitureProperty element in deserializedElements.FurnitureProperties)
-            {
-                CreateFurniture(element);
-            }
-        }
-
         public double DeegreToRadians(double angle)
         {
             return (Math.PI / 180) * angle;
-        }
-
-        /// <summary>
-        /// Creates a piece of furniture.
-        /// </summary>
-        /// <param name="properties"> Properties of the object</param>
-        private void CreateFurniture(FurnitureProperty properties)
-        {
-            if (properties is null) throw new ArgumentNullException(nameof(properties));
-            Document doc = uidoc.Document;
-
-            // get the properties
-            double rotation = DeegreToRadians(properties.Rotation);
-            XYZ p0 = GetXYZFromProperties(properties.Coordinate.ElementAt(0));
-            XYZ p1 = GetXYZFromProperties(properties.Coordinate.ElementAt(1));
-            XYZ point = p0.Add(p1).Divide(2);
-
-            // TODO: retrive family
-            string fsFamilyName = null;
-
-            // Creates a point above the furniture to serve as a rotation axis
-            XYZ axisPoint = new XYZ(point.X, point.Y, level.Elevation + 1);
-            Line axis = Line.CreateBound(point, axisPoint);
-
-            try
-            {
-                FamilySymbol familySymbol = GetFamilySymbol(doc, fsFamilyName);
-
-                using (Transaction transaction = new Transaction(doc, "Place Piece of Furniture"))
-                {
-                    transaction.Start();
-
-                    var structuralType = Autodesk.Revit.DB.Structure.StructuralType.NonStructural;
-                    FamilyInstance furniture = doc.Create.NewFamilyInstance(point, familySymbol, structuralType);
-                    ElementTransformUtils.RotateElement(doc, furniture.Id, axis, rotation);
-
-                    transaction.Commit();
-                }
-            }
-            catch (Exception e)
-            {
-                throw new Exception("Erro ao inserir mobiliario \"" + fsFamilyName + "\".", e);
-            }
         }
 
         private static FamilySymbol GetFamilySymbol(Document doc, string fsFamilyName)
@@ -194,7 +122,6 @@ namespace CustomizacaoMoradias
                     where (fs.Family.Name == fsFamilyName)
                     select fs).First();
         }
-
         private XYZ GetXYZFromProperties(Coordinate coords)
         {
             // Convert the values from the csv file
@@ -206,40 +133,6 @@ namespace CustomizacaoMoradias
 
             // Creates the point where the piece of furniture will be inserted
             return new XYZ(x0, y0, level.Elevation);
-        }
-
-        /// <summary>
-        /// Creates a wall given a array of string containg its properties.
-        /// </summary>
-        /// <param name="properties"> Properties of the object</param>
-        private void CreateWall(WallProperty properties, string wallTypeName)
-        {
-            if (properties is null) throw new ArgumentNullException(nameof(properties)); 
-            Document doc = uidoc.Document;
-
-            XYZ p0 = GetXYZFromProperties(properties.Coordinate.ElementAt(0));
-            XYZ p1 = GetXYZFromProperties(properties.Coordinate.ElementAt(1));
-
-            try
-            {
-                Curve curve = Line.CreateBound(p0, p1);
-                // sellect wall type
-                WallType wallType = GetWallType(wallTypeName);
-
-                // Creating the wall
-                using (Transaction transaction = new Transaction(doc, "Place Wall"))
-                {
-                    transaction.Start();
-                    Wall newWall = Wall.Create(doc, curve, wallType.Id, level.Id, MetersToFeet(2.8), 0, false, false);
-                    newWall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(topLevel.Id);
-                    newWall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET).Set(MetersToFeet(-0.10));
-                    transaction.Commit();
-                }
-            }
-            catch (Exception e)
-            {
-                throw new Exception("Erro ao inserir parede de coodenadas: (" + p0 + ", " + p1 + ").", e);
-            }
         }
 
         /// <summary>
@@ -304,21 +197,120 @@ namespace CustomizacaoMoradias
             return walls;
         }
 
+        public void BuildJSON(string path)
+        {
+            if (path is null) throw new ArgumentNullException(nameof(path));
+
+            string jsonText = File.ReadAllText(path);
+            ElementDeserializer deserializedElements = JsonConvert.DeserializeObject<ElementDeserializer>(jsonText);
+
+            foreach (WallProperty wall in deserializedElements.WallProperties)
+            {
+                CreateWall(wall, Properties.Settings.Default.WallTypeName);
+            }
+            foreach(WindowProperty window in deserializedElements.WindowProperties)
+            {
+                //reateHostedElement();
+            }
+            foreach(DoorProperty door in deserializedElements.DoorProperties)
+            {
+                //CreateHostedElement();
+            }
+            foreach(HostedProperty element in deserializedElements.HostedProperties)
+            {
+                //CreateHostedElement();
+            }
+            foreach(FurnitureProperty element in deserializedElements.FurnitureProperties)
+            {
+                CreateFurniture(element);
+            }
+        }
+
         /// <summary>
-        /// Create a hosted element on a wall.
+        /// Creates a piece of furniture.
         /// </summary>
-        /// <param name="properties">
-        /// [0]: Element type
-        /// [1]: x coordinate;
-        /// [2]: y coordinate;
-        /// [3]: type;
-        /// [4}: family name;
-        /// </param>
-        private void CreateHostedElement(HostedProperty properties)
+        /// <param name="properties"> Properties of the object</param>
+        private void CreateFurniture(FurnitureProperty properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
             Document doc = uidoc.Document;
 
+            // get the properties
+            double rotation = DeegreToRadians(properties.Rotation);
+            XYZ p0 = GetXYZFromProperties(properties.Coordinate.ElementAt(0));
+            XYZ p1 = GetXYZFromProperties(properties.Coordinate.ElementAt(1));
+            XYZ point = p0.Add(p1).Divide(2);
+
+            // TODO: retrive family
+            string fsFamilyName = null;
+
+            // Creates a point above the furniture to serve as a rotation axis
+            XYZ axisPoint = new XYZ(point.X, point.Y, level.Elevation + 1);
+            Line axis = Line.CreateBound(point, axisPoint);
+
+            try
+            {
+                FamilySymbol familySymbol = GetFamilySymbol(doc, fsFamilyName);
+
+                using (Transaction transaction = new Transaction(doc, "Place Piece of Furniture"))
+                {
+                    transaction.Start();
+
+                    var structuralType = Autodesk.Revit.DB.Structure.StructuralType.NonStructural;
+                    FamilyInstance furniture = doc.Create.NewFamilyInstance(point, familySymbol, structuralType);
+                    ElementTransformUtils.RotateElement(doc, furniture.Id, axis, rotation);
+
+                    transaction.Commit();
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Erro ao inserir mobiliario \"" + fsFamilyName + "\".", e);
+            }
+        }
+
+        /// <summary>
+        /// Creates a wall given a array of string containg its properties.
+        /// </summary>
+        /// <param name="properties"> Properties of the object</param>
+        private void CreateWall(WallProperty properties, string wallTypeName)
+        {
+            if (properties is null) throw new ArgumentNullException(nameof(properties)); 
+            Document doc = uidoc.Document;
+
+            XYZ p0 = GetXYZFromProperties(properties.Coordinate.ElementAt(0));
+            XYZ p1 = GetXYZFromProperties(properties.Coordinate.ElementAt(1));
+
+            try
+            {
+                Curve curve = Line.CreateBound(p0, p1);
+                // sellect wall type
+                WallType wallType = GetWallType(wallTypeName);
+
+                // Creating the wall
+                using (Transaction transaction = new Transaction(doc, "Place Wall"))
+                {
+                    transaction.Start();
+                    Wall newWall = Wall.Create(doc, curve, wallType.Id, level.Id, MetersToFeet(2.8), 0, false, false);
+                    newWall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(topLevel.Id);
+                    newWall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET).Set(MetersToFeet(-0.10));
+                    transaction.Commit();
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Erro ao inserir parede de coodenadas: (" + p0 + ", " + p1 + ").", e);
+            }
+        }
+
+        /// <summary>
+        /// Create a hosted element on a wall.
+        /// </summary>
+        /// <param name="properties"> Properties of the object.</param>
+        private void CreateHostedElement(HostedProperty properties)
+        {
+            if (properties is null) throw new ArgumentNullException(nameof(properties));
+            Document doc = uidoc.Document;
             XYZ point = GetXYZFromProperties(properties.Coordinate);
 
             // TODO: retrive family name
@@ -334,7 +326,6 @@ namespace CustomizacaoMoradias
                 using (Transaction transaction = new Transaction(doc, "Place Hosted Element"))
                 {
                     transaction.Start();
-                    
                     // Create window
                     FamilyInstance instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
                     //if (properties[0] == "Janela") instance.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));
