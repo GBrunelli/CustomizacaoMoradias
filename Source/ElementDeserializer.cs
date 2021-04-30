@@ -9,8 +9,8 @@ namespace CustomizacaoMoradias.Source
     // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse); 
     public class Coordinate
     {
-        public int x { get; set; }
-        public int y { get; set; }
+        public int X { get; set; }
+        public int Y { get; set; }
     }
 
     public class WallProperty

@@ -125,10 +125,10 @@ namespace CustomizacaoMoradias
         private XYZ GetXYZFromProperties(Coordinate coords)
         {
             // Convert the values from the csv file
-            double x0 = coords.x;
+            double x0 = coords.X;
             x0 = MetersToFeet(x0 * scale);
 
-            double y0 = coords.y;
+            double y0 = coords.Y;
             y0 = MetersToFeet(y0 * scale);
 
             // Creates the point where the piece of furniture will be inserted
@@ -214,11 +214,11 @@ namespace CustomizacaoMoradias
             }
             foreach(DoorProperty door in deserializedElements.DoorProperties)
             {
-                //CreateHostedElement();
+                CreateDoor(door);
             }
             foreach(HostedProperty element in deserializedElements.HostedProperties)
             {
-                //CreateHostedElement();
+                CreateHostedElement(element);
             }
             foreach(FurnitureProperty element in deserializedElements.FurnitureProperties)
             {
@@ -337,6 +337,25 @@ namespace CustomizacaoMoradias
             {
                 throw new Exception("Erro ao inserir elemento hospedeiro \"" + fsFamilyName + "\".", e);
             }
+        }
+
+        private void CreateDoor(DoorProperty properties)
+        {
+            if (properties is null) throw new ArgumentNullException(nameof(properties));
+
+            Coordinate c = new Coordinate
+            {
+                X = (properties.Coordinate.ElementAt(0).X + properties.Coordinate.ElementAt(1).X) / 2,
+                Y = (properties.Coordinate.ElementAt(0).Y + properties.Coordinate.ElementAt(1).Y) / 2
+            };
+
+            HostedProperty hp = new HostedProperty()
+            {
+                Coordinate = c,
+                Type = properties.Type
+            };
+
+            CreateHostedElement(hp);
         }
 
         /// <summary>
