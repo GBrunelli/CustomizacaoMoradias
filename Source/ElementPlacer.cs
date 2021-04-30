@@ -85,7 +85,7 @@ namespace CustomizacaoMoradias
                     switch (columns[0])
                     {
                         case "Parede":
-                            CreateWall(columns, "parede 15 cm - branca");
+                            //CreateWall(columns, "parede 15 cm - branca");
                             break;
 
                         case "Janela":
@@ -117,7 +117,7 @@ namespace CustomizacaoMoradias
 
             foreach (WallProperty wall in deserializedElements.WallProperties)
             {
-                
+                CreateWall(wall, Properties.Settings.Default.WallTypeName);
             }
             foreach(WindowProperty window in deserializedElements.WindowProperties)
             {
@@ -153,7 +153,9 @@ namespace CustomizacaoMoradias
 
             // get the properties
             double rotation = DeegreToRadians(properties.Rotation);
-            XYZ point = GetXYZFromProperties(properties.Coordinate);
+            XYZ p0 = GetXYZFromProperties(properties.Coordinate.ElementAt(0));
+            XYZ p1 = GetXYZFromProperties(properties.Coordinate.ElementAt(1));
+            XYZ point = p0.Add(p1).Divide(2);
 
             // TODO: retrive family
             string fsFamilyName = null;
@@ -193,48 +195,34 @@ namespace CustomizacaoMoradias
                     select fs).First();
         }
 
-        private XYZ GetXYZFromProperties(List<Coordinate> coords)
+        private XYZ GetXYZFromProperties(Coordinate coords)
         {
             // Convert the values from the csv file
-            double x0 = coords.ElementAt(0).x;
+            double x0 = coords.x;
             x0 = MetersToFeet(x0 * scale);
-            double y0 = coords.ElementAt(0).y;
-            y0 = MetersToFeet(x0 * scale);
 
-            double x1 = coords.ElementAt(1).x;
-            x1 = MetersToFeet(x1 * scale);
-            double y1 = coords.ElementAt(1).y;
-            y1 = MetersToFeet(x1 * scale);
+            double y0 = coords.y;
+            y0 = MetersToFeet(y0 * scale);
 
             // Creates the point where the piece of furniture will be inserted
-            return new XYZ((x0 + x1) / 2, (y0 + y1) / 2, level.Elevation);
+            return new XYZ(x0, y0, level.Elevation);
         }
 
         /// <summary>
         /// Creates a wall given a array of string containg its properties.
         /// </summary>
         /// <param name="properties"> Properties of the object</param>
-        private void CreateWall(string[] properties, string wallTypeName)
+        private void CreateWall(WallProperty properties, string wallTypeName)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties)); 
-
             Document doc = uidoc.Document;
 
-            // Reding the data from the array
-            NumberFormatInfo provider = new NumberFormatInfo();
-            provider.NumberDecimalSeparator = ".";
+            XYZ p0 = GetXYZFromProperties(properties.Coordinate.ElementAt(0));
+            XYZ p1 = GetXYZFromProperties(properties.Coordinate.ElementAt(1));
 
-            XYZ p1 = new XYZ(MetersToFeet(Convert.ToDouble(properties[1], provider)) * scale, // x
-                             MetersToFeet(Convert.ToDouble(properties[2], provider)) * scale, // y
-                             level.Elevation);                                                // z
-
-            XYZ p2 = new XYZ(MetersToFeet(Convert.ToDouble(properties[3], provider)) * scale, // x
-                             MetersToFeet(Convert.ToDouble(properties[4], provider)) * scale, // y
-                             level.Elevation);                                                // z
             try
             {
-                Curve curve = Line.CreateBound(p1, p2);
-      
+                Curve curve = Line.CreateBound(p0, p1);
                 // sellect wall type
                 WallType wallType = GetWallType(wallTypeName);
 
@@ -250,7 +238,7 @@ namespace CustomizacaoMoradias
             }
             catch (Exception e)
             {
-                throw new Exception("Erro ao inserir parede de coodenadas: (" + p1 + ", " + p2 + ").", e);
+                throw new Exception("Erro ao inserir parede de coodenadas: (" + p0 + ", " + p1 + ").", e);
             }
         }
 

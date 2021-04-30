@@ -58,5 +58,17 @@ namespace CustomizacaoMoradias.Properties {
                 this["TopLevelName"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("parede 15 cm - branca")]
+        public string WallTypeName {
+            get {
+                return ((string)(this["WallTypeName"]));
+            }
+            set {
+                this["WallTypeName"] = value;
+            }
+        }
     }
 }

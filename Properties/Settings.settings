@@ -11,5 +11,8 @@
     <Setting Name="TopLevelName" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="WallTypeName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">parede 15 cm - branca</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
