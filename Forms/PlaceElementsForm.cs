@@ -1,6 +1,8 @@
 ﻿using Autodesk.Revit.UI;
 using System;
 using System.Windows.Forms;
+using System.Configuration;
+using System.Threading;
 
 namespace CustomizacaoMoradias
 {
@@ -15,17 +17,31 @@ namespace CustomizacaoMoradias
         public static string topLevelName;
         public static string roofType;
 
+        private void RetriveUserInput()
+        {
+            fileTextBox.Text = Properties.Settings.Default.FileName;
+            levelNameTextBox.Text = Properties.Settings.Default.BaseLevelName;
+            topLevelNametextBox.Text = Properties.Settings.Default.TopLevelName;
+        }
+
         public PlaceElementsForm(ExternalEvent exEvent, UserInputHandler handler)
         {
             InitializeComponent();
+            Thread thread = new Thread(new ThreadStart(RetriveUserInput));
+            thread.Start();
             m_ExEvent = exEvent;
-            m_Handler = handler;   
+            m_Handler = handler;
+            
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
             // we own both the event and the handler
             // we should dispose it before we are closed
+            Properties.Settings.Default.FileName = fileTextBox.Text;
+            Properties.Settings.Default.BaseLevelName = levelNameTextBox.Text;
+            Properties.Settings.Default.TopLevelName = topLevelNametextBox.Text;
+            Properties.Settings.Default.Save();
             m_ExEvent.Dispose();
             m_ExEvent = null;
             m_Handler = null;

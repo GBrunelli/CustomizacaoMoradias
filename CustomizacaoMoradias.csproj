@@ -65,6 +65,11 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
     <Compile Include="Source\CeilingCommand.cs" />
     <Compile Include="Source\ClassifyRoomsCommand.cs" />
     <Compile Include="Source\ElementPlacerCommand.cs" />
@@ -84,6 +89,7 @@
     <Compile Include="Source\UserInputHandler.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="CustomizacaoMoradia.addin">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -102,6 +108,10 @@
     <None Include="Resources\ElementClassifierConfig.txt" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
     <None Include="Resources\floor-plan.png" />
     <None Include="Resources\floor-plan %281%29.png" />
     <None Include="Resources\floor-plan %282%29.png" />

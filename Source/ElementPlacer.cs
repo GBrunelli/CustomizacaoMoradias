@@ -107,6 +107,13 @@ namespace CustomizacaoMoradias
             }
         }
 
+        public void BuildJSON(string path)
+        {
+            if (path is null) throw new ArgumentNullException(nameof(path));
+
+
+        }
+
         /// <summary>
         /// Creates a piece of furniture.
         /// </summary>
@@ -206,7 +213,7 @@ namespace CustomizacaoMoradias
 
             Document doc = uidoc.Document;
 
-            #region Reding the data from the array
+            // Reding the data from the array
             NumberFormatInfo provider = new NumberFormatInfo();
             provider.NumberDecimalSeparator = ".";
 
@@ -217,16 +224,14 @@ namespace CustomizacaoMoradias
             XYZ p2 = new XYZ(MetersToFeet(Convert.ToDouble(properties[3], provider)) * scale, // x
                              MetersToFeet(Convert.ToDouble(properties[4], provider)) * scale, // y
                              level.Elevation);                                                // z
-
-            Curve curve = Line.CreateBound(p1, p2);
-            #endregion
-
-            #region Creating the wall
             try
             {
+                Curve curve = Line.CreateBound(p1, p2);
+      
                 // sellect wall type
                 WallType wallType = GetWallType(wallTypeName);
 
+                // Creating the wall
                 using (Transaction transaction = new Transaction(doc, "Place Wall"))
                 {
                     transaction.Start();
@@ -240,7 +245,6 @@ namespace CustomizacaoMoradias
             {
                 throw new Exception("Erro ao inserir parede de coodenadas: (" + p1 + ", " + p2 + ").", e);
             }
-            #endregion
         }
 
         /// <summary>
@@ -272,7 +276,6 @@ namespace CustomizacaoMoradias
             xyz = xyz.Subtract(new XYZ(0, 0, xyz.Z));
             if (xyz is null) throw new ArgumentNullException(nameof(xyz));
 
-            Document doc = uidoc.Document;
             List<Wall> walls = GetWalls();
 
             Wall wall = null;
@@ -322,7 +325,7 @@ namespace CustomizacaoMoradias
 
             Document doc = uidoc.Document;
 
-            #region Reding the data from the array
+            // Reding the data from the array
             NumberFormatInfo provider = new NumberFormatInfo
             {
                 NumberDecimalSeparator = "."
@@ -331,30 +334,26 @@ namespace CustomizacaoMoradias
             string yCoord = properties[2];
             string fsName = properties[3];
             string fsFamilyName = properties[4];
-            #endregion
 
             try
             {
-                #region LINQ to find the window's FamilySymbol by its type name.
+                // LINQ to find the window's FamilySymbol by its type name.
                 FamilySymbol familySymbol = (from fs in new FilteredElementCollector(doc).
                      OfClass(typeof(FamilySymbol)).
                      Cast<FamilySymbol>()
                                              where (fs.Family.Name == fsFamilyName && fs.Name == fsName)
                                              select fs).First();
-                #endregion
 
-                #region Convert coordinates to double and create XYZ point.
+                // Convert coordinates to double and create XYZ point.
                 double x = MetersToFeet(Convert.ToDouble(xCoord, provider) * scale);
                 double y = MetersToFeet(Convert.ToDouble(yCoord, provider) * scale);
                 XYZ xyz = new XYZ(x, y, level.Elevation);
-                #endregion
 
-                #region Find the hosting Wall (nearst wall to the insertion point)
+                // Find the hosting Wall (nearst wall to the insertion point)
                 Wall wall = FindHostingWall(xyz);
                 if (wall == null) return;
-                #endregion
 
-                #region Create the element
+                // Create the element
                 using (Transaction transaction = new Transaction(doc, "Place " + properties[0]))
                 {
                     transaction.Start();
@@ -372,7 +371,6 @@ namespace CustomizacaoMoradias
 
                     transaction.Commit();
                 }
-                #endregion
             }
             catch (Exception e)
             {
