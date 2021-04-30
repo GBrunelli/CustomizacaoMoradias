@@ -210,7 +210,7 @@ namespace CustomizacaoMoradias
             }
             foreach(WindowProperty window in deserializedElements.WindowProperties)
             {
-                //reateHostedElement();
+                CreateWindow(window);
             }
             foreach(DoorProperty door in deserializedElements.DoorProperties)
             {
@@ -340,6 +340,25 @@ namespace CustomizacaoMoradias
         }
 
         private void CreateDoor(DoorProperty properties)
+        {
+            if (properties is null) throw new ArgumentNullException(nameof(properties));
+
+            Coordinate c = new Coordinate
+            {
+                X = (properties.Coordinate.ElementAt(0).X + properties.Coordinate.ElementAt(1).X) / 2,
+                Y = (properties.Coordinate.ElementAt(0).Y + properties.Coordinate.ElementAt(1).Y) / 2
+            };
+
+            HostedProperty hp = new HostedProperty()
+            {
+                Coordinate = c,
+                Type = properties.Type
+            };
+
+            CreateHostedElement(hp);
+        }
+
+        private void CreateWindow(WindowProperty properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
 
