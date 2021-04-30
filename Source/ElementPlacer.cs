@@ -166,7 +166,7 @@ namespace CustomizacaoMoradias
 
             try
             {
-                FamilySymbol familySymbol = GetFamilyName(doc, fsFamilyName);
+                FamilySymbol familySymbol = GetFamilySymbol(doc, fsFamilyName);
 
                 using (Transaction transaction = new Transaction(doc, "Place Piece of Furniture"))
                 {
@@ -185,7 +185,7 @@ namespace CustomizacaoMoradias
             }
         }
 
-        private static FamilySymbol GetFamilyName(Document doc, string fsFamilyName)
+        private static FamilySymbol GetFamilySymbol(Document doc, string fsFamilyName)
         {
             // Retrieve the familySymbol of the piece of furniture
             return (from fs in new FilteredElementCollector(doc).
@@ -314,55 +314,30 @@ namespace CustomizacaoMoradias
         /// [3]: type;
         /// [4}: family name;
         /// </param>
-        private void CreateHostedElement(string[] properties)
+        private void CreateHostedElement(HostedProperty properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
-
             Document doc = uidoc.Document;
 
-            // Reding the data from the array
-            NumberFormatInfo provider = new NumberFormatInfo
-            {
-                NumberDecimalSeparator = "."
-            };
-            string xCoord = properties[1];
-            string yCoord = properties[2];
-            string fsName = properties[3];
-            string fsFamilyName = properties[4];
+            XYZ point = GetXYZFromProperties(properties.Coordinate);
+
+            // TODO: retrive family name
+            string fsFamilyName = null;
 
             try
             {
-                // LINQ to find the window's FamilySymbol by its type name.
-                FamilySymbol familySymbol = (from fs in new FilteredElementCollector(doc).
-                     OfClass(typeof(FamilySymbol)).
-                     Cast<FamilySymbol>()
-                                             where (fs.Family.Name == fsFamilyName && fs.Name == fsName)
-                                             select fs).First();
-
-                // Convert coordinates to double and create XYZ point.
-                double x = MetersToFeet(Convert.ToDouble(xCoord, provider) * scale);
-                double y = MetersToFeet(Convert.ToDouble(yCoord, provider) * scale);
-                XYZ xyz = new XYZ(x, y, level.Elevation);
-
-                // Find the hosting Wall (nearst wall to the insertion point)
-                Wall wall = FindHostingWall(xyz);
+                FamilySymbol familySymbol = GetFamilySymbol(doc, fsFamilyName);
+                Wall wall = FindHostingWall(point);
                 if (wall == null) return;
 
                 // Create the element
-                using (Transaction transaction = new Transaction(doc, "Place " + properties[0]))
+                using (Transaction transaction = new Transaction(doc, "Place Hosted Element"))
                 {
                     transaction.Start();
-
-                    if (!familySymbol.IsActive)
-                    {
-                        // Ensure the family symbol is activated.
-                        familySymbol.Activate();
-                        doc.Regenerate();
-                    }
-
+                    
                     // Create window
-                    FamilyInstance instance = doc.Create.NewFamilyInstance(xyz, familySymbol, wall, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
-                    if (properties[0] == "Janela") instance.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));
+                    FamilyInstance instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
+                    //if (properties[0] == "Janela") instance.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));
 
                     transaction.Commit();
                 }
