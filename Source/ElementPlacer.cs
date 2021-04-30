@@ -230,7 +230,7 @@ namespace CustomizacaoMoradias
         /// Creates a piece of furniture.
         /// </summary>
         /// <param name="properties"> Properties of the object</param>
-        private void CreateFurniture(FurnitureProperty properties)
+        private FamilyInstance CreateFurniture(FurnitureProperty properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
             Document doc = uidoc.Document;
@@ -247,6 +247,7 @@ namespace CustomizacaoMoradias
             // Creates a point above the furniture to serve as a rotation axis
             XYZ axisPoint = new XYZ(point.X, point.Y, level.Elevation + 1);
             Line axis = Line.CreateBound(point, axisPoint);
+            FamilyInstance furniture = null;
 
             try
             {
@@ -257,7 +258,7 @@ namespace CustomizacaoMoradias
                     transaction.Start();
 
                     var structuralType = Autodesk.Revit.DB.Structure.StructuralType.NonStructural;
-                    FamilyInstance furniture = doc.Create.NewFamilyInstance(point, familySymbol, structuralType);
+                    furniture = doc.Create.NewFamilyInstance(point, familySymbol, structuralType);
                     ElementTransformUtils.RotateElement(doc, furniture.Id, axis, rotation);
 
                     transaction.Commit();
@@ -267,6 +268,7 @@ namespace CustomizacaoMoradias
             {
                 throw new Exception("Erro ao inserir mobiliario \"" + fsFamilyName + "\".", e);
             }
+            return furniture;
         }
 
         /// <summary>
@@ -361,7 +363,7 @@ namespace CustomizacaoMoradias
         private void CreateWindow(WindowProperty properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
-
+            
             Coordinate c = new Coordinate
             {
                 X = (properties.Coordinate.ElementAt(0).X + properties.Coordinate.ElementAt(1).X) / 2,
