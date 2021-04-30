@@ -363,7 +363,7 @@ namespace CustomizacaoMoradias
             return CreateHostedElement(hp);
         }
 
-        private void CreateWindow(WindowProperty properties)
+        private FamilyInstance CreateWindow(WindowProperty properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
             
@@ -379,7 +379,7 @@ namespace CustomizacaoMoradias
                 Type = properties.Type
             };
 
-            CreateHostedElement(hp);
+            return CreateHostedElement(hp);
         }
 
         /// <summary>
