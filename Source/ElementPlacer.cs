@@ -157,23 +157,22 @@ namespace CustomizacaoMoradias
 
             try
             {
-
                 string jsonText = File.ReadAllText(path);
-                ElementDeserializer deserializedElements = JsonConvert.DeserializeObject<ElementDeserializer>(jsonText);
+                ElementDeserializer ed = JsonConvert.DeserializeObject<ElementDeserializer>(jsonText);
 
-                foreach (WallProperty wall in deserializedElements.WallProperties)
+                foreach (WallProperty wall in ed.WallProperties)
                     CreateWall(wall, Properties.Settings.Default.WallTypeName);
 
-                foreach (WindowProperty window in deserializedElements.WindowProperties)
+                foreach (WindowProperty window in ed.WindowProperties)
                     CreateWindow(window);
 
-                foreach (DoorProperty door in deserializedElements.DoorProperties)
+                foreach (DoorProperty door in ed.DoorProperties)
                     CreateDoor(door);
 
-                foreach (HostedProperty element in deserializedElements.HostedProperties)
+                foreach (HostedProperty element in ed.HostedProperties)
                     CreateHostedElement(element);
 
-                foreach (FurnitureProperty element in deserializedElements.FurnitureProperties)
+                foreach (FurnitureProperty element in ed.FurnitureProperties)
                     CreateFurniture(element);
             }
             catch (Exception e)
