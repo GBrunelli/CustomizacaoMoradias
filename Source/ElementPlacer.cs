@@ -275,14 +275,14 @@ namespace CustomizacaoMoradias
         /// Creates a wall given a array of string containg its properties.
         /// </summary>
         /// <param name="properties"> Properties of the object</param>
-        private void CreateWall(WallProperty properties, string wallTypeName)
+        private Wall CreateWall(WallProperty properties, string wallTypeName)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties)); 
             Document doc = uidoc.Document;
 
             XYZ p0 = GetXYZFromProperties(properties.Coordinate.ElementAt(0));
             XYZ p1 = GetXYZFromProperties(properties.Coordinate.ElementAt(1));
-
+            Wall wall;
             try
             {
                 Curve curve = Line.CreateBound(p0, p1);
@@ -293,9 +293,9 @@ namespace CustomizacaoMoradias
                 using (Transaction transaction = new Transaction(doc, "Place Wall"))
                 {
                     transaction.Start();
-                    Wall newWall = Wall.Create(doc, curve, wallType.Id, level.Id, MetersToFeet(2.8), 0, false, false);
-                    newWall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(topLevel.Id);
-                    newWall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET).Set(MetersToFeet(-0.10));
+                    wall = Wall.Create(doc, curve, wallType.Id, level.Id, MetersToFeet(2.8), 0, false, false);
+                    wall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(topLevel.Id);
+                    wall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET).Set(MetersToFeet(-0.10));
                     transaction.Commit();
                 }
             }
@@ -303,6 +303,7 @@ namespace CustomizacaoMoradias
             {
                 throw new Exception("Erro ao inserir parede de coodenadas: (" + p0 + ", " + p1 + ").", e);
             }
+            return wall;
         }
 
         /// <summary>
