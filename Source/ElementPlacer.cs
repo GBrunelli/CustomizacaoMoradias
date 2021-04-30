@@ -62,52 +62,6 @@ namespace CustomizacaoMoradias
             return null;
         }
 
-        /// <summary>
-        /// Read a CSV file containing the definitions of the building, then starts and commits a transaction to the open document.
-        /// </summary>
-        /// <param name="path">
-        /// The complete path to the CSV file.
-        /// </param>
-        public void BuildCSV(string path)
-        {
-            if (path is null) throw new ArgumentNullException(nameof(path));
-
-            // Get a line from the table
-            string[] lines = File.ReadAllLines(path);
-            foreach (string line in lines)
-            {
-                // Split the line into strings
-                string[] columns = line.Split(',');
-
-                // Analyzes the line
-                try
-                {
-                    switch (columns[0])
-                    {
-                        case "Parede":
-                            //CreateWall(columns, "parede 15 cm - branca");
-                            break;
-
-                        case "Janela":
-                            //CreateHostedElement(columns);
-                            break;
-
-                        case "Porta":
-                            //CreateHostedElement(columns);
-                            break;
-
-                        case "Mobiliario":
-                            //CreateFurniture(columns);
-                            break;
-                    }
-                }
-                catch(Exception e)
-                {
-                    MessageBox.Show(e.Message, "Erro");
-                }
-            }
-        }
-
         public double DeegreToRadians(double angle)
         {
             return (Math.PI / 180) * angle;
@@ -201,23 +155,32 @@ namespace CustomizacaoMoradias
         {
             if (path is null) throw new ArgumentNullException(nameof(path));
 
-            string jsonText = File.ReadAllText(path);
-            ElementDeserializer deserializedElements = JsonConvert.DeserializeObject<ElementDeserializer>(jsonText);
+            try
+            {
 
-            foreach (WallProperty wall in deserializedElements.WallProperties)          
-                CreateWall(wall, Properties.Settings.Default.WallTypeName);          
+                string jsonText = File.ReadAllText(path);
+                ElementDeserializer deserializedElements = JsonConvert.DeserializeObject<ElementDeserializer>(jsonText);
 
-            foreach(WindowProperty window in deserializedElements.WindowProperties)           
-                CreateWindow(window);      
-            
-            foreach(DoorProperty door in deserializedElements.DoorProperties)            
-                CreateDoor(door);   
-            
-            foreach(HostedProperty element in deserializedElements.HostedProperties)           
-                CreateHostedElement(element);    
-            
-            foreach(FurnitureProperty element in deserializedElements.FurnitureProperties)           
-                CreateFurniture(element);            
+                foreach (WallProperty wall in deserializedElements.WallProperties)
+                    CreateWall(wall, Properties.Settings.Default.WallTypeName);
+
+                foreach (WindowProperty window in deserializedElements.WindowProperties)
+                    CreateWindow(window);
+
+                foreach (DoorProperty door in deserializedElements.DoorProperties)
+                    CreateDoor(door);
+
+                foreach (HostedProperty element in deserializedElements.HostedProperties)
+                    CreateHostedElement(element);
+
+                foreach (FurnitureProperty element in deserializedElements.FurnitureProperties)
+                    CreateFurniture(element);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message, "Erro");
+            }
+
         }
 
         /// <summary>
