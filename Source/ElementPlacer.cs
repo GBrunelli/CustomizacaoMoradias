@@ -324,7 +324,7 @@ namespace CustomizacaoMoradias
             {
                 FamilySymbol familySymbol = GetFamilySymbol(doc, fsFamilyName);
                 Wall wall = FindHostingWall(point);
-                if (wall == null) return;
+                if (wall == null) return null;
 
                 // Create the element
                 using (Transaction transaction = new Transaction(doc, "Place Hosted Element"))
@@ -344,7 +344,7 @@ namespace CustomizacaoMoradias
             return instance;
         }
 
-        private void CreateDoor(DoorProperty properties)
+        private FamilyInstance CreateDoor(DoorProperty properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
 
@@ -360,7 +360,7 @@ namespace CustomizacaoMoradias
                 Type = properties.Type
             };
 
-            CreateHostedElement(hp);
+            return CreateHostedElement(hp);
         }
 
         private void CreateWindow(WindowProperty properties)
