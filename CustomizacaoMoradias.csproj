@@ -72,6 +72,7 @@
     </Compile>
     <Compile Include="Source\CeilingCommand.cs" />
     <Compile Include="Source\ClassifyRoomsCommand.cs" />
+    <Compile Include="Source\ElementDeserializer.cs" />
     <Compile Include="Source\ElementPlacerCommand.cs" />
     <Compile Include="Source\FloorCommand.cs" />
     <Compile Include="Source\RoofCommand.cs" />

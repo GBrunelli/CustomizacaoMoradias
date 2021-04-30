@@ -10,6 +10,7 @@ using System.IO;
 using System.Windows.Forms;
 using Autodesk.Revit.DB.Architecture;
 using Newtonsoft.Json;
+using CustomizacaoMoradias.Source;
 
 namespace CustomizacaoMoradias
 {
@@ -96,7 +97,7 @@ namespace CustomizacaoMoradias
                             break;
 
                         case "Mobiliario":
-                            CreateFurniture(columns);
+                            //CreateFurniture(columns);
                             break;
                     }
                 }
@@ -111,82 +112,67 @@ namespace CustomizacaoMoradias
         {
             if (path is null) throw new ArgumentNullException(nameof(path));
 
+            string jsonText = File.ReadAllText(path);
+            ElementDeserializer deserializedElements = JsonConvert.DeserializeObject<ElementDeserializer>(jsonText);
 
+            foreach (WallProperty wall in deserializedElements.WallProperties)
+            {
+                
+            }
+            foreach(WindowProperty window in deserializedElements.WindowProperties)
+            {
+
+            }
+            foreach(DoorProperty door in deserializedElements.DoorProperties)
+            {
+
+            }
+            foreach(HostedProperty element in deserializedElements.HostedProperties)
+            {
+
+            }
+            foreach(FurnitureProperty element in deserializedElements.FurnitureProperties)
+            {
+                CreateFurniture(element);
+            }
+        }
+
+        public double DeegreToRadians(double angle)
+        {
+            return (Math.PI / 180) * angle;
         }
 
         /// <summary>
         /// Creates a piece of furniture.
         /// </summary>
-        /// <param name="properties">
-        /// [0]: Name of the element;
-        /// [1]: x coordinate;
-        /// [2]: y coordinate;
-        /// [3]: rotation;
-        /// [4]: type;
-        /// [5]: family name;
-        /// </param>
-        private void CreateFurniture(string[] properties)
+        /// <param name="properties"> Properties of the object</param>
+        private void CreateFurniture(FurnitureProperty properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
-
             Document doc = uidoc.Document;
 
-            NumberFormatInfo provider = new NumberFormatInfo
-            {
-                NumberDecimalSeparator = "."
-            };
-            string xCoord = properties[1];
-            string yCoord = properties[2];
-            string rotation = properties[3];
-            string fsName = properties[4];
-            string fsFamilyName = properties[5];
+            // get the properties
+            double rotation = DeegreToRadians(properties.Rotation);
+            XYZ point = GetXYZFromProperties(properties.Coordinate);
 
-            // Get the rotation in radians
-            double radians = 0;
-            switch (rotation)
-            {
-                case "DIREITA":
-                    radians = 0.5;
-                    break;
-
-                case "BAIXO":
-                    radians = 1;
-                    break;
-
-                case "ESQUERDA":
-                    radians = 1.5;
-                    break;
-            }
-            radians *= Math.PI;
-
-            // Convert the values from the csv file
-            double x = MetersToFeet(Convert.ToDouble(xCoord, provider) * scale);
-            double y = MetersToFeet(Convert.ToDouble(yCoord, provider) * scale);
-
-            // Creates the point where the piece of furniture will be inserted
-            XYZ point = new XYZ(x, y, level.Elevation);
+            // TODO: retrive family
+            string fsFamilyName = null;
 
             // Creates a point above the furniture to serve as a rotation axis
-            XYZ axisPoint = new XYZ(x, y, level.Elevation + 1);
+            XYZ axisPoint = new XYZ(point.X, point.Y, level.Elevation + 1);
             Line axis = Line.CreateBound(point, axisPoint);
 
             try
             {
-                // Retrieve the familySymbol of the piece of furniture
-                FamilySymbol familySymbol = (from fs in new FilteredElementCollector(doc).
-                    OfClass(typeof(FamilySymbol)).
-                    Cast<FamilySymbol>()
-                    where (fs.Family.Name == fsFamilyName)
-                    select fs).First();
+                FamilySymbol familySymbol = GetFamilyName(doc, fsFamilyName);
 
                 using (Transaction transaction = new Transaction(doc, "Place Piece of Furniture"))
                 {
                     transaction.Start();
 
-                    FamilyInstance furniture = doc.Create.NewFamilyInstance(point, familySymbol,
-                        Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
-
-                    ElementTransformUtils.RotateElement(doc, furniture.Id, axis, radians);
+                    var structuralType = Autodesk.Revit.DB.Structure.StructuralType.NonStructural;
+                    FamilyInstance furniture = doc.Create.NewFamilyInstance(point, familySymbol, structuralType);
+                    ElementTransformUtils.RotateElement(doc, furniture.Id, axis, rotation);
 
                     transaction.Commit();
                 }
@@ -197,19 +183,40 @@ namespace CustomizacaoMoradias
             }
         }
 
+        private static FamilySymbol GetFamilyName(Document doc, string fsFamilyName)
+        {
+            // Retrieve the familySymbol of the piece of furniture
+            return (from fs in new FilteredElementCollector(doc).
+                 OfClass(typeof(FamilySymbol)).
+                 Cast<FamilySymbol>()
+                    where (fs.Family.Name == fsFamilyName)
+                    select fs).First();
+        }
+
+        private XYZ GetXYZFromProperties(List<Coordinate> coords)
+        {
+            // Convert the values from the csv file
+            double x0 = coords.ElementAt(0).x;
+            x0 = MetersToFeet(x0 * scale);
+            double y0 = coords.ElementAt(0).y;
+            y0 = MetersToFeet(x0 * scale);
+
+            double x1 = coords.ElementAt(1).x;
+            x1 = MetersToFeet(x1 * scale);
+            double y1 = coords.ElementAt(1).y;
+            y1 = MetersToFeet(x1 * scale);
+
+            // Creates the point where the piece of furniture will be inserted
+            return new XYZ((x0 + x1) / 2, (y0 + y1) / 2, level.Elevation);
+        }
+
         /// <summary>
         /// Creates a wall given a array of string containg its properties.
         /// </summary>
-        /// <param name="properties">
-        /// [0]: "Parede"
-        /// [1]: x1;
-        /// [2]: y1;
-        /// [3]: x2;
-        /// [4]: y2;
-        /// </param>
+        /// <param name="properties"> Properties of the object</param>
         private void CreateWall(string[] properties, string wallTypeName)
         {
-            if (properties is null) throw new ArgumentNullException(nameof(properties));
+            if (properties is null) throw new ArgumentNullException(nameof(properties)); 
 
             Document doc = uidoc.Document;
 
