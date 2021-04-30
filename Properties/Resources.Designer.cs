@@ -81,6 +81,56 @@ namespace CustomizacaoMoradias.Properties {
         }
         
         /// <summary>
+        ///   Consulta uma cadeia de caracteres localizada semelhante a [
+        ///	{
+        ///		&quot;Name&quot;: &quot;Sala de Estar&quot;,
+        ///		&quot;Element&quot;: 
+        ///		[
+        ///			{
+        ///				&quot;Name&quot;: &quot;Sofa_3 lugares&quot;,
+        ///				&quot;Score&quot;: 2
+        ///			},
+        ///			{
+        ///				&quot;Name&quot;:&quot;RACK COM TV&quot;,
+        ///				&quot;Score&quot;: 3
+        ///			},
+        ///			{
+        ///				&quot;Name&quot;:&quot;mesa lateral&quot;,
+        ///				&quot;Score&quot;: 1
+        ///			}
+        ///		]
+        ///	},
+        ///	{
+        ///		&quot;Name&quot;: &quot;Sala de Jantar&quot;,
+        ///		&quot;Element&quot;:
+        ///		[
+        ///			{
+        ///				&quot;Name&quot;: &quot;mesa jantar&quot;,
+        ///				&quot;Score&quot;: 5
+        ///			},
+        ///			{
+        ///				&quot;Name&quot;: &quot;RACK COM TV&quot;,
+        ///				&quot;Score&quot;: 1
+        ///			},
+        ///			{
+        ///				&quot;Name&quot;: &quot;buffet&quot;,
+        ///				&quot;Score&quot;: 2
+        ///			}
+        ///		]
+        ///	},
+        ///	{
+        ///		&quot;Name&quot;: &quot;Cozinha&quot;,
+        ///		&quot;Element&quot;:
+        ///		[
+        ///			 [o restante da cadeia de caracteres foi truncado]&quot;;.
+        /// </summary>
+        internal static string ElementClassifierConfig {
+            get {
+                return ResourceManager.GetString("ElementClassifierConfig", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap floor_plan_32px {

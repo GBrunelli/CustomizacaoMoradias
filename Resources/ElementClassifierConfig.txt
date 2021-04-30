@@ -1,0 +1,138 @@
+[
+	{
+		"Name": "Sala de Estar",
+		"Element": 
+		[
+			{
+				"Name": "Sofa_3 lugares",
+				"Score": 2
+			},
+			{
+				"Name":"RACK COM TV",
+				"Score": 3
+			},
+			{
+				"Name":"mesa lateral",
+				"Score": 1
+			}
+		]
+	},
+	{
+		"Name": "Sala de Jantar",
+		"Element":
+		[
+			{
+				"Name": "mesa jantar",
+				"Score": 5
+			},
+			{
+				"Name": "RACK COM TV",
+				"Score": 1
+			},
+			{
+				"Name": "buffet",
+				"Score": 2
+			}
+		]
+	},
+	{
+		"Name": "Cozinha",
+		"Element":
+		[
+			{
+				"Name": "pia cozinha - granilite 60cm",
+				"Score": 2
+			},
+			{
+				"Name": "geladeira",
+				"Score": 2
+			},
+			{
+				"Name": "fogao 4 bocas",
+				"Score": 5
+			},
+			{
+				"Name": "armario cozinha baixo",
+				"Score": 1
+			}
+		]
+	},
+	{
+		"Name": "Área Serviço",
+		"Element":
+		[
+			{
+				"Name": "Tanque - 1",
+				"Score": 2
+			},
+			{
+				"Name": "maquina lavar",
+				"Score": 5
+			}
+		]
+	},
+	{
+		"Name": "Banheiro",
+		"Element":
+		[
+			{
+				"Name": "chuveiro",
+				"Score": 5
+			},
+			{
+				"Name": "Caixa Acoplada",
+				"Score": 5
+			},
+			{
+				"Name": "Grande com Coluna",
+				"Score": 2
+			}
+		]
+	},
+	{
+		"Name": "Quarto Casal",
+		"Element": 
+		[
+			{
+				"Name": "cama casal",
+				"Score": 5
+			},
+			{
+				"Name": "mesa cabeceira",
+				"Score": 2
+			},
+			{
+				"Name": "guarda roupa - 4 modulos",
+				"Score": 3
+			}
+		]
+	},
+	{
+		"Name": "Quarto Solteiro",
+		"Element": 
+		[
+			{
+				"Name": "cama solteiro",
+				"Score": 2
+			},
+			{
+				"Name": "mesa cabeceira",
+				"Score": 2
+			},
+			{
+				"Name": "guarda roupa - 2 modulos",
+				"Score": 2
+			}
+		]
+	},
+	{
+		"Name": "Escritório",
+		"Element":
+		[
+			{
+				"Name": "mesa de estudo",
+				"Score": 3
+			}
+		]
+	}
+]

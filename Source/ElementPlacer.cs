@@ -952,7 +952,7 @@ namespace CustomizacaoMoradias
         public void ClassifyRooms()
         {
             Document doc = uidoc.Document;
-            string jsonElementClassifier = File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + "elementClassifier.json");
+            string jsonElementClassifier = Properties.Resources.ElementClassifierConfig;
             List<RoomClassifier> deserializedRoomClassifier = JsonConvert.DeserializeObject<List<RoomClassifier>>(jsonElementClassifier);         
             List<Room> rooms = GetRoomsAtLevel(level).ToList();
             foreach (Room room in rooms)
