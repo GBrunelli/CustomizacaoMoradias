@@ -204,26 +204,20 @@ namespace CustomizacaoMoradias
             string jsonText = File.ReadAllText(path);
             ElementDeserializer deserializedElements = JsonConvert.DeserializeObject<ElementDeserializer>(jsonText);
 
-            foreach (WallProperty wall in deserializedElements.WallProperties)
-            {
-                CreateWall(wall, Properties.Settings.Default.WallTypeName);
-            }
-            foreach(WindowProperty window in deserializedElements.WindowProperties)
-            {
-                CreateWindow(window);
-            }
-            foreach(DoorProperty door in deserializedElements.DoorProperties)
-            {
-                CreateDoor(door);
-            }
-            foreach(HostedProperty element in deserializedElements.HostedProperties)
-            {
-                CreateHostedElement(element);
-            }
-            foreach(FurnitureProperty element in deserializedElements.FurnitureProperties)
-            {
-                CreateFurniture(element);
-            }
+            foreach (WallProperty wall in deserializedElements.WallProperties)          
+                CreateWall(wall, Properties.Settings.Default.WallTypeName);          
+
+            foreach(WindowProperty window in deserializedElements.WindowProperties)           
+                CreateWindow(window);      
+            
+            foreach(DoorProperty door in deserializedElements.DoorProperties)            
+                CreateDoor(door);   
+            
+            foreach(HostedProperty element in deserializedElements.HostedProperties)           
+                CreateHostedElement(element);    
+            
+            foreach(FurnitureProperty element in deserializedElements.FurnitureProperties)           
+                CreateFurniture(element);            
         }
 
         /// <summary>
@@ -330,10 +324,7 @@ namespace CustomizacaoMoradias
                 using (Transaction transaction = new Transaction(doc, "Place Hosted Element"))
                 {
                     transaction.Start();
-                    // Create window
                     instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
-                    //if (properties[0] == "Janela") instance.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));
-
                     transaction.Commit();
                 }
             }
@@ -347,39 +338,33 @@ namespace CustomizacaoMoradias
         private FamilyInstance CreateDoor(DoorProperty properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
-
-            Coordinate c = new Coordinate
-            {
-                X = (properties.Coordinate.ElementAt(0).X + properties.Coordinate.ElementAt(1).X) / 2,
-                Y = (properties.Coordinate.ElementAt(0).Y + properties.Coordinate.ElementAt(1).Y) / 2
-            };
-
-            HostedProperty hp = new HostedProperty()
-            {
-                Coordinate = c,
-                Type = properties.Type
-            };
-
+            HostedProperty hp = ConvertToHosted(properties, typeof(DoorProperty));
             return CreateHostedElement(hp);
         }
 
         private FamilyInstance CreateWindow(WindowProperty properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
-            
+            HostedProperty hp = ConvertToHosted(properties, typeof(WindowProperty));
+            FamilyInstance window = CreateHostedElement(hp);
+            window.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));
+            return window;
+        }
+
+        private static HostedProperty ConvertToHosted(dynamic obj, Type type)
+        {
+            var properties = Convert.ChangeType(obj, type);
             Coordinate c = new Coordinate
             {
                 X = (properties.Coordinate.ElementAt(0).X + properties.Coordinate.ElementAt(1).X) / 2,
                 Y = (properties.Coordinate.ElementAt(0).Y + properties.Coordinate.ElementAt(1).Y) / 2
             };
-
             HostedProperty hp = new HostedProperty()
             {
                 Coordinate = c,
                 Type = properties.Type
             };
-
-            return CreateHostedElement(hp);
+            return hp;
         }
 
         /// <summary>
