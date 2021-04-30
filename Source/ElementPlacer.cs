@@ -282,7 +282,7 @@ namespace CustomizacaoMoradias
 
             XYZ p0 = GetXYZFromProperties(properties.Coordinate.ElementAt(0));
             XYZ p1 = GetXYZFromProperties(properties.Coordinate.ElementAt(1));
-            Wall wall;
+            Wall wall = null;
             try
             {
                 Curve curve = Line.CreateBound(p0, p1);
@@ -310,7 +310,7 @@ namespace CustomizacaoMoradias
         /// Create a hosted element on a wall.
         /// </summary>
         /// <param name="properties"> Properties of the object.</param>
-        private void CreateHostedElement(HostedProperty properties)
+        private FamilyInstance CreateHostedElement(HostedProperty properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
             Document doc = uidoc.Document;
@@ -319,6 +319,7 @@ namespace CustomizacaoMoradias
             // TODO: retrive family name
             string fsFamilyName = null;
 
+            FamilyInstance instance = null;
             try
             {
                 FamilySymbol familySymbol = GetFamilySymbol(doc, fsFamilyName);
@@ -330,7 +331,7 @@ namespace CustomizacaoMoradias
                 {
                     transaction.Start();
                     // Create window
-                    FamilyInstance instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
+                    instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
                     //if (properties[0] == "Janela") instance.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));
 
                     transaction.Commit();
@@ -340,6 +341,7 @@ namespace CustomizacaoMoradias
             {
                 throw new Exception("Erro ao inserir elemento hospedeiro \"" + fsFamilyName + "\".", e);
             }
+            return instance;
         }
 
         private void CreateDoor(DoorProperty properties)
