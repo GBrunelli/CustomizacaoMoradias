@@ -70,6 +70,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="Settings.cs" />
     <Compile Include="Source\CeilingCommand.cs" />
     <Compile Include="Source\ClassifyRoomsCommand.cs" />
     <Compile Include="Source\ElementDeserializer.cs" />

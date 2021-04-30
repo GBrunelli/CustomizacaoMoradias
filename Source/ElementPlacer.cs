@@ -11,6 +11,7 @@ using System.Windows.Forms;
 using Autodesk.Revit.DB.Architecture;
 using Newtonsoft.Json;
 using CustomizacaoMoradias.Source;
+using System.Configuration;
 
 namespace CustomizacaoMoradias
 {
@@ -153,8 +154,7 @@ namespace CustomizacaoMoradias
 
         public void BuildJSON(string path)
         {
-            if (path is null) throw new ArgumentNullException(nameof(path));
-
+            if (path is null) throw new ArgumentNullException(nameof(path));        
             try
             {
                 string jsonText = File.ReadAllText(path);
@@ -196,9 +196,7 @@ namespace CustomizacaoMoradias
             XYZ p0 = GetXYZFromProperties(properties.Coordinate.ElementAt(0));
             XYZ p1 = GetXYZFromProperties(properties.Coordinate.ElementAt(1));
             XYZ point = p0.Add(p1).Divide(2);
-
-            // TODO: retrive family
-            string fsFamilyName = null;
+            string fsFamilyName = GetFamilyName(properties.Type);
 
             // Creates a point above the furniture to serve as a rotation axis
             XYZ axisPoint = new XYZ(point.X, point.Y, level.Elevation + 1);
@@ -228,7 +226,7 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Creates a wall given a array of string containg its properties.
+        /// Creates a wall given its properties.
         /// </summary>
         /// <param name="properties"> Properties of the object</param>
         private Wall CreateWall(WallProperty properties, string wallTypeName)
@@ -271,9 +269,7 @@ namespace CustomizacaoMoradias
             if (properties is null) throw new ArgumentNullException(nameof(properties));
             Document doc = uidoc.Document;
             XYZ point = GetXYZFromProperties(properties.Coordinate);
-
-            // TODO: retrive family name
-            string fsFamilyName = null;
+            string fsFamilyName = GetFamilyName(properties.Type);
 
             FamilyInstance instance = null;
             try
@@ -295,6 +291,21 @@ namespace CustomizacaoMoradias
                 throw new Exception("Erro ao inserir elemento hospedeiro \"" + fsFamilyName + "\".", e);
             }
             return instance;
+        }
+
+        private static string GetFamilyName(string familyType)
+        {
+            string fsFamilyName = null;
+
+            foreach (SettingsProperty currentProperty in Properties.Settings.Default.Properties)
+            {
+                if (familyType == Properties.Settings.Default[currentProperty.Name].ToString())
+                {
+                    fsFamilyName = (string)currentProperty.DefaultValue;
+                }
+            }
+
+            return fsFamilyName;
         }
 
         private FamilyInstance CreateDoor(DoorProperty properties)

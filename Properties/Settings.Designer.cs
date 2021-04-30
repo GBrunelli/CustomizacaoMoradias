@@ -70,5 +70,449 @@ namespace CustomizacaoMoradias.Properties {
                 this["WallTypeName"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("janela veneziana 1,50x1,0 - metal e vidro")]
+        public string J1 {
+            get {
+                return ((string)(this["J1"]));
+            }
+            set {
+                this["J1"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("janela correr 1,50x1,0 - metal e vidro")]
+        public string J2 {
+            get {
+                return ((string)(this["J2"]));
+            }
+            set {
+                this["J2"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("bandeira 0,60 x 0,40")]
+        public string J3 {
+            get {
+                return ((string)(this["J3"]));
+            }
+            set {
+                this["J3"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string J4 {
+            get {
+                return ((string)(this["J4"]));
+            }
+            set {
+                this["J4"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string J5 {
+            get {
+                return ((string)(this["J5"]));
+            }
+            set {
+                this["J5"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("porta de abri 0.80x2.10 - madeira")]
+        public string P1 {
+            get {
+                return ((string)(this["P1"]));
+            }
+            set {
+                this["P1"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("porta de abrur 0.80x2.10 - metal e vidro")]
+        public string P2 {
+            get {
+                return ((string)(this["P2"]));
+            }
+            set {
+                this["P2"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("porta correr 1.60x2.10 - metal e vidro")]
+        public string P3 {
+            get {
+                return ((string)(this["P3"]));
+            }
+            set {
+                this["P3"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string P4 {
+            get {
+                return ((string)(this["P4"]));
+            }
+            set {
+                this["P4"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("chuveiro")]
+        public string H1 {
+            get {
+                return ((string)(this["H1"]));
+            }
+            set {
+                this["H1"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Caixa Acoplada")]
+        public string H2 {
+            get {
+                return ((string)(this["H2"]));
+            }
+            set {
+                this["H2"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Grande Com Coluna")]
+        public string H3 {
+            get {
+                return ((string)(this["H3"]));
+            }
+            set {
+                this["H3"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string H4 {
+            get {
+                return ((string)(this["H4"]));
+            }
+            set {
+                this["H4"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string H5 {
+            get {
+                return ((string)(this["H5"]));
+            }
+            set {
+                this["H5"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string H6 {
+            get {
+                return ((string)(this["H6"]));
+            }
+            set {
+                this["H6"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string H7 {
+            get {
+                return ((string)(this["H7"]));
+            }
+            set {
+                this["H7"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Sofa_3 lugares")]
+        public string M1 {
+            get {
+                return ((string)(this["M1"]));
+            }
+            set {
+                this["M1"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("RACK COM TV")]
+        public string M2 {
+            get {
+                return ((string)(this["M2"]));
+            }
+            set {
+                this["M2"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Poltrona-V1")]
+        public string M3 {
+            get {
+                return ((string)(this["M3"]));
+            }
+            set {
+                this["M3"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("mesa lateral")]
+        public string M4 {
+            get {
+                return ((string)(this["M4"]));
+            }
+            set {
+                this["M4"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("mesa jantar")]
+        public string M5 {
+            get {
+                return ((string)(this["M5"]));
+            }
+            set {
+                this["M5"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("buffet")]
+        public string M6 {
+            get {
+                return ((string)(this["M6"]));
+            }
+            set {
+                this["M6"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("pia cozinha - granilite 60cm")]
+        public string M7 {
+            get {
+                return ((string)(this["M7"]));
+            }
+            set {
+                this["M7"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("geladeira")]
+        public string M8 {
+            get {
+                return ((string)(this["M8"]));
+            }
+            set {
+                this["M8"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("fogao 4 bocas")]
+        public string M9 {
+            get {
+                return ((string)(this["M9"]));
+            }
+            set {
+                this["M9"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("armario cozinha baixo")]
+        public string M10 {
+            get {
+                return ((string)(this["M10"]));
+            }
+            set {
+                this["M10"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Tanque - 1")]
+        public string M11 {
+            get {
+                return ((string)(this["M11"]));
+            }
+            set {
+                this["M11"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("maquina lavar")]
+        public string M12 {
+            get {
+                return ((string)(this["M12"]));
+            }
+            set {
+                this["M12"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("cama casal")]
+        public string M13 {
+            get {
+                return ((string)(this["M13"]));
+            }
+            set {
+                this["M13"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("guarda roupa - 4 modulos")]
+        public string M14 {
+            get {
+                return ((string)(this["M14"]));
+            }
+            set {
+                this["M14"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("cama solteiro")]
+        public string M15 {
+            get {
+                return ((string)(this["M15"]));
+            }
+            set {
+                this["M15"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("mesa cabeceira")]
+        public string M16 {
+            get {
+                return ((string)(this["M16"]));
+            }
+            set {
+                this["M16"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("guarda roupa - 2 modulos")]
+        public string M17 {
+            get {
+                return ((string)(this["M17"]));
+            }
+            set {
+                this["M17"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("mesa de estudo")]
+        public string M18 {
+            get {
+                return ((string)(this["M18"]));
+            }
+            set {
+                this["M18"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string M19 {
+            get {
+                return ((string)(this["M19"]));
+            }
+            set {
+                this["M19"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string M20 {
+            get {
+                return ((string)(this["M20"]));
+            }
+            set {
+                this["M20"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string M21 {
+            get {
+                return ((string)(this["M21"]));
+            }
+            set {
+                this["M21"] = value;
+            }
+        }
     }
 }

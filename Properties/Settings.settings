@@ -14,5 +14,116 @@
     <Setting Name="WallTypeName" Type="System.String" Scope="User">
       <Value Profile="(Default)">parede 15 cm - branca</Value>
     </Setting>
+    <Setting Name="J1" Type="System.String" Scope="User">
+      <Value Profile="(Default)">janela veneziana 1,50x1,0 - metal e vidro</Value>
+    </Setting>
+    <Setting Name="J2" Type="System.String" Scope="User">
+      <Value Profile="(Default)">janela correr 1,50x1,0 - metal e vidro</Value>
+    </Setting>
+    <Setting Name="J3" Type="System.String" Scope="User">
+      <Value Profile="(Default)">bandeira 0,60 x 0,40</Value>
+    </Setting>
+    <Setting Name="J4" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="J5" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="P1" Type="System.String" Scope="User">
+      <Value Profile="(Default)">porta de abri 0.80x2.10 - madeira</Value>
+    </Setting>
+    <Setting Name="P2" Type="System.String" Scope="User">
+      <Value Profile="(Default)">porta de abrur 0.80x2.10 - metal e vidro</Value>
+    </Setting>
+    <Setting Name="P3" Type="System.String" Scope="User">
+      <Value Profile="(Default)">porta correr 1.60x2.10 - metal e vidro</Value>
+    </Setting>
+    <Setting Name="P4" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="H1" Type="System.String" Scope="User">
+      <Value Profile="(Default)">chuveiro</Value>
+    </Setting>
+    <Setting Name="H2" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Caixa Acoplada</Value>
+    </Setting>
+    <Setting Name="H3" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Grande Com Coluna</Value>
+    </Setting>
+    <Setting Name="H4" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="H5" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="H6" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="H7" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="M1" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Sofa_3 lugares</Value>
+    </Setting>
+    <Setting Name="M2" Type="System.String" Scope="User">
+      <Value Profile="(Default)">RACK COM TV</Value>
+    </Setting>
+    <Setting Name="M3" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Poltrona-V1</Value>
+    </Setting>
+    <Setting Name="M4" Type="System.String" Scope="User">
+      <Value Profile="(Default)">mesa lateral</Value>
+    </Setting>
+    <Setting Name="M5" Type="System.String" Scope="User">
+      <Value Profile="(Default)">mesa jantar</Value>
+    </Setting>
+    <Setting Name="M6" Type="System.String" Scope="User">
+      <Value Profile="(Default)">buffet</Value>
+    </Setting>
+    <Setting Name="M7" Type="System.String" Scope="User">
+      <Value Profile="(Default)">pia cozinha - granilite 60cm</Value>
+    </Setting>
+    <Setting Name="M8" Type="System.String" Scope="User">
+      <Value Profile="(Default)">geladeira</Value>
+    </Setting>
+    <Setting Name="M9" Type="System.String" Scope="User">
+      <Value Profile="(Default)">fogao 4 bocas</Value>
+    </Setting>
+    <Setting Name="M10" Type="System.String" Scope="User">
+      <Value Profile="(Default)">armario cozinha baixo</Value>
+    </Setting>
+    <Setting Name="M11" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Tanque - 1</Value>
+    </Setting>
+    <Setting Name="M12" Type="System.String" Scope="User">
+      <Value Profile="(Default)">maquina lavar</Value>
+    </Setting>
+    <Setting Name="M13" Type="System.String" Scope="User">
+      <Value Profile="(Default)">cama casal</Value>
+    </Setting>
+    <Setting Name="M14" Type="System.String" Scope="User">
+      <Value Profile="(Default)">guarda roupa - 4 modulos</Value>
+    </Setting>
+    <Setting Name="M15" Type="System.String" Scope="User">
+      <Value Profile="(Default)">cama solteiro</Value>
+    </Setting>
+    <Setting Name="M16" Type="System.String" Scope="User">
+      <Value Profile="(Default)">mesa cabeceira</Value>
+    </Setting>
+    <Setting Name="M17" Type="System.String" Scope="User">
+      <Value Profile="(Default)">guarda roupa - 2 modulos</Value>
+    </Setting>
+    <Setting Name="M18" Type="System.String" Scope="User">
+      <Value Profile="(Default)">mesa de estudo</Value>
+    </Setting>
+    <Setting Name="M19" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="M20" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="M21" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
   </Settings>
 </SettingsFile>
