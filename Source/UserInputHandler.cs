@@ -22,19 +22,17 @@ namespace CustomizacaoMoradias
 
                 ElementPlacer elementPlacer = new ElementPlacer(uidoc, levelName, topLevelName, 0.3);
 
-                elementPlacer.BuildCSV(path);
+                elementPlacer.BuildJSON(path);
                 elementPlacer.CreateFloor("piso 10 cm - ceramico 40x40");
                 elementPlacer.CreateCeiling("laje 10 cm - branca");
 
                 double offset = ElementPlacer.MetersToFeet(0.6);
+
                 if(roofVector == null)
-                {
                     roofVector = new XYZ(0, 0, 0);
-                }
+
                 elementPlacer.CreateRoof(offset, 0.3, roofVector);
-
                 elementPlacer.ClassifyRooms();
-
                 //PlaceElementsUtil.CreateNewSheet(doc);
             }
             catch(LevelNotFoundException lvlEx)
