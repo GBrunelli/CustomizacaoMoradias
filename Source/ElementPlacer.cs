@@ -206,6 +206,7 @@ namespace CustomizacaoMoradias
 
             Document doc = uidoc.Document;
 
+            #region Reding the data from the array
             NumberFormatInfo provider = new NumberFormatInfo();
             provider.NumberDecimalSeparator = ".";
 
@@ -216,12 +217,16 @@ namespace CustomizacaoMoradias
             XYZ p2 = new XYZ(MetersToFeet(Convert.ToDouble(properties[3], provider)) * scale, // x
                              MetersToFeet(Convert.ToDouble(properties[4], provider)) * scale, // y
                              level.Elevation);                                                // z
+
+            Curve curve = Line.CreateBound(p1, p2);
+            #endregion
+
+            #region Creating the wall
             try
             {
                 // sellect wall type
                 WallType wallType = GetWallType(wallTypeName);
 
-                Curve curve = Line.CreateBound(p1, p2);         
                 using (Transaction transaction = new Transaction(doc, "Place Wall"))
                 {
                     transaction.Start();
@@ -235,6 +240,7 @@ namespace CustomizacaoMoradias
             {
                 throw new Exception("Erro ao inserir parede de coodenadas: (" + p1 + ", " + p2 + ").", e);
             }
+            #endregion
         }
 
         /// <summary>
@@ -265,6 +271,8 @@ namespace CustomizacaoMoradias
         {
             xyz = xyz.Subtract(new XYZ(0, 0, xyz.Z));
             if (xyz is null) throw new ArgumentNullException(nameof(xyz));
+
+            Document doc = uidoc.Document;
             List<Wall> walls = GetWalls();
 
             Wall wall = null;
@@ -331,8 +339,8 @@ namespace CustomizacaoMoradias
                 FamilySymbol familySymbol = (from fs in new FilteredElementCollector(doc).
                      OfClass(typeof(FamilySymbol)).
                      Cast<FamilySymbol>()
-                     where (fs.Family.Name == fsFamilyName && fs.Name == fsName)
-                     select fs).First();
+                                             where (fs.Family.Name == fsFamilyName && fs.Name == fsName)
+                                             select fs).First();
                 #endregion
 
                 #region Convert coordinates to double and create XYZ point.
@@ -358,7 +366,7 @@ namespace CustomizacaoMoradias
                         doc.Regenerate();
                     }
 
-                    // Create element
+                    // Create window
                     FamilyInstance instance = doc.Create.NewFamilyInstance(xyz, familySymbol, wall, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
                     if (properties[0] == "Janela") instance.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));
 
