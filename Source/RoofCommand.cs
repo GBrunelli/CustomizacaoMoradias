@@ -14,7 +14,6 @@ namespace CustomizacaoMoradias
         {
             try
             {
-
                 UIDocument uidoc = commandData.Application.ActiveUIDocument;
                 ElementPlacer elementPlacer = new ElementPlacer(uidoc, "PLANTA BAIXA", "COBERTURA", 0.3);
 

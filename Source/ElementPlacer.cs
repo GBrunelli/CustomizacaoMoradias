@@ -56,7 +56,8 @@ namespace CustomizacaoMoradias
             {
                 Filter = "CSV|*.csv"
             };
-            if (openFileDialog.ShowDialog() == DialogResult.OK) return openFileDialog.FileName;
+            if (openFileDialog.ShowDialog() == DialogResult.OK) 
+                return openFileDialog.FileName;
             return null;
         }
 
@@ -69,8 +70,6 @@ namespace CustomizacaoMoradias
         public void BuildCSV(string path)
         {
             if (path is null) throw new ArgumentNullException(nameof(path));
-
-            Document doc = uidoc.Document;
 
             // Get a line from the table
             string[] lines = File.ReadAllLines(path);
@@ -244,6 +243,12 @@ namespace CustomizacaoMoradias
             #endregion
         }
 
+        /// <summary>
+        /// Searches in the document data base for a Wall Type.
+        /// </summary>
+        /// <returns>
+        /// Returns the Wall Type corresponding to the string.
+        /// </returns>
         private WallType GetWallType(string wallTypeName)
         {
             Document doc = uidoc.Document;
@@ -577,17 +582,21 @@ namespace CustomizacaoMoradias
         /// </summary>
         /// <param name="offset">
         /// A real value that reprends the offset of the perimeter.
+        /// If this value is 0, the user may not pass an offsetVector.
         /// </param>
         /// <param name="offsetVector">
-        /// A vector that will defines the offset. The spacing will be applied on the orthogonal edges to the offsetVector. 
+        /// A vector that will defines the offset. The offset will be applied on the orthogonal lines to the offsetVector. 
         /// The magnitude of the vector doesn't matter, just the direction will affect the offset.
         /// If the vector is 0, the offset will be applied for all sides. 
         /// </param>
         /// <returns>
         /// Returns a CurveArray that corresponds to the house perimeter.
         /// </returns>
-        public CurveArray GetHousePerimeterCurveArray(double offset, XYZ offsetVector)
+        public CurveArray GetHousePerimeter(double offset, XYZ offsetVector)
         {
+            if(offset != 0)
+                if (offsetVector is null) throw new ArgumentNullException(nameof(offsetVector));
+
             Document doc = uidoc.Document;
             // retrives the circuit set of the active document
             PlanCircuitSet circuitSet = GetDocPlanCircuitSet(false);
@@ -597,7 +606,7 @@ namespace CustomizacaoMoradias
                 // get all the closed loops in the circuit
                 IList<IList<BoundarySegment>> loopsSegments = GetLoopsInCircuit(circuit);
 
-                // if there more than 1 loop, that means that this circuit is the perimeter circuit,
+                // if there more than 1 loop, that means that this circuit represents the external area
                 if(loopsSegments.Count > 1)
                 {
                     // first of all we find the closed loop with the smaller area
@@ -607,15 +616,15 @@ namespace CustomizacaoMoradias
                     {
                         double area = 0;
 
-                        // transforms the boundary segments in a CurveLoop
+                        // transforms the boundary segments into a CurveLoop
                         CurveLoop currentCurve = new CurveLoop();
                         foreach (BoundarySegment seg in singleLoop)
                         {
                             currentCurve.Append(seg.GetCurve());
                         }
 
-                        IList<CurveLoop> curveLoopList = new List<CurveLoop>();
-                        curveLoopList.Add(currentCurve);
+                        // save the segments with the smaller area, which represents the house perimeter
+                        IList<CurveLoop> curveLoopList = new List<CurveLoop>{currentCurve};
                         area = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoopList);
                         if (area < minArea)
                         {
@@ -625,21 +634,44 @@ namespace CustomizacaoMoradias
                     }
 
                     // and then we create a curve array with the boundary segments of that loop
-                    CurveArray housePerimeter = new CurveArray();
-                    foreach (BoundarySegment seg in perimeterSegments)
-                    {
-                        Curve curve = seg.GetCurve();
-
-                        // aplies the offset for each curve
-                        if (offset > 0)
-                            curve = CreateOffsetedCurve(housePerimeter, curve, offset, offsetVector);
-
-                        housePerimeter.Append(curve);
-                    }
-                    return housePerimeter;
+                    return CreteOffsetedCurveArray(offset, offsetVector, perimeterSegments);
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// Creates a Curve Array given the Boundary Segments. 
+        /// </summary>
+        /// <param name="offset">
+        /// A real value that represents the offset that the curve array will have in a direction. 
+        /// If this value is 0, the user may not pass an offsetVector.
+        /// </param>
+        /// <param name="offsetVector">
+        /// A vector that will defines the offset. The offset will be applied on the orthogonal lines to the offsetVector. 
+        /// The magnitude of the vector doesn't matter, just the direction will affect the offset.
+        /// If the vector is 0, the offset will be applied for all sides. 
+        /// </param>
+        /// <param name="perimeterSegments">
+        /// A List with the Boundary Segments that will be the reference for the Curve Array.
+        /// </param>
+        /// <returns>
+        /// Returns the offseted Curve Array.
+        /// </returns>
+        private CurveArray CreteOffsetedCurveArray(double offset, XYZ offsetVector, IList<BoundarySegment> perimeterSegments)
+        {
+            CurveArray housePerimeter = new CurveArray();
+            foreach (BoundarySegment seg in perimeterSegments)
+            {
+                Curve curve = seg.GetCurve();
+
+                // aplies the offset for each curve
+                if (offset > 0)
+                    curve = CreateOffsetedCurve(housePerimeter, curve, offset, offsetVector);
+
+                housePerimeter.Append(curve);
+            }
+            return housePerimeter;
         }
 
         /// <summary>
@@ -717,12 +749,12 @@ namespace CustomizacaoMoradias
             double distanceToStart = curve.GetEndPoint(0).DistanceTo(intersectionPoint);
             double distanceToEnd = curve.GetEndPoint(1).DistanceTo(intersectionPoint);
 
-            // case the star point is closer
+            // In the case the start point is closer
             if (distanceToStart < distanceToEnd)
             {
                 curve.MakeBound(curve.GetEndParameter(0) + distanceToStart, curve.GetEndParameter(1));
             }
-            // case the end point is closer
+            // In the case the end point is closer
             else
             {
                 curve.MakeBound(curve.GetEndParameter(0), curve.GetEndParameter(1) - distanceToEnd);
@@ -749,7 +781,6 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Converts a CurveLoop to CurveArray.
         /// </summary>
-        /// <param name="loop"></param>
         /// <returns>
         /// Returns a CurveArray with the same curves of the CurveLoop.
         /// </returns>
@@ -766,7 +797,6 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Converts a CurveArray to a CurveLoop.
         /// </summary>
-        /// <param name="array"></param>
         /// <returns> 
         /// Returns a CurveLoop with the same curves of the CurveArray.
         /// </returns>
@@ -783,7 +813,6 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Create the ceiling of a building given the loops of the active document. The buildding must be surrounded by walls.
         /// </summary>
-        /// <param name="floorTypeName"></param>
         /// <returns>
         /// Returns the created floor.
         /// </returns>
@@ -800,7 +829,7 @@ namespace CustomizacaoMoradias
                 // creates a ceiling if in a room there is more than one loop,
                 // and finds the smallest loop
 
-                CurveArray curve = GetHousePerimeterCurveArray(0, new XYZ(0, 0, 0));
+                CurveArray curve = GetHousePerimeter(0, new XYZ(0, 0, 0));
 
                 // create a floor type
                 FilteredElementCollector collector = new FilteredElementCollector(doc);
@@ -820,7 +849,6 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Calculates the middle point of a Curve.
         /// </summary>
-        /// <param name="curve"></param>
         /// <returns>
         /// Returns the XYZ coords.
         /// </returns>
@@ -841,14 +869,20 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Create a generic roof in a building given the level of the walls.
+        /// Create a generic roof in the Top Level.
         /// </summary>
-        /// <param name="offset"></param>
-        /// <param name="offsetVector"></param>
+        /// <param name="overhang">
+        /// The value of the overhang. The overhang will be applied in all sides.
+        /// If this value is 0, the user may not pass the slopeDirection argument.
+        /// </param>
+        /// <param name="slopeDirection">
+        /// The slope will only be apllied on the edges that is orthogonal to the Slope Direction Vector.
+        /// Note tha a 0 vector is ortoghonal to all vectors.
+        /// </param>
         /// <returns>
-        /// Returns the created FootPrintRood.
+        /// Returns the created FootPrintRoof.
         /// </returns>
-        public FootPrintRoof CreateRoof(double offset, double slope, XYZ offsetVector)
+        public FootPrintRoof CreateRoof(double overhang, double slope, XYZ slopeDirection)
         {
             Document doc = uidoc.Document;
             FootPrintRoof footPrintRoof = null;
@@ -857,7 +891,7 @@ namespace CustomizacaoMoradias
             {
                 transaction.Start();
 
-                CurveArray footPrintCurve = GetHousePerimeterCurveArray(offset, new XYZ(0, 0, 0));
+                CurveArray footPrintCurve = GetHousePerimeter(overhang, new XYZ(0, 0, 0));
 
                 // create a roof type
                 FilteredElementCollector collector = new FilteredElementCollector(doc);
@@ -878,25 +912,32 @@ namespace CustomizacaoMoradias
                     Curve curve = modelCurve.GeometryCurve;
                     XYZ curveDirection = GetCurveDirection(curve);
 
-                    if (curveDirection.DotProduct(offsetVector) == 0)
+                    if (curveDirection.DotProduct(slopeDirection) == 0)
                     {
                         footPrintRoof.set_DefinesSlope(modelCurve, true);
                         footPrintRoof.set_SlopeAngle(modelCurve, slope);          
                     }
 
-                    double elevation = -(offset - MetersToFeet(0.1)) / 3;
+                    double elevation = -(overhang - MetersToFeet(0.1)) / 3;
                     footPrintRoof.set_Offset(modelCurve, elevation);
                 }
                 transaction.Commit();
             }
             roof = footPrintRoof;
 
-            if(!offsetVector.IsZeroLength())
-                CreateAllGableWalls(offsetVector, slope);
+            if(!slopeDirection.IsZeroLength())
+                CreateAllGableWalls(slopeDirection, slope);
 
             return footPrintRoof;
         }
 
+        /// <summary>
+        /// Calculates the vector that is formed by the start point and the end point of the curve.
+        /// </summary>
+        /// <param name="curve"></param>
+        /// <returns>
+        /// Returns the vector.
+        /// </returns>
         private static XYZ GetCurveDirection(Curve curve)
         {
             XYZ startPoint = curve.GetEndPoint(0);
@@ -913,21 +954,16 @@ namespace CustomizacaoMoradias
             Document doc = uidoc.Document;
             string jsonElementClassifier = File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + "elementClassifier.json");
             List<RoomClassifier> deserializedRoomClassifier = JsonConvert.DeserializeObject<List<RoomClassifier>>(jsonElementClassifier);         
-
             List<Room> rooms = GetRoomsAtLevel(level).ToList();
             foreach (Room room in rooms)
             {
                 if(room.Area > 0)
                 {
-                    
                     string roomName = null;
-
                     List<Element> elements = GetFurniture(room);
                     foreach (Element element in elements)
                     {
-
                         int roomScore = 0;
-
                         foreach (RoomClassifier roomClassifier in deserializedRoomClassifier)
                         {
                             foreach (RoomElement furniture in roomClassifier.Element)
@@ -1017,6 +1053,9 @@ namespace CustomizacaoMoradias
             return elementsInsideTheRoom;
         }
 
+        /// <summary>
+        /// Generate a new sheet of the Base Level.
+        /// </summary>
         public void CreateNewSheet()
         {
             Document doc = uidoc.Document;
@@ -1056,7 +1095,7 @@ namespace CustomizacaoMoradias
         public void CreateAllGableWalls(XYZ vectorDirection, double slope)
         {
             Document doc = uidoc.Document;
-            CurveArray perimeter = GetHousePerimeterCurveArray(0, null);
+            CurveArray perimeter = GetHousePerimeter(0, null);
             using (Transaction transaction = new Transaction(doc, "Create Gable Walls"))
             {
                 transaction.Start();
@@ -1110,16 +1149,9 @@ namespace CustomizacaoMoradias
         {
             double p2x = (p0.X + p1.X) / 2;
             double p2y = (p0.Y + p1.Y) / 2;
-
             XYZ baseVector = p1.Subtract(p0);
-
             double p2z = (slope * baseVector.GetLength()) / 2;
-
-            XYZ p2 = new XYZ(p2x, p2y, p2z);
-            return p2;
-        }
-    
-        // fazer a linha unbounded e comparar com as outras linhas do poligono, se houver encontro, significa que essa curva pode deve ser estendida até  
-    
+            return new XYZ(p2x, p2y, p2z);
+        }    
     }
 }
