@@ -56,7 +56,7 @@ namespace CustomizacaoMoradias
         {
             OpenFileDialog openFileDialog = new OpenFileDialog
             {
-                Filter = "CSV|*.csv"
+                Filter = "json|*.json"
             };
             if (openFileDialog.ShowDialog() == DialogResult.OK) 
                 return openFileDialog.FileName;
@@ -71,11 +71,12 @@ namespace CustomizacaoMoradias
         private static FamilySymbol GetFamilySymbol(Document doc, string fsFamilyName)
         {
             // Retrieve the familySymbol of the piece of furniture
-            return (from fs in new FilteredElementCollector(doc).
+            var symbol = (from familySymbol in new FilteredElementCollector(doc).
                  OfClass(typeof(FamilySymbol)).
                  Cast<FamilySymbol>()
-                    where (fs.Family.Name == fsFamilyName)
-                    select fs).First();
+                    where (familySymbol.Name == fsFamilyName)
+                    select familySymbol).First();
+            return symbol;
         }
         private XYZ GetXYZFromProperties(Coordinate coords)
         {
@@ -255,7 +256,8 @@ namespace CustomizacaoMoradias
             }
             catch (Exception e)
             {
-                throw new Exception("Erro ao inserir parede de coodenadas: (" + p0 + ", " + p1 + ").", e);
+                MessageBox.Show(e.Message, "Erro");
+                //throw new Exception("Erro ao inserir parede de coodenadas: (" + p0 + ", " + p1 + ").", e);
             }
             return wall;
         }
@@ -288,54 +290,55 @@ namespace CustomizacaoMoradias
             }
             catch (Exception e)
             {
-                throw new Exception("Erro ao inserir elemento hospedeiro \"" + fsFamilyName + "\".", e);
+                MessageBox.Show(e.Message, "Erro");
+                //throw new Exception("Erro ao inserir elemento hospedeiro \"" + fsFamilyName + "\".", e);
             }
             return instance;
         }
 
         private static string GetFamilyName(string familyType)
         {
-            string fsFamilyName = null;
-
             foreach (SettingsProperty currentProperty in Properties.Settings.Default.Properties)
             {
-                if (familyType == Properties.Settings.Default[currentProperty.Name].ToString())
+                if (familyType == currentProperty.Name)
                 {
-                    fsFamilyName = (string)currentProperty.DefaultValue;
+                    return (string) currentProperty.DefaultValue;
                 }
             }
 
-            return fsFamilyName;
+            return null;
         }
 
         private FamilyInstance CreateDoor(DoorProperty properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
-            HostedProperty hp = ConvertToHosted(properties, typeof(DoorProperty));
+            HostedProperty hp = ConvertToHosted(properties);
             return CreateHostedElement(hp);
         }
 
         private FamilyInstance CreateWindow(WindowProperty properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
-            HostedProperty hp = ConvertToHosted(properties, typeof(WindowProperty));
+            HostedProperty hp = ConvertToHosted(properties);
             FamilyInstance window = CreateHostedElement(hp);
-            window.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));
+            using (Transaction transaction = new Transaction(uidoc.Document, "Change Window Height"))
+            {
+                transaction.Start();
+                if (window != null)
+                    window.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));
+                transaction.Commit();
+            }
+                
             return window;
         }
 
-        private static HostedProperty ConvertToHosted(dynamic obj, Type type)
+        private static HostedProperty ConvertToHosted(Hosted obj)
         {
-            var properties = Convert.ChangeType(obj, type);
-            Coordinate c = new Coordinate
-            {
-                X = (properties.Coordinate.ElementAt(0).X + properties.Coordinate.ElementAt(1).X) / 2,
-                Y = (properties.Coordinate.ElementAt(0).Y + properties.Coordinate.ElementAt(1).Y) / 2
-            };
+            Coordinate c = obj.GetCoordinate();
             HostedProperty hp = new HostedProperty()
             {
                 Coordinate = c,
-                Type = properties.Type
+                Type = obj.getType()
             };
             return hp;
         }

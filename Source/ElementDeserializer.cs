@@ -18,24 +18,61 @@ namespace CustomizacaoMoradias.Source
         public List<Coordinate> Coordinate { get; set; }
     }
 
-    public class WindowProperty
+    public class WindowProperty : Hosted
     {
         public List<Coordinate> Coordinate { get; set; }
         public string Type { get; set; }
         public int Rotation { get; set; }
+
+        public Coordinate GetCoordinate()
+        {
+            return new Coordinate
+            {
+                X = (Coordinate.ElementAt(0).X + Coordinate.ElementAt(1).X) / 2,
+                Y = (Coordinate.ElementAt(0).Y + Coordinate.ElementAt(1).Y) / 2
+            };
+        }
+        public string getType()
+        {
+            return Type;
+        }
     }
 
-    public class DoorProperty
+    public class DoorProperty : Hosted
     {
         public List<Coordinate> Coordinate { get; set; }
         public string Type { get; set; }
         public int Rotation { get; set; }
+
+        public Coordinate GetCoordinate()
+        {
+            return new Coordinate
+            {
+                X = (Coordinate.ElementAt(0).X + Coordinate.ElementAt(1).X) / 2,
+                Y = (Coordinate.ElementAt(0).Y + Coordinate.ElementAt(1).Y) / 2
+            };
+        }
+
+        public string getType()
+        {
+            return Type;
+        }
     }
 
-    public class HostedProperty
+    public class HostedProperty : Hosted
     {
         public Coordinate Coordinate { get; set; }
         public string Type { get; set; }
+
+        public Coordinate GetCoordinate()
+        {
+            return Coordinate;
+        }
+
+        public string getType()
+        {
+            return Type;
+        }
     }
 
     public class FurnitureProperty
@@ -47,6 +84,15 @@ namespace CustomizacaoMoradias.Source
 
     public class ElementDeserializer
     {
+        public ElementDeserializer()
+        {
+            WallProperties = new List<WallProperty>();
+            WindowProperties = new List<WindowProperty>();
+            DoorProperties = new List<DoorProperty>();
+            HostedProperties = new List<HostedProperty>();
+            FurnitureProperties = new List<FurnitureProperty>();
+        }
+
         public List<WallProperty> WallProperties { get; set; }
         public List<WindowProperty> WindowProperties { get; set; }
         public List<DoorProperty> DoorProperties { get; set; }
@@ -54,6 +100,12 @@ namespace CustomizacaoMoradias.Source
         public List<FurnitureProperty> FurnitureProperties { get; set; }
     }
 
+    interface Hosted
+    {
+        Coordinate GetCoordinate();
+
+        string getType();
+    }
 
 
 
