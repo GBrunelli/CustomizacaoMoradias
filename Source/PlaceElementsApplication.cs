@@ -28,7 +28,7 @@ namespace CustomizacaoMoradias
             RibbonPanel elementPlacerRibbonPanel = application.CreateRibbonPanel("Customização de Moradias", "Geração Completa");
 
             // Main button
-            PushButtonData elementPlacerButtonData = new PushButtonData("ElementPlacerButton", "Contruir CSV", path, "CustomizacaoMoradias.ElementPlacerCommand");
+            PushButtonData elementPlacerButtonData = new PushButtonData("ElementPlacerButton", "Contruir JSON", path, "CustomizacaoMoradias.ElementPlacerCommand");
             PushButton elementPlacerButton = elementPlacerRibbonPanel.AddItem(elementPlacerButtonData) as PushButton;
             elementPlacerButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.floor_plan_32px);
 
