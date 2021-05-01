@@ -106,7 +106,4 @@ namespace CustomizacaoMoradias.Source
 
         string getType();
     }
-
-
-
 }

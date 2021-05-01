@@ -8,7 +8,6 @@ namespace CustomizacaoMoradias
 {
     public partial class PlaceElementsForm : System.Windows.Forms.Form
     {
-
         private ExternalEvent m_ExEvent;
         private UserInputHandler m_Handler;
         public static PlaceElementsForm form;
@@ -17,21 +16,14 @@ namespace CustomizacaoMoradias
         public static string topLevelName;
         public static string roofType;
 
-        private void RetriveUserInput()
-        {
-            fileTextBox.Text = Properties.Settings.Default.FileName;
-            levelNameTextBox.Text = Properties.Settings.Default.BaseLevelName;
-            topLevelNametextBox.Text = Properties.Settings.Default.TopLevelName;
-        }
-
         public PlaceElementsForm(ExternalEvent exEvent, UserInputHandler handler)
         {
             InitializeComponent();
-            Thread thread = new Thread(new ThreadStart(RetriveUserInput));
-            thread.Start();
+            fileTextBox.Text = Properties.Settings.Default.FileName;
+            levelNameTextBox.Text = Properties.Settings.Default.BaseLevelName;
+            topLevelNametextBox.Text = Properties.Settings.Default.TopLevelName;
             m_ExEvent = exEvent;
             m_Handler = handler;
-            
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)

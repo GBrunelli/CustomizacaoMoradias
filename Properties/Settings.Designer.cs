@@ -514,5 +514,29 @@ namespace CustomizacaoMoradias.Properties {
                 this["M21"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("piso 10 cm - ceramico 40x40")]
+        public string FloorName {
+            get {
+                return ((string)(this["FloorName"]));
+            }
+            set {
+                this["FloorName"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("laje 10 cm - branca")]
+        public string CeilingName {
+            get {
+                return ((string)(this["CeilingName"]));
+            }
+            set {
+                this["CeilingName"] = value;
+            }
+        }
     }
 }

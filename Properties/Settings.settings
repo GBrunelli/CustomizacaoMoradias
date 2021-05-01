@@ -125,5 +125,11 @@
     <Setting Name="M21" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="FloorName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">piso 10 cm - ceramico 40x40</Value>
+    </Setting>
+    <Setting Name="CeilingName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">laje 10 cm - branca</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

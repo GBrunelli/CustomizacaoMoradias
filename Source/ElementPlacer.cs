@@ -27,6 +27,9 @@ namespace CustomizacaoMoradias
         private PlanCircuitSet docPlanCircuitSet;
         private FootPrintRoof roof;
 
+        /// <summary>
+        /// Default contructor.
+        /// </summary>
         public ElementPlacer(UIDocument uidoc, string level, string topLevel, double scale)
         {
             this.uidoc = uidoc;
@@ -40,7 +43,6 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Convert from meters to feet.
         /// </summary>
-        /// <param name="meters"></param>
         public static double MetersToFeet(double meters)
         {
             return UnitUtils.Convert(meters, UnitTypeId.Meters, UnitTypeId.Feet);
@@ -63,11 +65,17 @@ namespace CustomizacaoMoradias
             return null;
         }
 
+        /// <summary>
+        /// Converts an angle in deegre to radians.
+        /// </summary>
         public double DeegreToRadians(double angle)
         {
             return (Math.PI / 180) * angle;
         }
 
+        /// <summary>
+        /// Get the FamilySymbol given its name.
+        /// </summary>
         private static FamilySymbol GetFamilySymbol(Document doc, string fsFamilyName)
         {
             // Retrieve the familySymbol of the piece of furniture
@@ -78,6 +86,10 @@ namespace CustomizacaoMoradias
                     select familySymbol).First();
             return symbol;
         }
+        
+        /// <summary>
+        /// Convert a Coordinate to an XYZ object.
+        /// </summary>
         private XYZ GetXYZFromProperties(Coordinate coords)
         {
             // Convert the values from the csv file
@@ -153,6 +165,9 @@ namespace CustomizacaoMoradias
             return walls;
         }
 
+        /// <summary>
+        /// Builds the elements defined on a JSON file.
+        /// </summary>
         public void BuildJSON(string path)
         {
             if (path is null) throw new ArgumentNullException(nameof(path));        
@@ -180,13 +195,12 @@ namespace CustomizacaoMoradias
             {
                 MessageBox.Show(e.Message, "Erro");
             }
-
         }
 
         /// <summary>
         /// Creates a piece of furniture.
         /// </summary>
-        /// <param name="properties"> Properties of the object</param>
+        /// <param name="properties"> Properties of the object.</param>
         private FamilyInstance CreateFurniture(FurnitureProperty properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
@@ -197,7 +211,7 @@ namespace CustomizacaoMoradias
             XYZ p0 = GetXYZFromProperties(properties.Coordinate.ElementAt(0));
             XYZ p1 = GetXYZFromProperties(properties.Coordinate.ElementAt(1));
             XYZ point = p0.Add(p1).Divide(2);
-            string fsFamilyName = GetFamilyName(properties.Type);
+            string fsFamilyName = GetFamilySymbolName(properties.Type);
 
             // Creates a point above the furniture to serve as a rotation axis
             XYZ axisPoint = new XYZ(point.X, point.Y, level.Elevation + 1);
@@ -229,7 +243,7 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Creates a wall given its properties.
         /// </summary>
-        /// <param name="properties"> Properties of the object</param>
+        /// <param name="properties"> Properties of the object.</param>
         private Wall CreateWall(WallProperty properties, string wallTypeName)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties)); 
@@ -271,7 +285,7 @@ namespace CustomizacaoMoradias
             if (properties is null) throw new ArgumentNullException(nameof(properties));
             Document doc = uidoc.Document;
             XYZ point = GetXYZFromProperties(properties.Coordinate);
-            string fsFamilyName = GetFamilyName(properties.Type);
+            string fsFamilyName = GetFamilySymbolName(properties.Type);
 
             FamilyInstance instance = null;
             try
@@ -290,13 +304,16 @@ namespace CustomizacaoMoradias
             }
             catch (Exception e)
             {
-                MessageBox.Show(e.Message, "Erro");
-                //throw new Exception("Erro ao inserir elemento hospedeiro \"" + fsFamilyName + "\".", e);
+                throw new Exception("Erro ao inserir elemento hospedeiro \"" + fsFamilyName + "\".", e);
             }
             return instance;
         }
 
-        private static string GetFamilyName(string familyType)
+        /// <summary>
+        /// Get the FamilySynbol from the settings.
+        /// </summary>
+        /// <param name="familyType"></param>
+        private static string GetFamilySymbolName(string familyType)
         {
             foreach (SettingsProperty currentProperty in Properties.Settings.Default.Properties)
             {
@@ -305,10 +322,13 @@ namespace CustomizacaoMoradias
                     return (string) currentProperty.DefaultValue;
                 }
             }
-
             return null;
         }
 
+        /// <summary>
+        /// Creates a door given its properties.
+        /// </summary>
+        /// <param name="properties"> Properties of the object.</param>
         private FamilyInstance CreateDoor(DoorProperty properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
@@ -316,6 +336,10 @@ namespace CustomizacaoMoradias
             return CreateHostedElement(hp);
         }
 
+        /// <summary>
+        /// Creates a windows given its properties.
+        /// </summary>
+        /// <param name="properties"> Properties of the object.</param>
         private FamilyInstance CreateWindow(WindowProperty properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
@@ -328,10 +352,12 @@ namespace CustomizacaoMoradias
                     window.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));
                 transaction.Commit();
             }
-                
             return window;
         }
 
+        /// <summary>
+        /// Converts an Hosted object in a HostedProperty.
+        /// </summary>
         private static HostedProperty ConvertToHosted(Hosted obj)
         {
             Coordinate c = obj.GetCoordinate();
@@ -705,8 +731,6 @@ namespace CustomizacaoMoradias
         /// Set the bound of a curve to remove overlaps. This method is used to make CurveLoops.
         /// </summary>
         /// <seealso cref="CreateOffsetedCurve(CurveArray, Curve, double, XYZ)"/>
-        /// <param name="curve"></param>
-        /// <param name="intersectionPoint"></param>
         private static void RemoveCurveOverlap(Curve curve, XYZ intersectionPoint)
         {
             double distanceToStart = curve.GetEndPoint(0).DistanceTo(intersectionPoint);

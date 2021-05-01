@@ -23,8 +23,8 @@ namespace CustomizacaoMoradias
                 ElementPlacer elementPlacer = new ElementPlacer(uidoc, levelName, topLevelName, 0.3);
 
                 elementPlacer.BuildJSON(path);
-                elementPlacer.CreateFloor("piso 10 cm - ceramico 40x40");
-                elementPlacer.CreateCeiling("laje 10 cm - branca");
+                elementPlacer.CreateFloor(Properties.Settings.Default.FloorName);
+                elementPlacer.CreateCeiling(Properties.Settings.Default.CeilingName);
 
                 double offset = ElementPlacer.MetersToFeet(0.6);
 
@@ -33,7 +33,6 @@ namespace CustomizacaoMoradias
 
                 elementPlacer.CreateRoof(offset, 0.3, roofVector);
                 elementPlacer.ClassifyRooms();
-                //PlaceElementsUtil.CreateNewSheet(doc);
             }
             catch(LevelNotFoundException lvlEx)
             {
