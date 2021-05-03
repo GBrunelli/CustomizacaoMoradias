@@ -1,17 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.IO;
 using System.Linq;
+using System.Windows.Forms;
+using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Architecture;
 using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.UI;
-using Autodesk.Revit.Attributes;
-using System.Globalization;
-using System.IO;
-using System.Windows.Forms;
-using Autodesk.Revit.DB.Architecture;
-using Newtonsoft.Json;
 using CustomizacaoMoradias.Source;
-using System.Configuration;
+using Newtonsoft.Json;
 
 namespace CustomizacaoMoradias
 {
@@ -60,7 +59,7 @@ namespace CustomizacaoMoradias
             {
                 Filter = "json|*.json"
             };
-            if (openFileDialog.ShowDialog() == DialogResult.OK) 
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
                 return openFileDialog.FileName;
             return null;
         }
@@ -82,11 +81,11 @@ namespace CustomizacaoMoradias
             var symbol = (from familySymbol in new FilteredElementCollector(doc).
                  OfClass(typeof(FamilySymbol)).
                  Cast<FamilySymbol>()
-                    where (familySymbol.Name == fsFamilyName)
-                    select familySymbol).First();
+                          where (familySymbol.Name == fsFamilyName)
+                          select familySymbol).First();
             return symbol;
         }
-        
+
         /// <summary>
         /// Convert a Coordinate to an XYZ object.
         /// </summary>
@@ -170,7 +169,7 @@ namespace CustomizacaoMoradias
         /// </summary>
         public void BuildJSON(string path)
         {
-            if (path is null) throw new ArgumentNullException(nameof(path));        
+            if (path is null) throw new ArgumentNullException(nameof(path));
             try
             {
                 string jsonText = File.ReadAllText(path);
@@ -246,7 +245,7 @@ namespace CustomizacaoMoradias
         /// <param name="properties"> Properties of the object.</param>
         private Wall CreateWall(WallProperty properties, string wallTypeName)
         {
-            if (properties is null) throw new ArgumentNullException(nameof(properties)); 
+            if (properties is null) throw new ArgumentNullException(nameof(properties));
             Document doc = uidoc.Document;
 
             XYZ p0 = GetXYZFromProperties(properties.Coordinate.ElementAt(0));
@@ -319,7 +318,7 @@ namespace CustomizacaoMoradias
             {
                 if (familyType == currentProperty.Name)
                 {
-                    return (string) currentProperty.DefaultValue;
+                    return (string)currentProperty.DefaultValue;
                 }
             }
             return null;
@@ -510,7 +509,7 @@ namespace CustomizacaoMoradias
                     // ElevationMarker marker = ElevationMarker.CreateElevationMarker(doc, viewFamilyType.Id, center, 2);
 
                     #endregion
- 
+
                     transaction.Commit();
                 }
             }
@@ -583,7 +582,7 @@ namespace CustomizacaoMoradias
         /// </returns>
         public CurveArray GetHousePerimeter(double offset, XYZ offsetVector)
         {
-            if(offset != 0)
+            if (offset != 0)
                 if (offsetVector is null) throw new ArgumentNullException(nameof(offsetVector));
 
             Document doc = uidoc.Document;
@@ -596,7 +595,7 @@ namespace CustomizacaoMoradias
                 IList<IList<BoundarySegment>> loopsSegments = GetLoopsInCircuit(circuit);
 
                 // if there more than 1 loop, that means that this circuit represents the external area
-                if(loopsSegments.Count > 1)
+                if (loopsSegments.Count > 1)
                 {
                     // first of all we find the closed loop with the smaller area
                     double minArea = double.MaxValue;
@@ -613,7 +612,7 @@ namespace CustomizacaoMoradias
                         }
 
                         // save the segments with the smaller area, which represents the house perimeter
-                        IList<CurveLoop> curveLoopList = new List<CurveLoop>{currentCurve};
+                        IList<CurveLoop> curveLoopList = new List<CurveLoop> { currentCurve };
                         area = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoopList);
                         if (area < minArea)
                         {
@@ -701,7 +700,7 @@ namespace CustomizacaoMoradias
                 wallNormalVector = wallNormalVector.Multiply(offset);
                 Transform transform = Transform.CreateTranslation(wallNormalVector);
                 curve = curve.CreateTransformed(transform);
-            }       
+            }
 
             // verifies that the new curve intersects with other curves in the array,
             // if that happens, both curves are ajusted to align perfectly 
@@ -902,7 +901,7 @@ namespace CustomizacaoMoradias
                     if (curveDirection.DotProduct(slopeDirection) == 0)
                     {
                         footPrintRoof.set_DefinesSlope(modelCurve, true);
-                        footPrintRoof.set_SlopeAngle(modelCurve, slope);          
+                        footPrintRoof.set_SlopeAngle(modelCurve, slope);
                     }
 
                     double elevation = -(overhang - MetersToFeet(0.1)) / 3;
@@ -912,7 +911,7 @@ namespace CustomizacaoMoradias
             }
             roof = footPrintRoof;
 
-            if(!slopeDirection.IsZeroLength())
+            if (!slopeDirection.IsZeroLength())
                 CreateAllGableWalls(slopeDirection, slope);
 
             return footPrintRoof;
@@ -940,11 +939,11 @@ namespace CustomizacaoMoradias
         {
             Document doc = uidoc.Document;
             string jsonElementClassifier = Properties.Resources.ElementClassifierConfig;
-            List<RoomClassifier> deserializedRoomClassifier = JsonConvert.DeserializeObject<List<RoomClassifier>>(jsonElementClassifier);         
+            List<RoomClassifier> deserializedRoomClassifier = JsonConvert.DeserializeObject<List<RoomClassifier>>(jsonElementClassifier);
             List<Room> rooms = GetRoomsAtLevel(level).ToList();
             foreach (Room room in rooms)
             {
-                if(room.Area > 0)
+                if (room.Area > 0)
                 {
                     string roomName = null;
                     List<Element> elements = GetFurniture(room);
@@ -962,7 +961,7 @@ namespace CustomizacaoMoradias
                             }
                             if (roomClassifier.RoomScore > roomScore)
                             {
-                                 roomName = roomClassifier.Name;                             
+                                roomName = roomClassifier.Name;
                             }
                         }
                     }
@@ -972,7 +971,7 @@ namespace CustomizacaoMoradias
                         if (roomName != null)
                         {
                             room.Name = roomName;
-                        }                        
+                        }
                         transaction.Commit();
                     }
                 }
@@ -1029,7 +1028,7 @@ namespace CustomizacaoMoradias
 
             foreach (FamilyInstance instance in collector)
             {
-                if(instance.Room != null)
+                if (instance.Room != null)
                 {
                     if (instance.Room.Id.IntegerValue.Equals(roomid))
                     {
@@ -1139,6 +1138,6 @@ namespace CustomizacaoMoradias
             XYZ baseVector = p1.Subtract(p0);
             double p2z = (slope * baseVector.GetLength()) / 2;
             return new XYZ(p2x, p2y, p2z);
-        }    
+        }
     }
 }
