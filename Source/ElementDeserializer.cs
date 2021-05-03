@@ -103,7 +103,6 @@ namespace CustomizacaoMoradias.Source
     interface Hosted
     {
         Coordinate GetCoordinate();
-
         string getType();
     }
 }

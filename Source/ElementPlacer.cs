@@ -221,16 +221,9 @@ namespace CustomizacaoMoradias
             {
                 FamilySymbol familySymbol = GetFamilySymbol(doc, fsFamilyName);
 
-                using (Transaction transaction = new Transaction(doc, "Place Piece of Furniture"))
-                {
-                    transaction.Start();
-
-                    var structuralType = Autodesk.Revit.DB.Structure.StructuralType.NonStructural;
-                    furniture = doc.Create.NewFamilyInstance(point, familySymbol, structuralType);
-                    ElementTransformUtils.RotateElement(doc, furniture.Id, axis, rotation);
-
-                    transaction.Commit();
-                }
+                var structuralType = Autodesk.Revit.DB.Structure.StructuralType.NonStructural;
+                furniture = doc.Create.NewFamilyInstance(point, familySymbol, structuralType);
+                ElementTransformUtils.RotateElement(doc, furniture.Id, axis, rotation);
             }
             catch (Exception e)
             {
@@ -258,14 +251,11 @@ namespace CustomizacaoMoradias
                 WallType wallType = GetWallType(wallTypeName);
 
                 // Creating the wall
-                using (Transaction transaction = new Transaction(doc, "Place Wall"))
-                {
-                    transaction.Start();
-                    wall = Wall.Create(doc, curve, wallType.Id, level.Id, MetersToFeet(2.8), 0, false, false);
-                    wall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(topLevel.Id);
-                    wall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET).Set(MetersToFeet(-0.10));
-                    transaction.Commit();
-                }
+
+                wall = Wall.Create(doc, curve, wallType.Id, level.Id, MetersToFeet(2.8), 0, false, false);
+                wall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(topLevel.Id);
+                wall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET).Set(MetersToFeet(-0.10));
+
             }
             catch (Exception e)
             {
@@ -294,12 +284,7 @@ namespace CustomizacaoMoradias
                 if (wall == null) return null;
 
                 // Create the element
-                using (Transaction transaction = new Transaction(doc, "Place Hosted Element"))
-                {
-                    transaction.Start();
-                    instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
-                    transaction.Commit();
-                }
+                instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
             }
             catch (Exception e)
             {
@@ -344,13 +329,10 @@ namespace CustomizacaoMoradias
             if (properties is null) throw new ArgumentNullException(nameof(properties));
             HostedProperty hp = ConvertToHosted(properties);
             FamilyInstance window = CreateHostedElement(hp);
-            using (Transaction transaction = new Transaction(uidoc.Document, "Change Window Height"))
-            {
-                transaction.Start();
-                if (window != null)
-                    window.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));
-                transaction.Commit();
-            }
+
+            if (window != null)
+                window.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));
+
             return window;
         }
 
@@ -448,70 +430,62 @@ namespace CustomizacaoMoradias
                 SpatialElementBoundaryLocation = SpatialElementBoundaryLocation.Center
             };
 
-            using (Transaction transaction = new Transaction(doc, "Create room"))
+            if (circuit.IsRoomLocated)
             {
+                UV point2D = circuit.GetPointInside();
+                XYZ point = new XYZ(point2D.U, point2D.V, 0);
+                room = doc.GetRoomAtPoint(point);
+                loops = room.GetBoundarySegments(opt);
+            }
+            else
+            {
+                room = doc.Create.NewRoom(null, circuit);
+                loops = room.GetBoundarySegments(opt);
 
-
-                if (circuit.IsRoomLocated)
+                if (loops.Count > 1)
                 {
-                    UV point2D = circuit.GetPointInside();
-                    XYZ point = new XYZ(point2D.U, point2D.V, 0);
-                    room = doc.GetRoomAtPoint(point);
-                    loops = room.GetBoundarySegments(opt);
+                    room.Name = "Exterior";
+                    room.Number = "0";
                 }
-                else
+
+                #region Elevation Mark TEST
+
+                /* TEST 1
+                ViewFamilyType viewFamilyType = null;
+
+                FilteredElementCollector collector = new FilteredElementCollector(doc);
+                ICollection<Element> views = collector.OfClass(typeof(ViewFamilyType)).ToElements();                   
+
+                foreach(Element element in views)
                 {
-                    transaction.Start();
-                    room = doc.Create.NewRoom(null, circuit);
-                    loops = room.GetBoundarySegments(opt);
-
-                    if (loops.Count > 1)
+                    if (element.Name == "Floor Plan")
                     {
-                        room.Name = "Exterior";
-                        room.Number = "0";
+                        viewFamilyType = element as ViewFamilyType;
                     }
-
-                    #region Elevation Mark TEST
-
-                    /* TEST 1
-                    ViewFamilyType viewFamilyType = null;
-
-                    FilteredElementCollector collector = new FilteredElementCollector(doc);
-                    ICollection<Element> views = collector.OfClass(typeof(ViewFamilyType)).ToElements();                   
-
-                    foreach(Element element in views)
-                    {
-                        if (element.Name == "Floor Plan")
-                        {
-                            viewFamilyType = element as ViewFamilyType;
-                        }
-                    }
-
-                    BoundingBoxXYZ roomBoundingBox = room.get_BoundingBox(null);
-                    XYZ center = (roomBoundingBox.Max + roomBoundingBox.Min) / 2;
-                    
-                    */
-
-                    /* TEST 2
-
-                    ViewFamilyType viewFamilyType;
-                    FilteredElementCollector collector = new FilteredElementCollector(doc);
-                    collector.OfClass(typeof(ViewFamilyType));
-                    List<ViewFamilyType> viewFamilyTypes = collector.Cast<ViewFamilyType>().Where(view => view.Name == "Plantas de piso").ToList();
-                    viewFamilyType = viewFamilyTypes.First();
-
-                    BoundingBoxXYZ roomBoundingBox = room.get_BoundingBox(null);
-                    XYZ center = (roomBoundingBox.Max + roomBoundingBox.Min) / 2;
-
-                    */
-
-
-                    // ElevationMarker marker = ElevationMarker.CreateElevationMarker(doc, viewFamilyType.Id, center, 2);
-
-                    #endregion
-
-                    transaction.Commit();
                 }
+
+                BoundingBoxXYZ roomBoundingBox = room.get_BoundingBox(null);
+                XYZ center = (roomBoundingBox.Max + roomBoundingBox.Min) / 2;
+                
+                */
+
+                /* TEST 2
+
+                ViewFamilyType viewFamilyType;
+                FilteredElementCollector collector = new FilteredElementCollector(doc);
+                collector.OfClass(typeof(ViewFamilyType));
+                List<ViewFamilyType> viewFamilyTypes = collector.Cast<ViewFamilyType>().Where(view => view.Name == "Plantas de piso").ToList();
+                viewFamilyType = viewFamilyTypes.First();
+
+                BoundingBoxXYZ roomBoundingBox = room.get_BoundingBox(null);
+                XYZ center = (roomBoundingBox.Max + roomBoundingBox.Min) / 2;
+
+                */
+
+
+                // ElevationMarker marker = ElevationMarker.CreateElevationMarker(doc, viewFamilyType.Id, center, 2);
+
+                #endregion
             }
             return loops;
         }
@@ -541,24 +515,18 @@ namespace CustomizacaoMoradias
 
                 if (loops != null)
                 {
-                    using (Transaction transaction = new Transaction(doc, "Create Floor"))
+                    // creates a floor if in a single room there is only one loop
+                    if (loops.Count == 1)
                     {
-                        transaction.Start();
-
-                        // creates a floor if in a single room there is only one loop
-                        if (loops.Count == 1)
+                        CurveArray curve = new CurveArray();
+                        foreach (IList<BoundarySegment> loop in loops)
                         {
-                            CurveArray curve = new CurveArray();
-                            foreach (IList<BoundarySegment> loop in loops)
+                            foreach (BoundarySegment seg in loop)
                             {
-                                foreach (BoundarySegment seg in loop)
-                                {
-                                    curve.Append(seg.GetCurve());
-                                }
-                                doc.Create.NewFloor(curve, floorType, level, true);
+                                curve.Append(seg.GetCurve());
                             }
+                            doc.Create.NewFloor(curve, floorType, level, true);
                         }
-                        transaction.Commit();
                     }
                 }
             }
@@ -808,26 +776,19 @@ namespace CustomizacaoMoradias
             Floor ceiling = null;
             PlanCircuitSet circuitSet = GetDocPlanCircuitSet(false);
 
-            using (Transaction transaction = new Transaction(doc, "Create Ceiling"))
-            {
-                transaction.Start();
+            // creates a ceiling if in a room there is more than one loop,
+            // and finds the smallest loop
 
-                // creates a ceiling if in a room there is more than one loop,
-                // and finds the smallest loop
+            CurveArray curve = GetHousePerimeter(0, new XYZ(0, 0, 0));
 
-                CurveArray curve = GetHousePerimeter(0, new XYZ(0, 0, 0));
+            // create a floor type
+            FilteredElementCollector collector = new FilteredElementCollector(doc);
+            collector.OfClass(typeof(FloorType));
+            FloorType floorType = collector.First(y => y.Name == floorTypeName) as FloorType;
 
-                // create a floor type
-                FilteredElementCollector collector = new FilteredElementCollector(doc);
-                collector.OfClass(typeof(FloorType));
-                FloorType floorType = collector.First(y => y.Name == floorTypeName) as FloorType;
-
-                // create the ceiling
-                ceiling = doc.Create.NewFloor(curve, floorType, topLevel, false);
-                ElementTransformUtils.MoveElement(doc, ceiling.Id, new XYZ(0, 0, topLevel.Elevation));
-
-                transaction.Commit();
-            }
+            // create the ceiling
+            ceiling = doc.Create.NewFloor(curve, floorType, topLevel, false);
+            ElementTransformUtils.MoveElement(doc, ceiling.Id, new XYZ(0, 0, topLevel.Elevation));
 
             return ceiling;
         }
@@ -873,42 +834,37 @@ namespace CustomizacaoMoradias
             Document doc = uidoc.Document;
             FootPrintRoof footPrintRoof = null;
 
-            using (Transaction transaction = new Transaction(doc, "Create Roof"))
+            CurveArray footPrintCurve = GetHousePerimeter(overhang, new XYZ(0, 0, 0));
+
+            // create a roof type
+            FilteredElementCollector collector = new FilteredElementCollector(doc);
+            collector.OfClass(typeof(RoofType));
+            RoofType roofType = collector.FirstElement() as RoofType;
+
+            // create the foot print of the roof
+            ModelCurveArray footPrintToModelCurveMapping = new ModelCurveArray();
+            footPrintRoof = doc.Create.NewFootPrintRoof(footPrintCurve, topLevel, roofType, out footPrintToModelCurveMapping);
+
+            // creates a iterator to add the roof slope
+            ModelCurveArrayIterator iterator = footPrintToModelCurveMapping.ForwardIterator();
+            iterator.Reset();
+
+            while (iterator.MoveNext())
             {
-                transaction.Start();
+                ModelCurve modelCurve = iterator.Current as ModelCurve;
+                Curve curve = modelCurve.GeometryCurve;
+                XYZ curveDirection = GetCurveDirection(curve);
 
-                CurveArray footPrintCurve = GetHousePerimeter(overhang, new XYZ(0, 0, 0));
-
-                // create a roof type
-                FilteredElementCollector collector = new FilteredElementCollector(doc);
-                collector.OfClass(typeof(RoofType));
-                RoofType roofType = collector.FirstElement() as RoofType;
-
-                // create the foot print of the roof
-                ModelCurveArray footPrintToModelCurveMapping = new ModelCurveArray();
-                footPrintRoof = doc.Create.NewFootPrintRoof(footPrintCurve, topLevel, roofType, out footPrintToModelCurveMapping);
-
-                // creates a iterator to add the roof slope
-                ModelCurveArrayIterator iterator = footPrintToModelCurveMapping.ForwardIterator();
-                iterator.Reset();
-
-                while (iterator.MoveNext())
+                if (curveDirection.DotProduct(slopeDirection) == 0)
                 {
-                    ModelCurve modelCurve = iterator.Current as ModelCurve;
-                    Curve curve = modelCurve.GeometryCurve;
-                    XYZ curveDirection = GetCurveDirection(curve);
-
-                    if (curveDirection.DotProduct(slopeDirection) == 0)
-                    {
-                        footPrintRoof.set_DefinesSlope(modelCurve, true);
-                        footPrintRoof.set_SlopeAngle(modelCurve, slope);
-                    }
-
-                    double elevation = -(overhang - MetersToFeet(0.1)) / 3;
-                    footPrintRoof.set_Offset(modelCurve, elevation);
+                    footPrintRoof.set_DefinesSlope(modelCurve, true);
+                    footPrintRoof.set_SlopeAngle(modelCurve, slope);
                 }
-                transaction.Commit();
+
+                double elevation = -(overhang - MetersToFeet(0.1)) / 3;
+                footPrintRoof.set_Offset(modelCurve, elevation);
             }
+
             roof = footPrintRoof;
 
             if (!slopeDirection.IsZeroLength())
@@ -965,14 +921,9 @@ namespace CustomizacaoMoradias
                             }
                         }
                     }
-                    using (Transaction transaction = new Transaction(doc, "Classify Room"))
+                    if (roomName != null)
                     {
-                        transaction.Start();
-                        if (roomName != null)
-                        {
-                            room.Name = roomName;
-                        }
-                        transaction.Commit();
+                        room.Name = roomName;
                     }
                 }
             }
@@ -1045,27 +996,20 @@ namespace CustomizacaoMoradias
         public void CreateNewSheet()
         {
             Document doc = uidoc.Document;
-            using (Transaction transaction = new Transaction(doc, "New Sheet"))
-            {
-                transaction.Start();
+            // create a filter to get all the title block type
+            FilteredElementCollector collector = new FilteredElementCollector(doc);
+            collector.OfCategory(BuiltInCategory.OST_TitleBlocks);
+            collector.WhereElementIsElementType();
 
-                // create a filter to get all the title block type
-                FilteredElementCollector collector = new FilteredElementCollector(doc);
-                collector.OfCategory(BuiltInCategory.OST_TitleBlocks);
-                collector.WhereElementIsElementType();
+            // get elementid of first title block type
+            ElementId titleblockid = collector.FirstElementId();
 
-                // get elementid of first title block type
-                ElementId titleblockid = collector.FirstElementId();
+            // create the sheet
+            ViewSheet viewSheet = ViewSheet.Create(doc, titleblockid);
+            viewSheet.Name = "NEW SHEET TEST";
+            viewSheet.SheetNumber = "A-01";
 
-                // create the sheet
-                ViewSheet viewSheet = ViewSheet.Create(doc, titleblockid);
-                viewSheet.Name = "NEW SHEET TEST";
-                viewSheet.SheetNumber = "A-01";
-
-                Viewport viewport = Viewport.Create(doc, viewSheet.Id, doc.ActiveView.Id, new XYZ(0, 2, 0));
-
-                transaction.Commit();
-            }
+            Viewport viewport = Viewport.Create(doc, viewSheet.Id, doc.ActiveView.Id, new XYZ(0, 2, 0));
         }
 
         /// <summary>
@@ -1082,19 +1026,13 @@ namespace CustomizacaoMoradias
         {
             Document doc = uidoc.Document;
             CurveArray perimeter = GetHousePerimeter(0, null);
-            using (Transaction transaction = new Transaction(doc, "Create Gable Walls"))
+            foreach (Curve line in perimeter)
             {
-                transaction.Start();
-
-                foreach (Curve line in perimeter)
+                XYZ lineDirection = GetCurveDirection(line);
+                if (lineDirection.CrossProduct(vectorDirection).IsZeroLength())
                 {
-                    XYZ lineDirection = GetCurveDirection(line);
-                    if (lineDirection.CrossProduct(vectorDirection).IsZeroLength())
-                    {
-                        CreateGableWall(line, slope);
-                    }
+                    CreateGableWall(line, slope);
                 }
-                transaction.Commit();
             }
         }
 

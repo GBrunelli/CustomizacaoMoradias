@@ -18,8 +18,12 @@ namespace CustomizacaoMoradias
                 ElementPlacer elementPlacer = new ElementPlacer(uidoc, "PLANTA BAIXA", "COBERTURA", 0.3);
 
                 double offset = ElementPlacer.MetersToFeet(0.6);
-
-                elementPlacer.CreateRoof(offset, 0.3, new XYZ(1, 0, 0));
+                using (Transaction transaction = new Transaction(commandData.Application.ActiveUIDocument.Document, "Roof Command"))
+                {
+                    transaction.Start();
+                    elementPlacer.CreateRoof(offset, 0.3, new XYZ(1, 0, 0));
+                    transaction.Commit();
+                }
 
                 return Result.Succeeded;
             }

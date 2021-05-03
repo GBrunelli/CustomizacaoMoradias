@@ -18,8 +18,13 @@ namespace CustomizacaoMoradias
                 UIDocument uidoc = commandData.Application.ActiveUIDocument;
                 ElementPlacer elementPlacer = new ElementPlacer(uidoc, "PLANTA BAIXA", "COBERTURA", 0.3);
 
-                elementPlacer.CreateCeiling("laje 10 cm - branca");
-
+                using(Transaction transaction = new Transaction(commandData.Application.ActiveUIDocument.Document, "Ceiling Command."))
+                {
+                    transaction.Start();
+                    elementPlacer.CreateCeiling("laje 10 cm - branca");
+                    transaction.Commit();
+                }
+              
                 return Result.Succeeded;
             }
             catch (Exception e)

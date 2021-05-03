@@ -14,25 +14,31 @@ namespace CustomizacaoMoradias
             try
             {
                 UIDocument uidoc = app.ActiveUIDocument;
+                using (Transaction transaction = new Transaction(uidoc.Document, "Contruir JSON"))
+                {
+                    transaction.Start();
 
-                string path = PlaceElementsForm.filePath;
-                string levelName = PlaceElementsForm.levelName;
-                string topLevelName = PlaceElementsForm.topLevelName;
-                XYZ roofVector = GetXYZFromString(PlaceElementsForm.roofType);
+                    string path = PlaceElementsForm.filePath;
+                    string levelName = PlaceElementsForm.levelName;
+                    string topLevelName = PlaceElementsForm.topLevelName;
+                    XYZ roofVector = GetXYZFromString(PlaceElementsForm.roofType);
 
-                ElementPlacer elementPlacer = new ElementPlacer(uidoc, levelName, topLevelName, 0.3);
+                    ElementPlacer elementPlacer = new ElementPlacer(uidoc, levelName, topLevelName, 0.3);
 
-                elementPlacer.BuildJSON(path);
-                elementPlacer.CreateFloor(Properties.Settings.Default.FloorName);
-                elementPlacer.CreateCeiling(Properties.Settings.Default.CeilingName);
+                    elementPlacer.BuildJSON(path);
+                    elementPlacer.CreateFloor(Properties.Settings.Default.FloorName);
+                    elementPlacer.CreateCeiling(Properties.Settings.Default.CeilingName);
 
-                double offset = ElementPlacer.MetersToFeet(0.6);
+                    double offset = ElementPlacer.MetersToFeet(0.6);
 
-                if(roofVector == null)
-                    roofVector = new XYZ(0, 0, 0);
+                    if (roofVector == null)
+                        roofVector = new XYZ(0, 0, 0);
 
-                elementPlacer.CreateRoof(offset, 0.3, roofVector);
-                elementPlacer.ClassifyRooms();
+                    elementPlacer.CreateRoof(offset, 0.3, roofVector);
+                    elementPlacer.ClassifyRooms();
+
+                    transaction.Commit();
+                }
             }
             catch(LevelNotFoundException lvlEx)
             {

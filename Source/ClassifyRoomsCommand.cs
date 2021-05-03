@@ -18,7 +18,12 @@ namespace CustomizacaoMoradias
                 UIDocument uidoc = commandData.Application.ActiveUIDocument;
                 ElementPlacer elementPlacer = new ElementPlacer(uidoc, "PLANTA BAIXA", "COBERTURA", 0.3);
 
-                elementPlacer.ClassifyRooms();
+                using (Transaction transaction = new Transaction(commandData.Application.ActiveUIDocument.Document, "Classify Rooms"))
+                {
+                    transaction.Start();
+                    elementPlacer.ClassifyRooms();
+                    transaction.Commit();
+                }
 
                 return Result.Succeeded;
             }

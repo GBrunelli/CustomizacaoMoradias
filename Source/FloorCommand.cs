@@ -16,8 +16,12 @@ namespace CustomizacaoMoradias
             {
                 UIDocument uidoc = commandData.Application.ActiveUIDocument;
                 ElementPlacer elementPlacer = new ElementPlacer(uidoc, "PLANTA BAIXA", "COBERTURA", 0.3);
-
-                elementPlacer.CreateFloor("piso 10 cm - ceramico 40x40");
+                using (Transaction transaction = new Transaction(commandData.Application.ActiveUIDocument.Document, ""))
+                {
+                    transaction.Start();
+                    elementPlacer.CreateFloor("piso 10 cm - ceramico 40x40");
+                    transaction.Commit();
+                }         
 
                 return Result.Succeeded;
             }
