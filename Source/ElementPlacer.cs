@@ -532,6 +532,76 @@ namespace CustomizacaoMoradias
             }
         }
 
+        private LinkedList<UV> GetPoints(CurveArray curveArray)
+        {
+            LinkedList<UV> points = new LinkedList<UV>();
+            foreach(Curve curve in curveArray)
+            {
+                XYZ p = curve.GetEndPoint(0);
+                UV point2D = new UV(p.X, p.Y);
+                points.AddLast(point2D);
+            }
+            return points;
+        }
+
+        private double GetAngle(UV p0, UV p1, UV p2)
+        {
+            UV vector1 = p1.Subtract(p0);
+            UV vector2 = p2.Subtract(p1);
+            return Math.PI + Math.Atan2(vector1.CrossProduct(vector2), vector1.DotProduct(vector2));
+        }
+
+        private List<UV> GetNotches(LinkedList<UV> points)
+        {
+            List<UV> notches = new List<UV>();
+            int n = points.Count();
+            double angle;
+
+            // calculates the angle for the first node
+            UV p0 = points.Last();
+            UV p1 = points.First();
+            UV p2 = points.First.Next.Value;
+            angle = GetAngle(p0, p1, p2);
+            if (angle > Math.PI)
+                notches.Add(p1);
+
+            // calculates the angle for the middle nodes
+            LinkedListNode<UV> node = points.First;
+            for (int i = 1; i < n-1; i++)
+            {
+                node = node.Next;
+                p0 = node.Previous.Value;
+                p1 = node.Value;
+                p2 = node.Next.Value;
+                angle = GetAngle(p0, p1, p2);
+                if (angle > Math.PI)
+                    notches.Add(p1);
+            }
+            // calculates the angle fot the last node
+            p0 = points.Last.Previous.Value;
+            p1 = points.Last();
+            p2 = points.First();
+            angle = GetAngle(p0, p1, p2);
+            if (angle > Math.PI)
+                notches.Add(p1);
+
+            return notches;
+        }
+
+
+        public List<CurveArray> GetConvexPerimeters(CurveArray curveArray)
+        {
+            // get all points    
+            LinkedList<UV> points = GetPoints(curveArray);
+
+            // get all notches
+            // https://stackoverflow.com/questions/12083480/finding-internal-angles-of-polygon
+            // Angle[i] =  Pi + ArcTan2(V[i] x V[i+1], V[i] * V[i+1])   
+            List<UV> notches = GetNotches(points);
+
+            return null;
+        }
+
         /// <summary>
         /// Calculates a CurveArray that corresponds the perimeter of a building given all its internal loops. 
         /// The building MUST be surround by walls.
@@ -836,6 +906,8 @@ namespace CustomizacaoMoradias
 
             CurveArray footPrintCurve = GetHousePerimeter(overhang, new XYZ(0, 0, 0));
 
+            GetConvexPerimeters(footPrintCurve);
+
             // create a roof type
             FilteredElementCollector collector = new FilteredElementCollector(doc);
             collector.OfClass(typeof(RoofType));
@@ -868,7 +940,7 @@ namespace CustomizacaoMoradias
             roof = footPrintRoof;
 
             if (!slopeDirection.IsZeroLength())
-                CreateAllGableWalls(slopeDirection, slope);
+                CreateAllGableWalls(slopeDirection, slope);           
 
             return footPrintRoof;
         }
