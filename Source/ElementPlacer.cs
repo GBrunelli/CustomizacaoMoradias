@@ -628,7 +628,7 @@ namespace CustomizacaoMoradias
 
             foreach(UV notche in notches)
             {
-                EliminateNotch(notche, curveArray, ref points);
+                EliminateNotch(notche, curveArray, points);
             }
 
             return null;
@@ -788,6 +788,13 @@ namespace CustomizacaoMoradias
             }
         }
 
+
+        /// <summary>
+        /// Searches for a point in the LinkedList
+        /// </summary>
+        /// <returns>
+        /// Returns the node.
+        /// </returns>
         private static LinkedListNode<UV> FindPoint(LinkedList<UV> points, UV key)
         {
             var node = points.First;
@@ -801,11 +808,17 @@ namespace CustomizacaoMoradias
             return null;
         }
 
+        /// <summary>
+        /// Project the point XYZ in the plane XY.
+        /// </summary>
         private static UV ProjectInPlaneXY(XYZ xyz)
         {
             return new UV(xyz.X, xyz.Y);
         }
 
+        /// <summary>
+        /// Transforms a 2D point in a 3D point, with the Z component set to 0.
+        /// </summary>
         private static XYZ TranformIn3D(UV uv)
         {
             return new XYZ(uv.U, uv.V, 0);
