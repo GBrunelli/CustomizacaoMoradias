@@ -533,6 +533,15 @@ namespace CustomizacaoMoradias
             }
         }
 
+        /// <summary>
+        /// Get the vertices of the CurveArray
+        /// </summary>
+        /// <param name="curveArray">
+        /// The CurveArray must be closed.
+        /// </param>
+        /// <returns>
+        /// Returns a Linked List of UV points ordered in clock wise order.
+        /// </returns>
         private LinkedList<UV> GetPoints(CurveArray curveArray)
         {
             LinkedList<UV> points = new LinkedList<UV>();
@@ -544,6 +553,12 @@ namespace CustomizacaoMoradias
             return points;
         }
 
+        /// <summary>
+        /// Calculates de angle between the vectors (p0, p1) and (p1, p2)
+        /// </summary>
+        /// <returns>
+        /// Returns the angle in radians.
+        /// </returns>
         private double CalculatesAngle(UV p0, UV p1, UV p2)
         {
             UV vector1 = p1.Subtract(p0);
@@ -551,6 +566,16 @@ namespace CustomizacaoMoradias
             return Math.PI + Math.Atan2(vector1.CrossProduct(vector2), vector1.DotProduct(vector2));
         }
 
+        /// <summary>
+        /// Get all notches in a list of ordered points that represent the vertices of
+        /// a polygon. A notch is a point that the reflex angle in internal.
+        /// </summary>
+        /// <param name="points">
+        /// The poitns in the LinkedList must be ordered in clockwise order.
+        /// </param>
+        /// <returns>
+        /// Returns a List with the notches.
+        /// </returns>
         private List<UV> GetNotches(LinkedList<UV> points)
         {
             List<UV> notches = new List<UV>();
@@ -588,7 +613,14 @@ namespace CustomizacaoMoradias
             return notches;
         }
 
-
+        /// <summary>
+        /// Decompose a non convex perimiter into its convex components. There is no 
+        /// garantee that it will be the mininum number of convex polygons. All the
+        /// angles of the perimeter bust be a multiple of PI/2 radians.
+        /// </summary>
+        /// <returns>
+        /// Returns a List of CurveArrays that represents the convex compenents.
+        /// </returns>
         public List<CurveArray> GetConvexPerimeters(CurveArray curveArray)
         {
             LinkedList<UV> points = GetPoints(curveArray);
@@ -602,9 +634,19 @@ namespace CustomizacaoMoradias
             return null;
         }
 
-        private List<CurveArray> EliminateNotch(UV notche, CurveArray curveArray, ref LinkedList<UV> points)
+        /// <summary>
+        /// Eliminates a notch by creating a new line between the notch and one of the other 
+        /// edges of the polygon.
+        /// </summary>
+        /// <param name="notch">Coordinates of the notch.</param>
+        /// <param name="curveArray">The polygon.</param>
+        /// <param name="points">The vertices of the polygon.</param>
+        /// <returns>
+        /// Returns the list of the CurveArrays.
+        /// </returns>
+        private List<CurveArray> EliminateNotch(UV notch, CurveArray curveArray, LinkedList<UV> points)
         {
-            XYZ notche3D = TranformIn3D(notche);
+            XYZ notche3D = TranformIn3D(notch);
             Line line1 = Line.CreateUnbound(notche3D, XYZ.BasisX);
             Line line2 = Line.CreateUnbound(notche3D, XYZ.BasisY);
 
@@ -617,8 +659,8 @@ namespace CustomizacaoMoradias
                 
                 // the curve will be appended if none of the
                 // end points is equal to the notche
-                if(!p0.Subtract(notche).IsZeroLength() && 
-                   !p1.Subtract(notche).IsZeroLength())
+                if(!p0.Subtract(notch).IsZeroLength() && 
+                   !p1.Subtract(notch).IsZeroLength())
                 {
                     posibleCurves.Append(curve);
                 }
@@ -633,7 +675,7 @@ namespace CustomizacaoMoradias
                 var intersection = curve.Intersect(line1, out resultArray);
                 if (intersection == SetComparisonResult.Overlap)
                 {
-                    AddPointsInList(ref points, resultArray, curve);
+                    AddPointsInList(points, resultArray, curve);
                     break;
                 }
                 else
@@ -641,7 +683,7 @@ namespace CustomizacaoMoradias
                     intersection = curve.Intersect(line2, out resultArray);
                     if (intersection == SetComparisonResult.Overlap)
                     {                       
-                        AddPointsInList(ref points, resultArray, curve);
+                        AddPointsInList(points, resultArray, curve);
                         break;
                     }
                 }
@@ -725,8 +767,13 @@ namespace CustomizacaoMoradias
         */
         #endregion
 
-
-        private static void AddPointsInList(ref LinkedList<UV> points, IntersectionResultArray resultArray, Curve curve)
+        /// <summary>
+        /// Add a new vertice in order in the list of vertices of the polygon given the IntersectionResultArray.
+        /// </summary>
+        /// <param name="points"></param>
+        /// <param name="resultArray"></param>
+        /// <param name="curve"></param>
+        private static void AddPointsInList(LinkedList<UV> points, IntersectionResultArray resultArray, Curve curve)
         {
             UV p0 = ProjectInPlaneXY(curve.GetEndPoint(0));
             var node = FindPoint(points, p0);
