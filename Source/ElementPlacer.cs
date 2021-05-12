@@ -26,7 +26,6 @@ namespace CustomizacaoMoradias
         private Level topLevel;
         private double scale;
         private PlanCircuitSet docPlanCircuitSet;
-        private FootPrintRoof roof;
 
         /// <summary>
         /// Default contructor.
@@ -38,7 +37,6 @@ namespace CustomizacaoMoradias
             this.topLevel = GetLevelFromName(topLevel);
             this.scale = scale;
             this.docPlanCircuitSet = null;
-            this.roof = null;
         }
 
         /// <summary>
@@ -695,6 +693,13 @@ namespace CustomizacaoMoradias
             return list;
         }
 
+        /// <summary>
+        /// Finds a point that
+        /// </summary>
+        /// <param name="points"></param>
+        /// <param name="line1"></param>
+        /// <param name="posibleCurves"></param>
+        /// <returns></returns>
         private static LinkedListNode<UV> FindNewNode(LinkedList<UV> points, Line line1, CurveArray posibleCurves)
         {
             // iterate for each possible curve, and if
@@ -713,6 +718,9 @@ namespace CustomizacaoMoradias
             return newNode;
         }
 
+        /// <summary>
+        /// Create a CurveArray given its vertices.
+        /// </summary>
         private CurveArray CreateCurveArrayFromPoints(LinkedList<UV> points)
         {
             CurveArray curveArray = new CurveArray();
@@ -730,6 +738,15 @@ namespace CustomizacaoMoradias
             return curveArray;
         }
 
+        /// <summary>
+        /// Create a sub group of the linkedList that starts with node 'first' and ends with node 'last'.
+        /// </summary>
+        /// <param name="points"></param>
+        /// <param name="first"></param>
+        /// <param name="last"></param>
+        /// <returns>
+        /// Returns the vertives of the new polygon.
+        /// </returns>
         private LinkedList<UV> CreatePolygonBetweenVertices(LinkedList<UV> points, LinkedListNode<UV> first, LinkedListNode<UV> last)
         {
             LinkedList<UV> polygon = new LinkedList<UV>();
@@ -1105,6 +1122,16 @@ namespace CustomizacaoMoradias
             return footPrintRoof;
         }
 
+        /// <summary>
+        /// Creates a RoofFootPrint.
+        /// </summary>
+        /// <param name="overhang">The overhang value.</param>
+        /// <param name="slope">The slope of the roof.</param>
+        /// <param name="slopeDirection">The direction of the slope.</param>
+        /// <param name="footPrint">The footprint.</param>
+        /// <returns>
+        /// Returns a reference of the roof generated.
+        /// </returns>
         private FootPrintRoof CreateFootPrintRoof(double overhang, double slope, XYZ slopeDirection, CurveArray footPrint)
         {
             Document doc = uidoc.Document;
@@ -1124,6 +1151,14 @@ namespace CustomizacaoMoradias
             return footPrintRoof;
         }
 
+        /// <summary>
+        /// Aplies the slope in a determined FootPrintRoof.
+        /// </summary>
+        /// <param name="overhang">The overhang value.</param>
+        /// <param name="slope">The slope of the roof</param>
+        /// <param name="slopeDirection">The vector that represents the directions that the slope should be applied.</param>
+        /// <param name="footPrintRoof">The Roof</param>
+        /// <param name="footPrintToModelCurveMapping">The ModelCurveArray generated with the roof instance.</param>
         private static void ApplySlope(double overhang, double slope, XYZ slopeDirection, FootPrintRoof footPrintRoof, ModelCurveArray footPrintToModelCurveMapping)
         {
             ModelCurveArrayIterator iterator = footPrintToModelCurveMapping.ForwardIterator();
