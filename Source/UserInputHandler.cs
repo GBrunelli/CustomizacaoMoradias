@@ -11,13 +11,12 @@ namespace CustomizacaoMoradias
     {
         public void Execute(UIApplication app)
         {
-            try
+            UIDocument uidoc = app.ActiveUIDocument;
+            using (Transaction transaction = new Transaction(uidoc.Document, "Contruir JSON"))
             {
-                UIDocument uidoc = app.ActiveUIDocument;
-                using (Transaction transaction = new Transaction(uidoc.Document, "Contruir JSON"))
-                {
-                    transaction.Start();
-
+                transaction.Start();
+                try
+                {                
                     string path = PlaceElementsForm.filePath;
                     string levelName = PlaceElementsForm.levelName;
                     string topLevelName = PlaceElementsForm.topLevelName;
@@ -37,20 +36,20 @@ namespace CustomizacaoMoradias
                     elementPlacer.CreateRoof(offset, 0.3, roofVector);
                     elementPlacer.ClassifyRooms();
 
-                    transaction.Commit();
                 }
-            }
-            catch(LevelNotFoundException lvlEx)
-            {
-                MessageBox.Show(lvlEx.Message, "Erro");
-                throw lvlEx;
+                catch (LevelNotFoundException lvlEx)
+                {
+                    MessageBox.Show(lvlEx.Message, "Erro");
+                    throw lvlEx;
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show(e.Message, "Erro");
+                }
 
+                transaction.Commit();
             }
-            catch(Exception e)
-            {
-                MessageBox.Show(e.Message, "Erro");
-            }
-
+            
             PlaceElementsForm.CloseForm();
         }
 

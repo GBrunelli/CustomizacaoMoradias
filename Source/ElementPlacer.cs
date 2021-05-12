@@ -12,6 +12,7 @@ using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.UI;
 using CustomizacaoMoradias.Source;
 using Newtonsoft.Json;
+using System.Diagnostics;
 
 namespace CustomizacaoMoradias
 {
@@ -621,7 +622,7 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns a List of CurveArrays that represents the convex compenents.
         /// </returns>
-        public List<CurveArray> GetConvexPerimeters(CurveArray curveArray)
+        public List<CurveArray> GetConvexPerimeters(CurveArray curveArray, XYZ preferredOrientation)
         {
             LinkedList<UV> points = GetPoints(curveArray);
             List<UV> notches = GetNotches(points);
@@ -629,7 +630,7 @@ namespace CustomizacaoMoradias
 
             foreach (UV notche in notches)
             {
-                var result = EliminateNotch(notche, curveArray, points);
+                var result = EliminateNotch(notche, curveArray, points, preferredOrientation);
                 foreach(CurveArray array in result)
                 {
                     perimeters.Add(array);
@@ -649,23 +650,24 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns the list of the CurveArrays.
         /// </returns>
-        private List<CurveArray> EliminateNotch(UV notch, CurveArray curveArray, LinkedList<UV> points)
-        {    
+        private List<CurveArray> EliminateNotch(UV notch, CurveArray curveArray, LinkedList<UV> points, XYZ preferredOrientation)
+        {
             XYZ notche3D = TranformIn3D(notch);
-            Line line1 = Line.CreateUnbound(notche3D, XYZ.BasisX);
-            Line line2 = Line.CreateUnbound(notche3D, XYZ.BasisY);
+            Line line1 = Line.CreateUnbound(notche3D, preferredOrientation);
+            XYZ otherOrientation = new XYZ(preferredOrientation.Y, preferredOrientation.X, 0);
+            Line line2 = Line.CreateUnbound(notche3D, otherOrientation);
             LinkedListNode<UV> notchNode = FindPoint(points, notch);
 
             // get the posible curves for the new point
             CurveArray posibleCurves = new CurveArray();
-            foreach(Curve curve in curveArray)
+            foreach (Curve curve in curveArray)
             {
                 UV p0 = ProjectInPlaneXY(curve.GetEndPoint(0));
                 UV p1 = ProjectInPlaneXY(curve.GetEndPoint(1));
-                
+
                 // the curve will be appended if none of the
                 // end points is equal to the notche
-                if(!p0.Subtract(notch).IsZeroLength() && 
+                if (!p0.Subtract(notch).IsZeroLength() &&
                    !p1.Subtract(notch).IsZeroLength())
                 {
                     posibleCurves.Append(curve);
@@ -675,26 +677,11 @@ namespace CustomizacaoMoradias
             // iterate for each possible curve, and if
             // a intersection is found, the point will 
             // added in the linked list
-            LinkedListNode<UV> newNode = null;
-            foreach (Curve curve in posibleCurves)
-            {
-                IntersectionResultArray resultArray;
-                var intersection = curve.Intersect(line1, out resultArray);                
-                if (intersection == SetComparisonResult.Overlap)
-                {
-                    newNode = AddPointsInList(points, resultArray, curve);
-                    break;
-                }
-                else
-                {
-                    intersection = curve.Intersect(line2, out resultArray);
-                    if (intersection == SetComparisonResult.Overlap)
-                    {
-                        newNode = AddPointsInList(points, resultArray, curve);
-                        break;
-                    }
-                }
-            }    
+            LinkedListNode<UV> newNode;
+            newNode = FindNewNode(points, line1, posibleCurves);
+
+            if (newNode == null)         
+                newNode = FindNewNode(points, line2, posibleCurves);
 
             // generates the 2 new polygons    
             LinkedList<UV> polygonA = CreatePolygonBetweenVertices(points, newNode, notchNode);
@@ -706,6 +693,24 @@ namespace CustomizacaoMoradias
             list.Add(CreateCurveArrayFromPoints(polygonB));
 
             return list;
+        }
+
+        private static LinkedListNode<UV> FindNewNode(LinkedList<UV> points, Line line1, CurveArray posibleCurves)
+        {
+            // iterate for each possible curve, and if
+            // a intersection is found, the point will 
+            // added in the linked list
+            LinkedListNode<UV> newNode = null;
+            foreach (Curve curve in posibleCurves)
+            {
+                var intersection = curve.Intersect(line1, out IntersectionResultArray resultArray);
+                if (intersection == SetComparisonResult.Overlap)
+                {
+                    newNode = AddPointsInList(points, resultArray, curve);
+                    break;
+                }
+            }
+            return newNode;
         }
 
         private CurveArray CreateCurveArrayFromPoints(LinkedList<UV> points)
@@ -817,12 +822,8 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns a CurveArray that corresponds to the house perimeter.
         /// </returns>
-        public CurveArray GetHousePerimeter(double offset, XYZ offsetVector)
+        public CurveArray GetHousePerimeter()
         {
-            if (offset != 0)
-                if (offsetVector is null) throw new ArgumentNullException(nameof(offsetVector));
-
-            Document doc = uidoc.Document;
             // retrives the circuit set of the active document
             PlanCircuitSet circuitSet = GetDocPlanCircuitSet(false);
 
@@ -859,17 +860,28 @@ namespace CustomizacaoMoradias
                     }
 
                     // and then we create a curve array with the boundary segments of that loop
-                    return CreteOffsetedCurveArray(offset, offsetVector, perimeterSegments);
+                    return BoundarySegmentToCurveArray(perimeterSegments);
                 }
             }
             return null;
+        }
+
+        private CurveArray BoundarySegmentToCurveArray(IList<BoundarySegment> perimeterSegments)
+        {
+            CurveArray curveArray = new CurveArray();
+            foreach (BoundarySegment seg in perimeterSegments)
+            {
+                Curve curve = seg.GetCurve();
+                curveArray.Append(curve);
+            }
+            return curveArray;
         }
 
         /// <summary>
         /// Creates a Curve Array given the Boundary Segments. 
         /// </summary>
         /// <param name="offset">
-        /// A real value that represents the offset that the curve array will have in a direction. 
+        /// A positive value that represents the offset that the curve array will have in a direction. 
         /// If this value is 0, the user may not pass an offsetVector.
         /// </param>
         /// <param name="offsetVector">
@@ -877,118 +889,87 @@ namespace CustomizacaoMoradias
         /// The magnitude of the vector doesn't matter, just the direction will affect the offset.
         /// If the vector is 0, the offset will be applied for all sides. 
         /// </param>
-        /// <param name="perimeterSegments">
-        /// A List with the Boundary Segments that will be the reference for the Curve Array.
+        /// <param name="curveArray">
+        /// The reference Curve Array.
         /// </param>
         /// <returns>
         /// Returns the offseted Curve Array.
         /// </returns>
-        private CurveArray CreteOffsetedCurveArray(double offset, XYZ offsetVector, IList<BoundarySegment> perimeterSegments)
+        public CurveArray CreateOffsetedCurveArray(double offset, CurveArray curveArray)
         {
-            CurveArray housePerimeter = new CurveArray();
-            foreach (BoundarySegment seg in perimeterSegments)
-            {
-                Curve curve = seg.GetCurve();
-
-                // aplies the offset for each curve
-                if (offset > 0)
-                    curve = CreateOffsetedCurve(housePerimeter, curve, offset, offsetVector);
-
-                housePerimeter.Append(curve);
-            }
-            return housePerimeter;
+            if (offset < 0) return null;
+            var points = GetPoints(curveArray).ToList() ;
+            var offsetedPoints = OffsetPolygon(points, offset);
+            LinkedList<UV> linked = new LinkedList<UV>(offsetedPoints);
+            CurveArray offsetedCurveArray = CreateCurveArrayFromPoints(linked);
+            return offsetedCurveArray;
         }
 
-        /// <summary>
-        /// Transform a curve to be offsetted.
-        /// </summary>
-        /// <param name="housePerimeter"></param>
-        /// <param name="curve"></param>
-        /// <param name="offset"></param>
-        /// <param name="offsetVector"></param>
-        /// <returns>
-        /// Returns the offsetted curve.
-        /// </returns>
-        private Curve CreateOffsetedCurve(CurveArray housePerimeter, Curve curve, double offset, XYZ offsetVector)
+        private static List<UV> OffsetPolygon(List<UV> old_points, double offset)
         {
-            Document doc = uidoc.Document;
-            // finds the middle point of the current curve
-            XYZ middlePoint = GetCurveMiddlePoint(curve);
+            int num_points = old_points.Count(); //grab the number of points we will be iterating over (perf measure)
+            List<UV> adjusted_points = new List<UV>(num_points); //create an array to hold the adjusted points
 
-            // finds the wall below that curve, and retrives its normal vector
-            Wall wall = FindHostingWall(middlePoint);
-            XYZ wallNormalVector = wall.Orientation;
-
-            // Makes sure that the exterior of the wall is pointed to the exterior of the house
-            XYZ roomPoint = middlePoint.Add(wallNormalVector);
-            Room room = doc.GetRoomAtPoint(roomPoint);
-            if (room.Name != "Exterior 0")
+            for (int j = 0; j < num_points; j++) //loop through each point
             {
-                wall.Flip();
-                wallNormalVector = wall.Orientation;
-            }
-
-            // makes the curve 60cm bigger at each end, since we assume that all walls are in right angles
-            curve.MakeBound(curve.GetEndParameter(0) - offset, curve.GetEndParameter(1) + offset);
-
-            if (wallNormalVector.CrossProduct(offsetVector).IsZeroLength())
-            {
-                // aplies the offset
-                wallNormalVector = wallNormalVector.Multiply(offset);
-                Transform transform = Transform.CreateTranslation(wallNormalVector);
-                curve = curve.CreateTransformed(transform);
-            }
-
-            // verifies that the new curve intersects with other curves in the array,
-            // if that happens, both curves are ajusted to align perfectly 
-            foreach (Curve iterationCurve in housePerimeter)
-            {
-                // calculates and analyzes the intersections
-                IntersectionResultArray intersectionResultArray;
-                SetComparisonResult setComparisonResult = curve.Intersect(iterationCurve, out intersectionResultArray);
-                if (setComparisonResult == SetComparisonResult.Overlap)
+                //find the points before and after our target point.
+                int i = (j - 1);
+                if (i < 0)
                 {
-                    IntersectionResultArrayIterator iterator = intersectionResultArray.ForwardIterator();
-                    while (iterator.MoveNext())
-                    {
-                        IntersectionResult result = iterator.Current as IntersectionResult;
-                        XYZ intersectionPoint = result.XYZPoint;
-
-                        // remove the overlap of the both curves
-                        RemoveCurveOverlap(curve, intersectionPoint);
-                        RemoveCurveOverlap(iterationCurve, intersectionPoint);
-                    }
+                    i += num_points;
                 }
-            }
-            return curve;
-        }
 
-        /// <summary>
-        /// Set the bound of a curve to remove overlaps. This method is used to make CurveLoops.
-        /// </summary>
-        /// <seealso cref="CreateOffsetedCurve(CurveArray, Curve, double, XYZ)"/>
-        private static void RemoveCurveOverlap(Curve curve, XYZ intersectionPoint)
-        {
-            double distanceToStart = curve.GetEndPoint(0).DistanceTo(intersectionPoint);
-            double distanceToEnd = curve.GetEndPoint(1).DistanceTo(intersectionPoint);
+                int k = (j + 1) % num_points;
 
-            // In the case the start point is closer
-            if (distanceToStart < distanceToEnd)
-            {
-                curve.MakeBound(curve.GetEndParameter(0) + distanceToStart, curve.GetEndParameter(1));
+
+                //the next step is to push out each point based on the position of its surrounding points and then
+                //figure out the intersections of the pushed out points
+                UV pij1, pij2, pjk1, pjk2;
+
+                UV v1 = new UV(old_points[j].U - old_points[i].U, old_points[j].V - old_points[i].V);
+                v1 = v1.Normalize();
+                v1 = v1.Multiply(offset);
+
+                UV n1 = new UV(-v1.V, v1.U);
+
+                pij1 = new UV(old_points[i].U + n1.U, old_points[i].V + n1.V);
+                pij2 = new UV(old_points[j].U + n1.U, old_points[j].V + n1.V);
+
+                UV v2 = new UV(old_points[k].U - old_points[j].U, old_points[k].V - old_points[j].V);
+                v2 = v2.Normalize();
+                v2 = v2.Multiply(offset);
+
+                UV n2 = new UV(-v2.V, v2.U);
+                pjk1 = new UV(old_points[j].U + n2.U, old_points[j].V + n2.V);
+                pjk2 = new UV(old_points[k].U + n2.U, old_points[k].V + n2.V);
+
+
+                //see where the shifted lines ij and jk intersect using an infinite line intersection test (not a line segment intersection test)
+                //Vector3 intersection_point = MeshLight_Utils.InfiniteLineIntersection(pij1, pij2, pjk1, pjk2);
+                Line line1 = Line.CreateBound(TranformIn3D(pij1), TranformIn3D(pij2));
+                line1.MakeUnbound();
+                Line line2 = Line.CreateBound(TranformIn3D(pjk1), TranformIn3D(pjk2));
+                line2.MakeUnbound();
+
+                SetComparisonResult comparisonRsult = line1.Intersect(line2, out IntersectionResultArray intersection);
+
+                if(comparisonRsult == SetComparisonResult.Overlap)
+                {
+                    IntersectionResult result = intersection.get_Item(0);
+                    UV intersection_point = ProjectInPlaneXY(result.XYZPoint);
+                    //add the intersection as our adjusted vert point
+                    adjusted_points.Add(new UV(intersection_point.U, intersection_point.V));
+                }            
             }
-            // In the case the end point is closer
-            else
-            {
-                curve.MakeBound(curve.GetEndParameter(0), curve.GetEndParameter(1) - distanceToEnd);
-            }
+
+            return adjusted_points;
         }
 
         /// <summary>
         /// Draw lines in the current view that matches the given curve array.
         /// </summary>
         /// <param name="curveArray"></param>
-        public void DrawCurveArray(CurveArray curveArray)
+        private void DrawCurveArray(CurveArray curveArray)
         {
             Document doc = uidoc.Document;
             Autodesk.Revit.DB.View currentView = doc.ActiveView;
@@ -1048,7 +1029,7 @@ namespace CustomizacaoMoradias
             // creates a ceiling if in a room there is more than one loop,
             // and finds the smallest loop
 
-            CurveArray curve = GetHousePerimeter(0, new XYZ(0, 0, 0));
+            CurveArray curve = GetHousePerimeter();
 
             // create a floor type
             FilteredElementCollector collector = new FilteredElementCollector(doc);
@@ -1100,23 +1081,51 @@ namespace CustomizacaoMoradias
         /// </returns>
         public FootPrintRoof CreateRoof(double overhang, double slope, XYZ slopeDirection)
         {
-            Document doc = uidoc.Document;
             FootPrintRoof footPrintRoof = null;
+            CurveArray footPrintCurve = GetHousePerimeter();
 
-            CurveArray footPrintCurve = GetHousePerimeter(overhang, new XYZ(0, 0, 0));
+            // Hip roof
+            if (slopeDirection.IsZeroLength())
+            {
+                CurveArray offsetedFootPrint = CreateOffsetedCurveArray(overhang, footPrintCurve);
+                footPrintRoof = CreateFootPrintRoof(overhang, slope, slopeDirection, offsetedFootPrint);
+            }
+            // Gable roof
+            else
+            {        
+                List<CurveArray> convexFootPrint = GetConvexPerimeters(footPrintCurve, slopeDirection);
+                foreach (CurveArray footPrint in convexFootPrint)
+                {
+                    CurveArray offsetedFootPrint = CreateOffsetedCurveArray(overhang, footPrint);
+                    footPrintRoof = CreateFootPrintRoof(overhang, slope, slopeDirection, offsetedFootPrint);
+                    CreateAllGableWalls(slopeDirection, slope, footPrint);
+                }
+            }
+            
+            return footPrintRoof;
+        }
 
-            GetConvexPerimeters(footPrintCurve);
+        private FootPrintRoof CreateFootPrintRoof(double overhang, double slope, XYZ slopeDirection, CurveArray footPrint)
+        {
+            Document doc = uidoc.Document;
 
             // create a roof type
             FilteredElementCollector collector = new FilteredElementCollector(doc);
             collector.OfClass(typeof(RoofType));
             RoofType roofType = collector.FirstElement() as RoofType;
 
-            // create the foot print of the roof
             ModelCurveArray footPrintToModelCurveMapping = new ModelCurveArray();
-            footPrintRoof = doc.Create.NewFootPrintRoof(footPrintCurve, topLevel, roofType, out footPrintToModelCurveMapping);
 
-            // creates a iterator to add the roof slope
+            // create the foot print of the roof
+            FootPrintRoof footPrintRoof = doc.Create.NewFootPrintRoof(footPrint, topLevel, roofType, out footPrintToModelCurveMapping);
+
+            ApplySlope(overhang, slope, slopeDirection, footPrintRoof, footPrintToModelCurveMapping);              
+
+            return footPrintRoof;
+        }
+
+        private static void ApplySlope(double overhang, double slope, XYZ slopeDirection, FootPrintRoof footPrintRoof, ModelCurveArray footPrintToModelCurveMapping)
+        {
             ModelCurveArrayIterator iterator = footPrintToModelCurveMapping.ForwardIterator();
             iterator.Reset();
 
@@ -1135,13 +1144,6 @@ namespace CustomizacaoMoradias
                 double elevation = -(overhang - MetersToFeet(0.1)) / 3;
                 footPrintRoof.set_Offset(modelCurve, elevation);
             }
-
-            roof = footPrintRoof;
-
-            if (!slopeDirection.IsZeroLength())
-                CreateAllGableWalls(slopeDirection, slope);           
-
-            return footPrintRoof;
         }
 
         /// <summary>
@@ -1293,11 +1295,10 @@ namespace CustomizacaoMoradias
         /// <param name="slope">
         /// The slope of the gable, must match the slope of the roof.
         /// </param>
-        public void CreateAllGableWalls(XYZ vectorDirection, double slope)
+        public void CreateAllGableWalls(XYZ vectorDirection, double slope, CurveArray perimeter)
         {
-            Document doc = uidoc.Document;
-            CurveArray perimeter = GetHousePerimeter(0, null);
-            foreach (Curve line in perimeter)
+            CurveArray normalizedCurve = CreateOffsetedCurveArray(0, perimeter);
+            foreach (Curve line in normalizedCurve)
             {
                 XYZ lineDirection = GetCurveDirection(line);
                 if (lineDirection.CrossProduct(vectorDirection).IsZeroLength())
@@ -1348,79 +1349,168 @@ namespace CustomizacaoMoradias
             double p2z = (slope * baseVector.GetLength()) / 2;
             return new XYZ(p2x, p2y, p2z);
         }
-    }
-    #region Order Points Clock Wise (Deprecated)
-    /*
-    class ClockWisePointComparer : IComparer
-    {
-        public static UV centroid;
 
-        public int Compare(object x, object y)
+        /// <summary>
+        /// Transform a curve to be offsetted.
+        /// </summary>
+        /// <param name="housePerimeter"></param>
+        /// <param name="curve"></param>
+        /// <param name="offset"></param>
+        /// <param name="offsetVector"></param>
+        /// <returns>
+        /// Returns the offsetted curve.
+        /// </returns>
+        [Obsolete("This Method is Deprecated. Use OffsetPolygon", true)]
+        private Curve CreateOffsetedCurve(CurveArray housePerimeter, Curve curve, double offset, XYZ offsetVector)
         {
-            UV a = x as UV;
-            UV b = y as UV;
+            Document doc = uidoc.Document;
+            // finds the middle point of the current curve
+            XYZ middlePoint = GetCurveMiddlePoint(curve);
 
-            if (a.U - centroid.U >= 0 && b.U - centroid.U < 0)
-                return -1;
-            if (a.U - centroid.U < 0 && b.U - centroid.U >= 0)
-                return 1;
-            if (a.U - centroid.U == 0 && b.U - centroid.U == 0)
+            // expand the curve
+            curve.MakeBound(curve.GetEndParameter(0) - offset, curve.GetEndParameter(1) + offset);
+
+            // finds the wall below that curve, and retrives its normal vector
+            Wall wall = FindHostingWall(middlePoint);
+            if (wall != null)
             {
-                if (a.V - centroid.V >= 0 || b.V - centroid.V >= 0)
-                    return a.V > b.V;
-                return b.V > a.V;
+                XYZ wallNormalVector = wall.Orientation;
+
+                // Makes sure that the exterior of the wall is pointed to the exterior of the house
+                XYZ roomPoint = middlePoint.Add(wallNormalVector);
+                Room room = doc.GetRoomAtPoint(roomPoint);
+                if (room.Name != "Exterior 0")
+                {
+                    wall.Flip();
+                    wallNormalVector = wall.Orientation;
+                }
+
+                if (wallNormalVector.CrossProduct(offsetVector).IsZeroLength())
+                {
+                    // aplies the offset
+                    wallNormalVector = wallNormalVector.Multiply(offset);
+                    Transform transform = Transform.CreateTranslation(wallNormalVector);
+                    curve = curve.CreateTransformed(transform);
+                }
             }
 
-            // compute the cross product of vectors (center -> a) x (center -> b)
-            double det = (a.U - centroid.U) * (b.V - centroid.V) - (b.U - centroid.U) * (a.V - centroid.V);
-            if (det < 0)
-                return true;
-            if (det > 0)
-                return false;
+            // verifies that the new curve intersects with other curves in the array,
+            // if that happens, both curves are ajusted to align perfectly 
+            foreach (Curve iterationCurve in housePerimeter)
+            {
+                // calculates and analyzes the intersections
+                IntersectionResultArray intersectionResultArray;
+                SetComparisonResult setComparisonResult = curve.Intersect(iterationCurve, out intersectionResultArray);
+                if (setComparisonResult == SetComparisonResult.Overlap)
+                {
+                    IntersectionResultArrayIterator iterator = intersectionResultArray.ForwardIterator();
+                    while (iterator.MoveNext())
+                    {
+                        IntersectionResult result = iterator.Current as IntersectionResult;
+                        XYZ intersectionPoint = result.XYZPoint;
 
-            // points a and b are on the same line from the center
-            // check which point is closer to the center
-            double d1 = (a.U - centroid.U) * (a.U - centroid.U) + (a.V- centroid.V) * (a.V - centroid.V);
-            double d2 = (b.U - centroid.U) * (b.U - centroid.U) + (b.V - centroid.V) * (b.V - centroid.V);
-            return d1 > d2;
-
+                        // remove the overlap of the both curves
+                        RemoveCurveOverlap(curve, intersectionPoint);
+                        RemoveCurveOverlap(iterationCurve, intersectionPoint);
+                    }
+                }
+            }
+            return curve;
         }
 
-        public static UV Compute2DPolygonCentroid(LinkedList<UV> points)
+        /// <summary>
+        /// Set the bound of a curve to remove overlaps. This method is used to make CurveLoops.
+        /// </summary>
+        /// <seealso cref="CreateOffsetedCurve(CurveArray, Curve, double, XYZ)"/>
+        [Obsolete("This Method is Deprecated")]
+        private static void RemoveCurveOverlap(Curve curve, XYZ intersectionPoint)
         {
-            centroid = new UV(0, 0);
-            int vertexCount = points.Count();
-            UV[] vertices = new UV[vertexCount];
-            points.CopyTo(vertices, 0);               
-            double signedArea = 0.0;
-            double u0 = 0.0; // Current vertex X
-            double v0 = 0.0; // Current vertex Y
-            double u1 = 0.0; // Next vertex X
-            double v1 = 0.0; // Next vertex Y
-            double a = 0.0;  // Partial signed area
+            double distanceToStart = curve.GetEndPoint(0).DistanceTo(intersectionPoint);
+            double distanceToEnd = curve.GetEndPoint(1).DistanceTo(intersectionPoint);
 
-            // For all vertices
-            for (int i = 0; i < vertexCount; i++)
+            // In the case the start point is closer
+            if (distanceToStart < distanceToEnd)
             {
-                u0 = vertices[i].U;
-                v0 = vertices[i].V;
-                u1 = vertices[(i + 1) % vertexCount].U;
-                v1 = vertices[(i + 1) % vertexCount].V;
-                a = u0 * v1 - u1 * v0;
-                signedArea += a;
-                double tempU = (u0 + u1) * a;
-                double tempV = (v0 + v1) * a;
-                centroid.Add(new UV(tempU, tempV));
+                curve.MakeBound(curve.GetEndParameter(0) + distanceToStart, curve.GetEndParameter(1));
+            }
+            // In the case the end point is closer
+            else
+            {
+                curve.MakeBound(curve.GetEndParameter(0), curve.GetEndParameter(1) - distanceToEnd);
+            }
+        }
+
+        class ClockWisePointComparer : IComparer
+        {
+            public static UV centroid;
+
+            [Obsolete("This Method is Deprecated")]
+            public int Compare(object x, object y)
+            {
+                UV a = x as UV;
+                UV b = y as UV;
+
+                if (a.U - centroid.U >= 0 && b.U - centroid.U < 0)
+                    return -1;
+                if (a.U - centroid.U < 0 && b.U - centroid.U >= 0)
+                    return 1;
+                if (a.U - centroid.U == 0 && b.U - centroid.U == 0)
+                {
+                    if (a.V - centroid.V >= 0 || b.V - centroid.V >= 0)
+                        return Convert.ToInt32(a.V - b.V);
+                    return Convert.ToInt32(b.V - a.V);
+                }
+
+                // compute the cross product of vectors (center -> a) x (center -> b)
+                double det = (a.U - centroid.U) * (b.V - centroid.V) - (b.U - centroid.U) * (a.V - centroid.V);
+                if (det < 0)
+                    return 1;
+                if (det > 0)
+                    return -1;
+
+                // points a and b are on the same line from the center
+                // check which point is closer to the center
+                double d1 = (a.U - centroid.U) * (a.U - centroid.U) + (a.V - centroid.V) * (a.V - centroid.V);
+                double d2 = (b.U - centroid.U) * (b.U - centroid.U) + (b.V - centroid.V) * (b.V - centroid.V);
+                return Convert.ToInt32(d1 - d2);
+
             }
 
-            signedArea *= 0.5;
-            double newU = centroid.U / (6.0 * signedArea);
-            double newV = centroid.V / (6.0 * signedArea);
-            centroid = new UV(newU, newV);
+            [Obsolete("This Method is Deprecated")]
+            public static UV Compute2DPolygonCentroid(LinkedList<UV> points)
+            {
+                centroid = new UV(0, 0);
+                int vertexCount = points.Count();
+                UV[] vertices = new UV[vertexCount];
+                points.CopyTo(vertices, 0);
+                double signedArea = 0.0;
+                double u0 = 0.0; // Current vertex X
+                double v0 = 0.0; // Current vertex Y
+                double u1 = 0.0; // Next vertex X
+                double v1 = 0.0; // Next vertex Y
+                double a = 0.0;  // Partial signed area
 
-            return centroid;
+                // For all vertices
+                for (int i = 0; i < vertexCount; i++)
+                {
+                    u0 = vertices[i].U;
+                    v0 = vertices[i].V;
+                    u1 = vertices[(i + 1) % vertexCount].U;
+                    v1 = vertices[(i + 1) % vertexCount].V;
+                    a = u0 * v1 - u1 * v0;
+                    signedArea += a;
+                    double tempU = (u0 + u1) * a;
+                    double tempV = (v0 + v1) * a;
+                    centroid.Add(new UV(tempU, tempV));
+                }
+
+                signedArea *= 0.5;
+                double newU = centroid.U / (6.0 * signedArea);
+                double newV = centroid.V / (6.0 * signedArea);
+                centroid = new UV(newU, newV);
+
+                return centroid;
+            }
         }
     }
-    */
-    #endregion
 }
