@@ -625,13 +625,18 @@ namespace CustomizacaoMoradias
         {
             LinkedList<UV> points = GetPoints(curveArray);
             List<UV> notches = GetNotches(points);
+            List<CurveArray> perimeters = new List<CurveArray>();
 
-            foreach(UV notche in notches)
+            foreach (UV notche in notches)
             {
-                EliminateNotch(notche, curveArray, points);
+                var result = EliminateNotch(notche, curveArray, points);
+                foreach(CurveArray array in result)
+                {
+                    perimeters.Add(array);
+                }
             }
 
-            return null;
+            return perimeters;
         }
 
         /// <summary>
@@ -645,10 +650,11 @@ namespace CustomizacaoMoradias
         /// Returns the list of the CurveArrays.
         /// </returns>
         private List<CurveArray> EliminateNotch(UV notch, CurveArray curveArray, LinkedList<UV> points)
-        {
+        {    
             XYZ notche3D = TranformIn3D(notch);
             Line line1 = Line.CreateUnbound(notche3D, XYZ.BasisX);
             Line line2 = Line.CreateUnbound(notche3D, XYZ.BasisY);
+            LinkedListNode<UV> notchNode = FindPoint(points, notch);
 
             // get the posible curves for the new point
             CurveArray posibleCurves = new CurveArray();
@@ -669,103 +675,74 @@ namespace CustomizacaoMoradias
             // iterate for each possible curve, and if
             // a intersection is found, the point will 
             // added in the linked list
-            foreach(Curve curve in posibleCurves)
+            LinkedListNode<UV> newNode = null;
+            foreach (Curve curve in posibleCurves)
             {
                 IntersectionResultArray resultArray;
-                var intersection = curve.Intersect(line1, out resultArray);
+                var intersection = curve.Intersect(line1, out resultArray);                
                 if (intersection == SetComparisonResult.Overlap)
                 {
-                    AddPointsInList(points, resultArray, curve);
+                    newNode = AddPointsInList(points, resultArray, curve);
                     break;
                 }
                 else
                 {
                     intersection = curve.Intersect(line2, out resultArray);
                     if (intersection == SetComparisonResult.Overlap)
-                    {                       
-                        AddPointsInList(points, resultArray, curve);
+                    {
+                        newNode = AddPointsInList(points, resultArray, curve);
                         break;
                     }
                 }
-            }
+            }    
 
-            return null;
+            // generates the 2 new polygons    
+            LinkedList<UV> polygonA = CreatePolygonBetweenVertices(points, newNode, notchNode);
+            LinkedList<UV> polygonB = CreatePolygonBetweenVertices(points, notchNode, newNode);
+
+            // creates the curves
+            List<CurveArray> list = new List<CurveArray>();
+            list.Add(CreateCurveArrayFromPoints(polygonA));
+            list.Add(CreateCurveArrayFromPoints(polygonB));
+
+            return list;
         }
 
-        #region Order Points Clock Wise (Deprecated)
-        /*
-        class ClockWisePointComparer : IComparer
+        private CurveArray CreateCurveArrayFromPoints(LinkedList<UV> points)
         {
-            public static UV centroid;
-
-            public int Compare(object x, object y)
+            CurveArray curveArray = new CurveArray();
+            int n = points.Count();
+            var node = points.First;
+            Line line;
+            for (int i = 1; i < n; i++)
             {
-                UV a = x as UV;
-                UV b = y as UV;
-
-                if (a.U - centroid.U >= 0 && b.U - centroid.U < 0)
-                    return -1;
-                if (a.U - centroid.U < 0 && b.U - centroid.U >= 0)
-                    return 1;
-                if (a.U - centroid.U == 0 && b.U - centroid.U == 0)
-                {
-                    if (a.V - centroid.V >= 0 || b.V - centroid.V >= 0)
-                        return a.V > b.V;
-                    return b.V > a.V;
-                }
-
-                // compute the cross product of vectors (center -> a) x (center -> b)
-                double det = (a.U - centroid.U) * (b.V - centroid.V) - (b.U - centroid.U) * (a.V - centroid.V);
-                if (det < 0)
-                    return true;
-                if (det > 0)
-                    return false;
-
-                // points a and b are on the same line from the center
-                // check which point is closer to the center
-                double d1 = (a.U - centroid.U) * (a.U - centroid.U) + (a.V- centroid.V) * (a.V - centroid.V);
-                double d2 = (b.U - centroid.U) * (b.U - centroid.U) + (b.V - centroid.V) * (b.V - centroid.V);
-                return d1 > d2;
-                
+                line = Line.CreateBound(TranformIn3D(node.Value), TranformIn3D(node.Next.Value));
+                curveArray.Append(line);
+                node = node.Next;
             }
-
-            public static UV Compute2DPolygonCentroid(LinkedList<UV> points)
-            {
-                centroid = new UV(0, 0);
-                int vertexCount = points.Count();
-                UV[] vertices = new UV[vertexCount];
-                points.CopyTo(vertices, 0);               
-                double signedArea = 0.0;
-                double u0 = 0.0; // Current vertex X
-                double v0 = 0.0; // Current vertex Y
-                double u1 = 0.0; // Next vertex X
-                double v1 = 0.0; // Next vertex Y
-                double a = 0.0;  // Partial signed area
-
-                // For all vertices
-                for (int i = 0; i < vertexCount; i++)
-                {
-                    u0 = vertices[i].U;
-                    v0 = vertices[i].V;
-                    u1 = vertices[(i + 1) % vertexCount].U;
-                    v1 = vertices[(i + 1) % vertexCount].V;
-                    a = u0 * v1 - u1 * v0;
-                    signedArea += a;
-                    double tempU = (u0 + u1) * a;
-                    double tempV = (v0 + v1) * a;
-                    centroid.Add(new UV(tempU, tempV));
-                }
-
-                signedArea *= 0.5;
-                double newU = centroid.U / (6.0 * signedArea);
-                double newV = centroid.V / (6.0 * signedArea);
-                centroid = new UV(newU, newV);
-
-                return centroid;
-            }
+            line = Line.CreateBound(TranformIn3D(node.Value), TranformIn3D(points.First.Value));
+            curveArray.Append(line);
+            return curveArray;
         }
-        */
-        #endregion
+
+        private LinkedList<UV> CreatePolygonBetweenVertices(LinkedList<UV> points, LinkedListNode<UV> first, LinkedListNode<UV> last)
+        {
+            LinkedList<UV> polygon = new LinkedList<UV>();
+            LinkedListNode<UV> node = first;
+
+            while(node != last)
+            {            
+                // TEMPORARY: change for a circular list
+                if(node == null)
+                {
+                    node = points.First;
+                }
+                polygon.AddLast(node.Value);
+                node = node.Next;
+            }
+            polygon.AddLast(node.Value);
+            return polygon;
+        }
 
         /// <summary>
         /// Add a new vertice in order in the list of vertices of the polygon given the IntersectionResultArray.
@@ -773,21 +750,21 @@ namespace CustomizacaoMoradias
         /// <param name="points"></param>
         /// <param name="resultArray"></param>
         /// <param name="curve"></param>
-        private static void AddPointsInList(LinkedList<UV> points, IntersectionResultArray resultArray, Curve curve)
+        private static LinkedListNode<UV> AddPointsInList(LinkedList<UV> points, IntersectionResultArray resultArray, Curve curve)
         {
             UV p0 = ProjectInPlaneXY(curve.GetEndPoint(0));
+            LinkedListNode<UV> newNode = null;
             var node = FindPoint(points, p0);
             var iterator = resultArray.ForwardIterator();
             iterator.Reset();
             while (iterator.MoveNext())
             {
                 IntersectionResult result = iterator.Current as IntersectionResult;
-                UV intersectionPoint = ProjectInPlaneXY(result.XYZPoint);
-                points.AddAfter(node, intersectionPoint);
-                
+                var intersectionPoint = ProjectInPlaneXY(result.XYZPoint);
+                newNode = points.AddAfter(node, intersectionPoint);
             }
+            return newNode;
         }
-
 
         /// <summary>
         /// Searches for a point in the LinkedList
@@ -1372,4 +1349,78 @@ namespace CustomizacaoMoradias
             return new XYZ(p2x, p2y, p2z);
         }
     }
+    #region Order Points Clock Wise (Deprecated)
+    /*
+    class ClockWisePointComparer : IComparer
+    {
+        public static UV centroid;
+
+        public int Compare(object x, object y)
+        {
+            UV a = x as UV;
+            UV b = y as UV;
+
+            if (a.U - centroid.U >= 0 && b.U - centroid.U < 0)
+                return -1;
+            if (a.U - centroid.U < 0 && b.U - centroid.U >= 0)
+                return 1;
+            if (a.U - centroid.U == 0 && b.U - centroid.U == 0)
+            {
+                if (a.V - centroid.V >= 0 || b.V - centroid.V >= 0)
+                    return a.V > b.V;
+                return b.V > a.V;
+            }
+
+            // compute the cross product of vectors (center -> a) x (center -> b)
+            double det = (a.U - centroid.U) * (b.V - centroid.V) - (b.U - centroid.U) * (a.V - centroid.V);
+            if (det < 0)
+                return true;
+            if (det > 0)
+                return false;
+
+            // points a and b are on the same line from the center
+            // check which point is closer to the center
+            double d1 = (a.U - centroid.U) * (a.U - centroid.U) + (a.V- centroid.V) * (a.V - centroid.V);
+            double d2 = (b.U - centroid.U) * (b.U - centroid.U) + (b.V - centroid.V) * (b.V - centroid.V);
+            return d1 > d2;
+
+        }
+
+        public static UV Compute2DPolygonCentroid(LinkedList<UV> points)
+        {
+            centroid = new UV(0, 0);
+            int vertexCount = points.Count();
+            UV[] vertices = new UV[vertexCount];
+            points.CopyTo(vertices, 0);               
+            double signedArea = 0.0;
+            double u0 = 0.0; // Current vertex X
+            double v0 = 0.0; // Current vertex Y
+            double u1 = 0.0; // Next vertex X
+            double v1 = 0.0; // Next vertex Y
+            double a = 0.0;  // Partial signed area
+
+            // For all vertices
+            for (int i = 0; i < vertexCount; i++)
+            {
+                u0 = vertices[i].U;
+                v0 = vertices[i].V;
+                u1 = vertices[(i + 1) % vertexCount].U;
+                v1 = vertices[(i + 1) % vertexCount].V;
+                a = u0 * v1 - u1 * v0;
+                signedArea += a;
+                double tempU = (u0 + u1) * a;
+                double tempV = (v0 + v1) * a;
+                centroid.Add(new UV(tempU, tempV));
+            }
+
+            signedArea *= 0.5;
+            double newU = centroid.U / (6.0 * signedArea);
+            double newV = centroid.V / (6.0 * signedArea);
+            centroid = new UV(newU, newV);
+
+            return centroid;
+        }
+    }
+    */
+    #endregion
 }
