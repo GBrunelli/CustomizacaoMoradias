@@ -22,7 +22,7 @@ namespace CustomizacaoMoradias
     public class ElementPlacer
     {
         private UIDocument uidoc;
-        private Level level;
+        private Level baseLevel;
         private Level topLevel;
         private double scale;
         private PlanCircuitSet docPlanCircuitSet;
@@ -33,7 +33,7 @@ namespace CustomizacaoMoradias
         public ElementPlacer(UIDocument uidoc, string level, string topLevel, double scale)
         {
             this.uidoc = uidoc;
-            this.level = GetLevelFromName(level);
+            this.baseLevel = GetLevelFromName(level);
             this.topLevel = GetLevelFromName(topLevel);
             this.scale = scale;
             this.docPlanCircuitSet = null;
@@ -99,7 +99,7 @@ namespace CustomizacaoMoradias
             y0 = MetersToFeet(y0 * scale);
 
             // Creates the point where the piece of furniture will be inserted
-            return new XYZ(x0, y0, level.Elevation);
+            return new XYZ(x0, y0, baseLevel.Elevation);
         }
 
         /// <summary>
@@ -160,7 +160,7 @@ namespace CustomizacaoMoradias
             Document doc = uidoc.Document;
             FilteredElementCollector collector = new FilteredElementCollector(doc);
             collector.OfClass(typeof(Wall));
-            List<Wall> walls = collector.Cast<Wall>().Where(wl => wl.LevelId == level.Id).ToList();
+            List<Wall> walls = collector.Cast<Wall>().Where(wl => wl.LevelId == baseLevel.Id).ToList();
             return walls;
         }
 
@@ -213,7 +213,7 @@ namespace CustomizacaoMoradias
             string fsFamilyName = GetFamilySymbolName(properties.Type);
 
             // Creates a point above the furniture to serve as a rotation axis
-            XYZ axisPoint = new XYZ(point.X, point.Y, level.Elevation + 1);
+            XYZ axisPoint = new XYZ(point.X, point.Y, baseLevel.Elevation + 1);
             Line axis = Line.CreateBound(point, axisPoint);
             FamilyInstance furniture = null;
 
@@ -252,7 +252,7 @@ namespace CustomizacaoMoradias
 
                 // Creating the wall
 
-                wall = Wall.Create(doc, curve, wallType.Id, level.Id, MetersToFeet(2.8), 0, false, false);
+                wall = Wall.Create(doc, curve, wallType.Id, baseLevel.Id, MetersToFeet(2.8), 0, false, false);
                 wall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(topLevel.Id);
                 wall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET).Set(MetersToFeet(-0.10));
 
@@ -401,7 +401,7 @@ namespace CustomizacaoMoradias
                 if (createRoomsInPhase is null)
                     throw new Exception("Não foi encontrada nenhuma fase no documento atual.");
 
-                PlanTopology topology = doc.get_PlanTopology(level, createRoomsInPhase);
+                PlanTopology topology = doc.get_PlanTopology(baseLevel, createRoomsInPhase);
                 PlanCircuitSet circuitSet = topology.Circuits;
 
                 return circuitSet;
@@ -525,7 +525,7 @@ namespace CustomizacaoMoradias
                             {
                                 curve.Append(seg.GetCurve());
                             }
-                            doc.Create.NewFloor(curve, floorType, level, true);
+                            doc.Create.NewFloor(curve, floorType, baseLevel, true);
                         }
                     }
                 }
@@ -1141,11 +1141,9 @@ namespace CustomizacaoMoradias
             collector.OfClass(typeof(RoofType));
             RoofType roofType = collector.FirstElement() as RoofType;
 
-            ModelCurveArray footPrintToModelCurveMapping = new ModelCurveArray();
-
             // create the foot print of the roof
+            ModelCurveArray footPrintToModelCurveMapping = new ModelCurveArray();
             FootPrintRoof footPrintRoof = doc.Create.NewFootPrintRoof(footPrint, topLevel, roofType, out footPrintToModelCurveMapping);
-
             ApplySlope(overhang, slope, slopeDirection, footPrintRoof, footPrintToModelCurveMapping);              
 
             return footPrintRoof;
@@ -1204,7 +1202,7 @@ namespace CustomizacaoMoradias
             Document doc = uidoc.Document;
             string jsonElementClassifier = Properties.Resources.ElementClassifierConfig;
             List<RoomClassifier> deserializedRoomClassifier = JsonConvert.DeserializeObject<List<RoomClassifier>>(jsonElementClassifier);
-            List<Room> rooms = GetRoomsAtLevel(level).ToList();
+            List<Room> rooms = GetRoomsAtLevel(baseLevel).ToList();
             foreach (Room room in rooms)
             {
                 if (room.Area > 0)
