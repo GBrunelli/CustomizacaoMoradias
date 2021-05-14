@@ -544,9 +544,9 @@ namespace CustomizacaoMoradias
         private LinkedList<UV> GetPoints(CurveArray curveArray)
         {
             LinkedList<UV> points = new LinkedList<UV>();
-            foreach(Curve curve in curveArray)
+            foreach (Curve curve in curveArray)
             {
-                UV point2D = ProjectInPlaneXY(curve.GetEndPoint(0));                           
+                UV point2D = ProjectInPlaneXY(curve.GetEndPoint(0));
                 points.AddLast(point2D);
             }
             return points;
@@ -591,7 +591,7 @@ namespace CustomizacaoMoradias
 
             // calculates the angle for the middle nodes
             LinkedListNode<UV> node = points.First;
-            for (int i = 1; i < n-1; i++)
+            for (int i = 1; i < n - 1; i++)
             {
                 node = node.Next;
                 p0 = node.Previous.Value;
@@ -615,40 +615,62 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Decompose a non convex perimiter into its convex components. There is no 
         /// garantee that it will be the mininum number of convex polygons. All the
-        /// angles of the perimeter bust be a multiple of PI/2 radians.
+        /// angles of the perimeter must be a multiple of PI/2 radians.
         /// </summary>
         /// <returns>
         /// Returns a List of CurveArrays that represents the convex compenents.
         /// </returns>
-        public List<CurveArray> GetConvexPerimeters(CurveArray curveArray, XYZ preferredOrientation)
+        public List<CurveArray> GetConvexPerimeters(CurveArray curveArray, XYZ preferredOrientation, out List<Line> cutLines)
         {
             LinkedList<UV> points = GetPoints(curveArray);
             List<UV> notches = GetNotches(points);
             List<CurveArray> perimeters = new List<CurveArray>();
-
+            cutLines = new List<Line>();
             foreach (UV notche in notches)
             {
-                var result = EliminateNotch(notche, curveArray, points, preferredOrientation);
-                foreach(CurveArray array in result)
+                var result = EliminateNotch(notche, curveArray, points, preferredOrientation, out Line line);
+                cutLines.Add(line);
+                foreach (CurveArray array in result)
                 {
                     perimeters.Add(array);
                 }
             }
 
+            perimeters.Sort(new SortingDescendingArea());
             return perimeters;
         }
 
+        private class SortingDescendingArea : IComparer<CurveArray>
+        {
+            public int Compare(CurveArray x, CurveArray y)
+            {
+                IList<CurveLoop> curveLoopX = new List<CurveLoop> { CurveArrayToCurveLoop(x) };
+                double areaX = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoopX);
+
+                IList<CurveLoop> curveLoopY = new List<CurveLoop> { CurveArrayToCurveLoop(y) };
+                double areaY = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoopY);
+
+                if (areaX < areaY)
+                    return 1;
+                if (areaX > areaY)
+                    return -1;
+                else
+                    return 0;
+            }
+        }
+
         /// <summary>
-        /// Eliminates a notch by creating a new line between the notch and one of the other 
-        /// edges of the polygon.
+        /// Eliminates a notch by creating a new line between the notch and an edge of the polygon.
         /// </summary>
         /// <param name="notch">Coordinates of the notch.</param>
         /// <param name="curveArray">The polygon.</param>
         /// <param name="points">The vertices of the polygon.</param>
+        /// <param name="preferredOrientation">The method will try to make a cut that is parallel to this vector.</param>
+        /// <param name="cutLine">The line that cut the polygon.</param>
         /// <returns>
         /// Returns the list of the CurveArrays.
         /// </returns>
-        private List<CurveArray> EliminateNotch(UV notch, CurveArray curveArray, LinkedList<UV> points, XYZ preferredOrientation)
+        private List<CurveArray> EliminateNotch(UV notch, CurveArray curveArray, LinkedList<UV> points, XYZ preferredOrientation, out Line cutLine)
         {
             XYZ notche3D = TranformIn3D(notch);
             Line line1 = Line.CreateUnbound(notche3D, preferredOrientation);
@@ -686,9 +708,14 @@ namespace CustomizacaoMoradias
             LinkedList<UV> polygonB = CreatePolygonBetweenVertices(points, notchNode, newNode);
 
             // creates the curves
-            List<CurveArray> list = new List<CurveArray>();
-            list.Add(CreateCurveArrayFromPoints(polygonA));
-            list.Add(CreateCurveArrayFromPoints(polygonB));
+            List<CurveArray> list = new List<CurveArray>
+            {
+                CreateCurveArrayFromPoints(polygonA),
+                CreateCurveArrayFromPoints(polygonB)
+            };
+
+            // returns the cutLine
+            cutLine = Line.CreateBound(notche3D, TranformIn3D(newNode.Value));
 
             return list;
         }
@@ -883,6 +910,9 @@ namespace CustomizacaoMoradias
             return null;
         }
 
+        /// <summary>
+        /// Creates a CurveArray given a List of BoundarySegments
+        /// </summary>
         private CurveArray BoundarySegmentToCurveArray(IList<BoundarySegment> perimeterSegments)
         {
             CurveArray curveArray = new CurveArray();
@@ -900,85 +930,95 @@ namespace CustomizacaoMoradias
         /// <param name="offset">
         /// A positive value that represents the offset that the curve array will have in a direction. 
         /// If this value is 0, the user may not pass an offsetVector.
-        /// </param>
-        /// <param name="offsetVector">
-        /// A vector that will defines the offset. The offset will be applied on the orthogonal lines to the offsetVector. 
-        /// The magnitude of the vector doesn't matter, just the direction will affect the offset.
-        /// If the vector is 0, the offset will be applied for all sides. 
-        /// </param>
         /// <param name="curveArray">
         /// The reference Curve Array.
         /// </param>
         /// <returns>
         /// Returns the offseted Curve Array.
         /// </returns>
-        public CurveArray CreateOffsetedCurveArray(double offset, CurveArray curveArray)
+        public CurveArray CreateOffsetedCurveArray(double offset, CurveArray curveArray, Line unchangedLine)
         {
             if (offset < 0) return null;
-            var points = GetPoints(curveArray).ToList() ;
-            var offsetedPoints = OffsetPolygon(points, offset);
-            LinkedList<UV> linked = new LinkedList<UV>(offsetedPoints);
-            CurveArray offsetedCurveArray = CreateCurveArrayFromPoints(linked);
+            List<UV> points = GetPoints(curveArray).ToList() ;
+            List<UV> offsetedPoints = OffsetPolygon(points, offset, unchangedLine);
+            LinkedList<UV> linkedOffsetedPoints = new LinkedList<UV>(offsetedPoints);
+            CurveArray offsetedCurveArray = CreateCurveArrayFromPoints(linkedOffsetedPoints);
             return offsetedCurveArray;
         }
 
-        private static List<UV> OffsetPolygon(List<UV> old_points, double offset)
+        /// <summary>
+        /// Offset a polygon in all directions.
+        /// </summary>
+        private static List<UV> OffsetPolygon(List<UV> vertices, double offset, Line unchangedLine)
         {
-            int num_points = old_points.Count(); //grab the number of points we will be iterating over (perf measure)
-            List<UV> adjusted_points = new List<UV>(num_points); //create an array to hold the adjusted points
+            int num_points = vertices.Count();
+            List<UV> adjusted_points = new List<UV>(num_points);
 
-            for (int j = 0; j < num_points; j++) //loop through each point
+            for (int j = 0; j < num_points; j++)
             {
                 //find the points before and after our target point.
                 int i = (j - 1);
                 if (i < 0)
-                {
                     i += num_points;
-                }
-
                 int k = (j + 1) % num_points;
-
 
                 //the next step is to push out each point based on the position of its surrounding points and then
                 //figure out the intersections of the pushed out points
-                UV pij1, pij2, pjk1, pjk2;
+                UV n1, n2, v1, v2, pij1, pij2, pjk1, pjk2;
 
-                UV v1 = new UV(old_points[j].U - old_points[i].U, old_points[j].V - old_points[i].V);
+                // calculates the vector between i and j
+                v1 = vertices[j] - vertices[i];
                 v1 = v1.Normalize();
-                v1 = v1.Multiply(offset);
+                v1 *= offset;
 
-                UV n1 = new UV(-v1.V, v1.U);
-
-                pij1 = new UV(old_points[i].U + n1.U, old_points[i].V + n1.V);
-                pij2 = new UV(old_points[j].U + n1.U, old_points[j].V + n1.V);
-
-                UV v2 = new UV(old_points[k].U - old_points[j].U, old_points[k].V - old_points[j].V);
+                // calculates the vector between j and k
+                v2 = vertices[k] - vertices[j];
                 v2 = v2.Normalize();
-                v2 = v2.Multiply(offset);
+                v2 *= offset;
 
-                UV n2 = new UV(-v2.V, v2.U);
-                pjk1 = new UV(old_points[j].U + n2.U, old_points[j].V + n2.V);
-                pjk2 = new UV(old_points[k].U + n2.U, old_points[k].V + n2.V);
+                // verifies if one of the segments ij, ji, jk or kj is the unchangedLine
+                double offsetBuffer = offset;
+                if (unchangedLine != null)
+                {
+                    UV p0 = ProjectInPlaneXY(unchangedLine.GetEndPoint(0));
+                    UV p1 = ProjectInPlaneXY(unchangedLine.GetEndPoint(1));
+                    
+                    if ((vertices[i].IsAlmostEqualTo(p0) && vertices[j].IsAlmostEqualTo(p1)) || 
+                        (vertices[j].IsAlmostEqualTo(p0) && vertices[i].IsAlmostEqualTo(p1)))
+                        v1 = UV.Zero;
 
+                    if((vertices[j].IsAlmostEqualTo(p0) && vertices[k].IsAlmostEqualTo(p1)) || 
+                        (vertices[k].IsAlmostEqualTo(p0) && vertices[j].IsAlmostEqualTo(p1)))
+                        v2 = UV.Zero;
+                }                                  
 
-                //see where the shifted lines ij and jk intersect using an infinite line intersection test (not a line segment intersection test)
-                //Vector3 intersection_point = MeshLight_Utils.InfiniteLineIntersection(pij1, pij2, pjk1, pjk2);
+                // creates a shifted line that is parallel to the vector v1 
+                n1 = new UV(-v1.V, v1.U);
+                pij1 = vertices[i] + n1;
+                pij2 = vertices[j] + n1;
                 Line line1 = Line.CreateBound(TranformIn3D(pij1), TranformIn3D(pij2));
                 line1.MakeUnbound();
+
+                // creates a shifted line that is parallel to the vector v2
+                n2 = new UV(-v2.V, v2.U);
+                pjk1 = vertices[j] + n2;
+                pjk2 = vertices[k] + n2;
                 Line line2 = Line.CreateBound(TranformIn3D(pjk1), TranformIn3D(pjk2));
                 line2.MakeUnbound();
 
+                //see where the shifted lines 1 and 2 intersect
                 SetComparisonResult comparisonRsult = line1.Intersect(line2, out IntersectionResultArray intersection);
 
                 if(comparisonRsult == SetComparisonResult.Overlap)
                 {
                     IntersectionResult result = intersection.get_Item(0);
                     UV intersection_point = ProjectInPlaneXY(result.XYZPoint);
+
                     //add the intersection as our adjusted vert point
                     adjusted_points.Add(new UV(intersection_point.U, intersection_point.V));
-                }            
+                }
+                offset = offsetBuffer;
             }
-
             return adjusted_points;
         }
 
@@ -1104,18 +1144,28 @@ namespace CustomizacaoMoradias
             // Hip roof
             if (slopeDirection.IsZeroLength())
             {
-                CurveArray offsetedFootPrint = CreateOffsetedCurveArray(overhang, footPrintCurve);
+                CurveArray offsetedFootPrint = CreateOffsetedCurveArray(overhang, footPrintCurve, null);
                 footPrintRoof = CreateFootPrintRoof(overhang, slope, slopeDirection, offsetedFootPrint);
             }
             // Gable roof
             else
-            {        
-                List<CurveArray> convexFootPrint = GetConvexPerimeters(footPrintCurve, slopeDirection);
-                foreach (CurveArray footPrint in convexFootPrint)
+            {
+                List<FootPrintRoof> roofs = new List<FootPrintRoof>();
+                List<CurveArray> convexFootPrint = GetConvexPerimeters(footPrintCurve, slopeDirection, out List<Line> cutLines);
+                
+                int n = convexFootPrint.Count();
+                for(int i = 0; i < n; i++)
                 {
-                    CurveArray offsetedFootPrint = CreateOffsetedCurveArray(overhang, footPrint);
+                    Line unchangedLine = i % 2 == 0 ? null : cutLines[0];
+                    CurveArray offsetedFootPrint = CreateOffsetedCurveArray(overhang, convexFootPrint[i], unchangedLine);
                     footPrintRoof = CreateFootPrintRoof(overhang, slope, slopeDirection, offsetedFootPrint);
-                    CreateAllGableWalls(slopeDirection, slope, footPrint);
+                    CreateAllGableWalls(slopeDirection, slope, convexFootPrint[i]);
+                    roofs.Add(footPrintRoof);
+                }
+
+                for(int i = 0; i < n-1; i++)
+                {
+                    JoinGeometryUtils.JoinGeometry(uidoc.Document, roofs[i], roofs[i + 1]);
                 }
             }
             
@@ -1199,7 +1249,6 @@ namespace CustomizacaoMoradias
         /// </summary>
         public void ClassifyRooms()
         {
-            Document doc = uidoc.Document;
             string jsonElementClassifier = Properties.Resources.ElementClassifierConfig;
             List<RoomClassifier> deserializedRoomClassifier = JsonConvert.DeserializeObject<List<RoomClassifier>>(jsonElementClassifier);
             List<Room> rooms = GetRoomsAtLevel(baseLevel).ToList();
@@ -1330,7 +1379,7 @@ namespace CustomizacaoMoradias
         /// </param>
         public void CreateAllGableWalls(XYZ vectorDirection, double slope, CurveArray perimeter)
         {
-            CurveArray normalizedCurve = CreateOffsetedCurveArray(0, perimeter);
+            CurveArray normalizedCurve = CreateOffsetedCurveArray(0, perimeter, null);
             foreach (Curve line in normalizedCurve)
             {
                 XYZ lineDirection = GetCurveDirection(line);
