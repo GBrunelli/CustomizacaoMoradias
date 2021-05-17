@@ -12,7 +12,6 @@ using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.UI;
 using CustomizacaoMoradias.Source;
 using Newtonsoft.Json;
-using System.Diagnostics;
 
 namespace CustomizacaoMoradias
 {
@@ -21,15 +20,15 @@ namespace CustomizacaoMoradias
     [Journaling(JournalingMode.NoCommandData)]
     public class ElementPlacer
     {
-        private UIDocument uidoc;
-        private Document doc;
+        private readonly UIDocument uidoc;
+        private readonly Document doc;
 
-        private Level baseLevel;
-        private Level topLevel;
+        private readonly Level baseLevel;
+        private readonly Level topLevel;       
+
+        private readonly double scale;
 
         private PlanCircuitSet docPlanCircuitSet;
-
-        private double scale;
 
         /// <summary>
         /// Default contructor.
@@ -37,11 +36,11 @@ namespace CustomizacaoMoradias
         public ElementPlacer(UIDocument uidoc, string level, string topLevel, double scale)
         {
             this.uidoc = uidoc;
-            this.doc = uidoc.Document;
-            this.baseLevel = GetLevelFromName(level);
+            doc = uidoc.Document;
+            baseLevel = GetLevelFromName(level);
             this.topLevel = GetLevelFromName(topLevel);
             this.scale = scale;
-            this.docPlanCircuitSet = null;
+            docPlanCircuitSet = null;
         }
 
         /// <summary>
@@ -65,7 +64,10 @@ namespace CustomizacaoMoradias
                 Filter = "json|*.json"
             };
             if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
                 return openFileDialog.FileName;
+            }
+
             return null;
         }
 
@@ -83,11 +85,11 @@ namespace CustomizacaoMoradias
         private static FamilySymbol GetFamilySymbol(Document doc, string fsFamilyName)
         {
             // Retrieve the familySymbol of the piece of furniture
-            var symbol = (from familySymbol in new FilteredElementCollector(doc).
+            FamilySymbol symbol = (from familySymbol in new FilteredElementCollector(doc).
                  OfClass(typeof(FamilySymbol)).
                  Cast<FamilySymbol>()
-                          where (familySymbol.Name == fsFamilyName)
-                          select familySymbol).First();
+                                   where (familySymbol.Name == fsFamilyName)
+                                   select familySymbol).First();
             return symbol;
         }
 
@@ -133,7 +135,10 @@ namespace CustomizacaoMoradias
         private Wall FindHostingWall(XYZ xyz)
         {
             xyz = xyz.Subtract(new XYZ(0, 0, xyz.Z));
-            if (xyz is null) throw new ArgumentNullException(nameof(xyz));
+            if (xyz is null)
+            {
+                throw new ArgumentNullException(nameof(xyz));
+            }
 
             List<Wall> walls = GetWalls();
 
@@ -172,26 +177,40 @@ namespace CustomizacaoMoradias
         /// </summary>
         public void BuildJSON(string path)
         {
-            if (path is null) throw new ArgumentNullException(nameof(path));
+            if (path is null)
+            {
+                throw new ArgumentNullException(nameof(path));
+            }
+
             try
             {
                 string jsonText = File.ReadAllText(path);
                 ElementDeserializer ed = JsonConvert.DeserializeObject<ElementDeserializer>(jsonText);
 
                 foreach (WallProperty wall in ed.WallProperties)
+                {
                     CreateWall(wall, Properties.Settings.Default.WallTypeName);
+                }
 
                 foreach (WindowProperty window in ed.WindowProperties)
+                {
                     CreateWindow(window);
+                }
 
                 foreach (DoorProperty door in ed.DoorProperties)
+                {
                     CreateDoor(door);
+                }
 
                 foreach (HostedProperty element in ed.HostedProperties)
+                {
                     CreateHostedElement(element);
+                }
 
                 foreach (FurnitureProperty element in ed.FurnitureProperties)
+                {
                     CreateFurniture(element);
+                }
             }
             catch (Exception e)
             {
@@ -205,7 +224,10 @@ namespace CustomizacaoMoradias
         /// <param name="properties"> Properties of the object.</param>
         private FamilyInstance CreateFurniture(FurnitureProperty properties)
         {
-            if (properties is null) throw new ArgumentNullException(nameof(properties));
+            if (properties is null)
+            {
+                throw new ArgumentNullException(nameof(properties));
+            }
 
             // get the properties
             double rotation = DeegreToRadians(properties.Rotation);
@@ -223,7 +245,7 @@ namespace CustomizacaoMoradias
             {
                 FamilySymbol familySymbol = GetFamilySymbol(doc, fsFamilyName);
 
-                var structuralType = Autodesk.Revit.DB.Structure.StructuralType.NonStructural;
+                Autodesk.Revit.DB.Structure.StructuralType structuralType = Autodesk.Revit.DB.Structure.StructuralType.NonStructural;
                 furniture = doc.Create.NewFamilyInstance(point, familySymbol, structuralType);
                 ElementTransformUtils.RotateElement(doc, furniture.Id, axis, rotation);
             }
@@ -240,7 +262,10 @@ namespace CustomizacaoMoradias
         /// <param name="properties"> Properties of the object.</param>
         private Wall CreateWall(WallProperty properties, string wallTypeName)
         {
-            if (properties is null) throw new ArgumentNullException(nameof(properties));
+            if (properties is null)
+            {
+                throw new ArgumentNullException(nameof(properties));
+            }
 
             XYZ p0 = GetXYZFromProperties(properties.Coordinate.ElementAt(0));
             XYZ p1 = GetXYZFromProperties(properties.Coordinate.ElementAt(1));
@@ -272,7 +297,11 @@ namespace CustomizacaoMoradias
         /// <param name="properties"> Properties of the object.</param>
         private FamilyInstance CreateHostedElement(HostedProperty properties)
         {
-            if (properties is null) throw new ArgumentNullException(nameof(properties));
+            if (properties is null)
+            {
+                throw new ArgumentNullException(nameof(properties));
+            }
+
             XYZ point = GetXYZFromProperties(properties.Coordinate);
             string fsFamilyName = GetFamilySymbolName(properties.Type);
 
@@ -281,7 +310,10 @@ namespace CustomizacaoMoradias
             {
                 FamilySymbol familySymbol = GetFamilySymbol(doc, fsFamilyName);
                 Wall wall = FindHostingWall(point);
-                if (wall == null) return null;
+                if (wall == null)
+                {
+                    return null;
+                }
 
                 // Create the element
                 instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
@@ -315,7 +347,11 @@ namespace CustomizacaoMoradias
         /// <param name="properties"> Properties of the object.</param>
         private FamilyInstance CreateDoor(DoorProperty properties)
         {
-            if (properties is null) throw new ArgumentNullException(nameof(properties));
+            if (properties is null)
+            {
+                throw new ArgumentNullException(nameof(properties));
+            }
+
             HostedProperty hp = ConvertToHosted(properties);
             return CreateHostedElement(hp);
         }
@@ -326,12 +362,18 @@ namespace CustomizacaoMoradias
         /// <param name="properties"> Properties of the object.</param>
         private FamilyInstance CreateWindow(WindowProperty properties)
         {
-            if (properties is null) throw new ArgumentNullException(nameof(properties));
+            if (properties is null)
+            {
+                throw new ArgumentNullException(nameof(properties));
+            }
+
             HostedProperty hp = ConvertToHosted(properties);
             FamilyInstance window = CreateHostedElement(hp);
 
             if (window != null)
+            {
                 window.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));
+            }
 
             return window;
         }
@@ -397,12 +439,14 @@ namespace CustomizacaoMoradias
                 Phase createRoomsInPhase = phases.get_Item(phases.Size - 1);
 
                 if (createRoomsInPhase is null)
+                {
                     throw new Exception("Não foi encontrada nenhuma fase no documento atual.");
+                }
 
                 PlanTopology topology = doc.get_PlanTopology(baseLevel, createRoomsInPhase);
-                PlanCircuitSet circuitSet = topology.Circuits;
+                docPlanCircuitSet = topology.Circuits;
 
-                return circuitSet;
+                return docPlanCircuitSet;
             }
             else
             {
@@ -583,7 +627,9 @@ namespace CustomizacaoMoradias
             UV p2 = points.First.Next.Value;
             angle = CalculatesAngle(p0, p1, p2);
             if (angle > Math.PI)
+            {
                 notches.Add(p1);
+            }
 
             // calculates the angle for the middle nodes
             LinkedListNode<UV> node = points.First;
@@ -595,7 +641,9 @@ namespace CustomizacaoMoradias
                 p2 = node.Next.Value;
                 angle = CalculatesAngle(p0, p1, p2);
                 if (angle > Math.PI)
+                {
                     notches.Add(p1);
+                }
             }
             // calculates the angle fot the last node
             p0 = points.Last.Previous.Value;
@@ -603,7 +651,9 @@ namespace CustomizacaoMoradias
             p2 = points.First();
             angle = CalculatesAngle(p0, p1, p2);
             if (angle > Math.PI)
+            {
                 notches.Add(p1);
+            }
 
             return notches;
         }
@@ -624,7 +674,7 @@ namespace CustomizacaoMoradias
             cutLines = new List<Line>();
             foreach (UV notche in notches)
             {
-                var result = EliminateNotch(notche, curveArray, points, preferredOrientation, out Line line);
+                List<CurveArray> result = EliminateNotch(notche, curveArray, points, preferredOrientation, out Line line);
                 cutLines.Add(line);
                 foreach (CurveArray array in result)
                 {
@@ -647,11 +697,18 @@ namespace CustomizacaoMoradias
                 double areaY = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoopY);
 
                 if (areaX < areaY)
+                {
                     return 1;
+                }
+
                 if (areaX > areaY)
+                {
                     return -1;
+                }
                 else
+                {
                     return 0;
+                }
             }
         }
 
@@ -696,8 +753,10 @@ namespace CustomizacaoMoradias
             LinkedListNode<UV> newNode;
             newNode = FindNewNode(points, line1, posibleCurves);
 
-            if (newNode == null)         
+            if (newNode == null)
+            {
                 newNode = FindNewNode(points, line2, posibleCurves);
+            }
 
             // generates the 2 new polygons    
             LinkedList<UV> polygonA = CreatePolygonBetweenVertices(points, newNode, notchNode);
@@ -731,7 +790,7 @@ namespace CustomizacaoMoradias
             LinkedListNode<UV> newNode = null;
             foreach (Curve curve in posibleCurves)
             {
-                var intersection = curve.Intersect(line1, out IntersectionResultArray resultArray);
+                SetComparisonResult intersection = curve.Intersect(line1, out IntersectionResultArray resultArray);
                 if (intersection == SetComparisonResult.Overlap)
                 {
                     newNode = AddPointsInList(points, resultArray, curve);
@@ -748,7 +807,7 @@ namespace CustomizacaoMoradias
         {
             CurveArray curveArray = new CurveArray();
             int n = points.Count();
-            var node = points.First;
+            LinkedListNode<UV> node = points.First;
             Line line;
             for (int i = 1; i < n; i++)
             {
@@ -775,10 +834,10 @@ namespace CustomizacaoMoradias
             LinkedList<UV> polygon = new LinkedList<UV>();
             LinkedListNode<UV> node = first;
 
-            while(node != last)
-            {            
+            while (node != last)
+            {
                 // TEMPORARY: change for a circular list
-                if(node == null)
+                if (node == null)
                 {
                     node = points.First;
                 }
@@ -799,13 +858,13 @@ namespace CustomizacaoMoradias
         {
             UV p0 = ProjectInPlaneXY(curve.GetEndPoint(0));
             LinkedListNode<UV> newNode = null;
-            var node = FindPoint(points, p0);
-            var iterator = resultArray.ForwardIterator();
+            LinkedListNode<UV> node = FindPoint(points, p0);
+            IntersectionResultArrayIterator iterator = resultArray.ForwardIterator();
             iterator.Reset();
             while (iterator.MoveNext())
             {
                 IntersectionResult result = iterator.Current as IntersectionResult;
-                var intersectionPoint = ProjectInPlaneXY(result.XYZPoint);
+                UV intersectionPoint = ProjectInPlaneXY(result.XYZPoint);
                 newNode = points.AddAfter(node, intersectionPoint);
             }
             return newNode;
@@ -819,12 +878,15 @@ namespace CustomizacaoMoradias
         /// </returns>
         private static LinkedListNode<UV> FindPoint(LinkedList<UV> points, UV key)
         {
-            var node = points.First;
-            while(node != null)
+            LinkedListNode<UV> node = points.First;
+            while (node != null)
             {
-                var point = node.Value;
+                UV point = node.Value;
                 if (point.U == key.U && point.V == key.V)
+                {
                     return node;
+                }
+
                 node = node.Next;
             }
             return null;
@@ -934,8 +996,12 @@ namespace CustomizacaoMoradias
         /// </returns>
         public CurveArray CreateOffsetedCurveArray(double offset, CurveArray curveArray, Line unchangedLine)
         {
-            if (offset < 0) return null;
-            List<UV> points = GetPoints(curveArray).ToList() ;
+            if (offset < 0)
+            {
+                return null;
+            }
+
+            List<UV> points = GetPoints(curveArray).ToList();
             List<UV> offsetedPoints = OffsetPolygon(points, offset, unchangedLine);
             LinkedList<UV> linkedOffsetedPoints = new LinkedList<UV>(offsetedPoints);
             CurveArray offsetedCurveArray = CreateCurveArrayFromPoints(linkedOffsetedPoints);
@@ -955,7 +1021,10 @@ namespace CustomizacaoMoradias
                 //find the points before and after our target point.
                 int i = (j - 1);
                 if (i < 0)
+                {
                     i += num_points;
+                }
+
                 int k = (j + 1) % num_points;
 
                 //the next step is to push out each point based on the position of its surrounding points and then
@@ -978,15 +1047,19 @@ namespace CustomizacaoMoradias
                 {
                     UV p0 = ProjectInPlaneXY(unchangedLine.GetEndPoint(0));
                     UV p1 = ProjectInPlaneXY(unchangedLine.GetEndPoint(1));
-                    
-                    if ((vertices[i].IsAlmostEqualTo(p0) && vertices[j].IsAlmostEqualTo(p1)) || 
-                        (vertices[j].IsAlmostEqualTo(p0) && vertices[i].IsAlmostEqualTo(p1)))
-                        v1 = UV.Zero;
 
-                    if((vertices[j].IsAlmostEqualTo(p0) && vertices[k].IsAlmostEqualTo(p1)) || 
+                    if ((vertices[i].IsAlmostEqualTo(p0) && vertices[j].IsAlmostEqualTo(p1)) ||
+                        (vertices[j].IsAlmostEqualTo(p0) && vertices[i].IsAlmostEqualTo(p1)))
+                    {
+                        v1 = UV.Zero;
+                    }
+
+                    if ((vertices[j].IsAlmostEqualTo(p0) && vertices[k].IsAlmostEqualTo(p1)) ||
                         (vertices[k].IsAlmostEqualTo(p0) && vertices[j].IsAlmostEqualTo(p1)))
+                    {
                         v2 = UV.Zero;
-                }                                  
+                    }
+                }
 
                 // creates a shifted line that is parallel to the vector v1 
                 n1 = new UV(-v1.V, v1.U);
@@ -1005,7 +1078,7 @@ namespace CustomizacaoMoradias
                 //see where the shifted lines 1 and 2 intersect
                 SetComparisonResult comparisonRsult = line1.Intersect(line2, out IntersectionResultArray intersection);
 
-                if(comparisonRsult == SetComparisonResult.Overlap)
+                if (comparisonRsult == SetComparisonResult.Overlap)
                 {
                     IntersectionResult result = intersection.get_Item(0);
                     UV intersection_point = ProjectInPlaneXY(result.XYZPoint);
@@ -1103,7 +1176,10 @@ namespace CustomizacaoMoradias
         /// </returns>
         private static XYZ GetCurveMiddlePoint(Curve curve)
         {
-            if (curve is null) throw new ArgumentNullException(nameof(curve));
+            if (curve is null)
+            {
+                throw new ArgumentNullException(nameof(curve));
+            }
 
             XYZ curveStartPoint = curve.GetEndPoint(0);
             XYZ curveEndPoint = curve.GetEndPoint(1);
@@ -1155,17 +1231,20 @@ namespace CustomizacaoMoradias
 
                 case RoofDesign.HiddenButterfly:
                     CreateHiddenButterflyRoof(footPrintCurve, slope, slopeDirection);
-                    break;       
+                    break;
             }
             return footPrintRoof;
-        }        
+        }
+
 
         private void CreateHiddenButterflyRoof(CurveArray footPrint, double slope, XYZ slopeDirection)
         {
             List<CurveArray> convexFootPrint = GetConvexPerimeters(footPrint, slopeDirection, out List<Line> cutLines);
 
-            if(convexFootPrint.Count == 1)      
+            if (convexFootPrint.Count == 1)
+            {
                 convexFootPrint = DivideCurveArrayInHalf(convexFootPrint[0], slopeDirection);
+            }
 
             foreach (CurveArray curveArray in convexFootPrint)
             {
@@ -1191,20 +1270,23 @@ namespace CustomizacaoMoradias
                         footPrintRoof.set_DefinesSlope(modelCurve, true);
                         footPrintRoof.set_SlopeAngle(modelCurve, slope);
                     }
-                }               
+                }
             }
             CreateParapetWall(footPrint);
         }
 
+
         private List<CurveArray> DivideCurveArrayInHalf(CurveArray curveArray, XYZ divisionDirection)
         {
             if (curveArray.Size != 4)
+            {
                 return null;
+            }
 
             List<XYZ> newPoints = new List<XYZ>();
-            foreach(Curve curve in curveArray)
+            foreach (Curve curve in curveArray)
             {
-                if(GetCurveDirection(curve).CrossProduct(divisionDirection).IsZeroLength())
+                if (GetCurveDirection(curve).CrossProduct(divisionDirection).IsZeroLength())
                 {
                     XYZ p0 = curve.GetEndPoint(0);
                     XYZ p1 = curve.GetEndPoint(1);
@@ -1214,15 +1296,17 @@ namespace CustomizacaoMoradias
             }
 
             if (newPoints.Count != 2)
+            {
                 return null;
+            }
 
-            var points = GetPoints(curveArray);
+            LinkedList<UV> points = GetPoints(curveArray);
 
-            var node0 = FindPoint(points, ProjectInPlaneXY(newPoints[0]));
-            var node1 = FindPoint(points, ProjectInPlaneXY(newPoints[1]));                    
+            LinkedListNode<UV> node0 = FindPoint(points, ProjectInPlaneXY(newPoints[0]));
+            LinkedListNode<UV> node1 = FindPoint(points, ProjectInPlaneXY(newPoints[1]));
 
-            var newPolygon0 = CreatePolygonBetweenVertices(points, node0, node1);
-            var newPolygon1 = CreatePolygonBetweenVertices(points, node1, node0);
+            LinkedList<UV> newPolygon0 = CreatePolygonBetweenVertices(points, node0, node1);
+            LinkedList<UV> newPolygon1 = CreatePolygonBetweenVertices(points, node1, node0);
 
             List<CurveArray> dividedCurveArrays = new List<CurveArray>
             {
@@ -1233,9 +1317,10 @@ namespace CustomizacaoMoradias
             return dividedCurveArrays;
         }
 
+
         private void CreateParapetWall(CurveArray curveArray)
         {
-            foreach(Curve curve in curveArray)
+            foreach (Curve curve in curveArray)
             {
                 XYZ curveMiddlePoint = GetCurveMiddlePoint(curve);
                 Wall wall = FindHostingWall(curveMiddlePoint);
@@ -1248,14 +1333,16 @@ namespace CustomizacaoMoradias
                     WallType wallType = GetWallType(Properties.Settings.Default.WallTypeName);
                     Wall.Create(doc, curve, wallType.Id, topLevel.Id, MetersToFeet(0.8), 0, false, false);
                 }
-            }                     
+            }
         }
+
 
         private void CreateHipRoof(CurveArray footPrint, double overhang, double slope, XYZ slopeDirection)
         {
             CurveArray offsetedFootPrint = CreateOffsetedCurveArray(overhang, footPrint, null);
             CreateFootPrintRoof(overhang, slope, slopeDirection, offsetedFootPrint);
         }
+
 
         private void CreateGableRoof(CurveArray footPrint, double overhang, double slope, XYZ slopeDirection)
         {
@@ -1285,15 +1372,16 @@ namespace CustomizacaoMoradias
             }
         }
 
+
         private bool VerifyIntersectionInArray(Curve curve, List<Line> lines)
         {
-            Transform transform = Transform.CreateTranslation( new XYZ(0, 0, -curve.GetEndPoint(0).Z));
+            Transform transform = Transform.CreateTranslation(new XYZ(0, 0, -curve.GetEndPoint(0).Z));
             curve = curve.CreateTransformed(transform);
-            foreach(Line line in lines)
+            foreach (Line line in lines)
             {
                 // verifiy is the line is equal or a subset of the curve
-                var result = line.Intersect(curve);
-                if(result == SetComparisonResult.Equal ||
+                SetComparisonResult result = line.Intersect(curve);
+                if (result == SetComparisonResult.Equal ||
                     result == SetComparisonResult.Subset)
                 {
                     return true;
@@ -1330,7 +1418,7 @@ namespace CustomizacaoMoradias
             FootPrintRoof footPrintRoof = doc.Create.NewFootPrintRoof(footPrint, topLevel, roofType, out footPrintToModelCurveMapping);
 
             // create the slope
-            ApplySlope(overhang, slope, slopeDirection, footPrintRoof, footPrintToModelCurveMapping);              
+            ApplySlope(overhang, slope, slopeDirection, footPrintRoof, footPrintToModelCurveMapping);
 
             return footPrintRoof;
         }
@@ -1541,10 +1629,12 @@ namespace CustomizacaoMoradias
             XYZ p0 = line.GetEndPoint(0);
             XYZ p1 = line.GetEndPoint(1);
             XYZ p2 = FormTriangle(slope, p0, p1);
-            IList<Curve> profile = new List<Curve>(3);
-            profile.Add(Line.CreateBound(p0, p1));
-            profile.Add(Line.CreateBound(p1, p2));
-            profile.Add(Line.CreateBound(p2, p0));
+            IList<Curve> profile = new List<Curve>(3)
+            {
+                Line.CreateBound(p0, p1),
+                Line.CreateBound(p1, p2),
+                Line.CreateBound(p2, p0)
+            };
 
             // get the wall type
             WallType type = GetWallType("parede 15 cm - branca");
@@ -1613,8 +1703,7 @@ namespace CustomizacaoMoradias
             foreach (Curve iterationCurve in housePerimeter)
             {
                 // calculates and analyzes the intersections
-                IntersectionResultArray intersectionResultArray;
-                SetComparisonResult setComparisonResult = curve.Intersect(iterationCurve, out intersectionResultArray);
+                SetComparisonResult setComparisonResult = curve.Intersect(iterationCurve, out IntersectionResultArray intersectionResultArray);
                 if (setComparisonResult == SetComparisonResult.Overlap)
                 {
                     IntersectionResultArrayIterator iterator = intersectionResultArray.ForwardIterator();
@@ -1654,7 +1743,7 @@ namespace CustomizacaoMoradias
             }
         }
 
-        class ClockWisePointComparer : IComparer
+        private class ClockWisePointComparer : IComparer
         {
             public static UV centroid;
 
@@ -1665,22 +1754,36 @@ namespace CustomizacaoMoradias
                 UV b = y as UV;
 
                 if (a.U - centroid.U >= 0 && b.U - centroid.U < 0)
+                {
                     return -1;
+                }
+
                 if (a.U - centroid.U < 0 && b.U - centroid.U >= 0)
+                {
                     return 1;
+                }
+
                 if (a.U - centroid.U == 0 && b.U - centroid.U == 0)
                 {
                     if (a.V - centroid.V >= 0 || b.V - centroid.V >= 0)
+                    {
                         return Convert.ToInt32(a.V - b.V);
+                    }
+
                     return Convert.ToInt32(b.V - a.V);
                 }
 
                 // compute the cross product of vectors (center -> a) x (center -> b)
                 double det = (a.U - centroid.U) * (b.V - centroid.V) - (b.U - centroid.U) * (a.V - centroid.V);
                 if (det < 0)
+                {
                     return 1;
+                }
+
                 if (det > 0)
+                {
                     return -1;
+                }
 
                 // points a and b are on the same line from the center
                 // check which point is closer to the center
