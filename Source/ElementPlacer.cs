@@ -22,10 +22,14 @@ namespace CustomizacaoMoradias
     public class ElementPlacer
     {
         private UIDocument uidoc;
+        private Document doc;
+
         private Level baseLevel;
         private Level topLevel;
-        private double scale;
+
         private PlanCircuitSet docPlanCircuitSet;
+
+        private double scale;
 
         /// <summary>
         /// Default contructor.
@@ -33,6 +37,7 @@ namespace CustomizacaoMoradias
         public ElementPlacer(UIDocument uidoc, string level, string topLevel, double scale)
         {
             this.uidoc = uidoc;
+            this.doc = uidoc.Document;
             this.baseLevel = GetLevelFromName(level);
             this.topLevel = GetLevelFromName(topLevel);
             this.scale = scale;
@@ -110,7 +115,6 @@ namespace CustomizacaoMoradias
         /// </returns>
         private WallType GetWallType(string wallTypeName)
         {
-            Document doc = uidoc.Document;
             FilteredElementCollector collector = new FilteredElementCollector(doc);
             collector.OfClass(typeof(WallType));
             WallType wallType = collector.First(y => y.Name == wallTypeName) as WallType;
@@ -157,7 +161,6 @@ namespace CustomizacaoMoradias
         /// <returns></returns>
         private List<Wall> GetWalls()
         {
-            Document doc = uidoc.Document;
             FilteredElementCollector collector = new FilteredElementCollector(doc);
             collector.OfClass(typeof(Wall));
             List<Wall> walls = collector.Cast<Wall>().Where(wl => wl.LevelId == baseLevel.Id).ToList();
@@ -203,7 +206,6 @@ namespace CustomizacaoMoradias
         private FamilyInstance CreateFurniture(FurnitureProperty properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
-            Document doc = uidoc.Document;
 
             // get the properties
             double rotation = DeegreToRadians(properties.Rotation);
@@ -239,7 +241,6 @@ namespace CustomizacaoMoradias
         private Wall CreateWall(WallProperty properties, string wallTypeName)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
-            Document doc = uidoc.Document;
 
             XYZ p0 = GetXYZFromProperties(properties.Coordinate.ElementAt(0));
             XYZ p1 = GetXYZFromProperties(properties.Coordinate.ElementAt(1));
@@ -272,7 +273,6 @@ namespace CustomizacaoMoradias
         private FamilyInstance CreateHostedElement(HostedProperty properties)
         {
             if (properties is null) throw new ArgumentNullException(nameof(properties));
-            Document doc = uidoc.Document;
             XYZ point = GetXYZFromProperties(properties.Coordinate);
             string fsFamilyName = GetFamilySymbolName(properties.Type);
 
@@ -361,7 +361,6 @@ namespace CustomizacaoMoradias
         /// </returns>
         public Level GetLevelFromName(string levelName)
         {
-            Document doc = uidoc.Document;
             Level level;
             try
             {
@@ -392,7 +391,6 @@ namespace CustomizacaoMoradias
         {
             if (docPlanCircuitSet == null || update == true)
             {
-                Document doc = uidoc.Document;
                 PhaseArray phases = doc.Phases;
 
                 // get the last phase
@@ -422,7 +420,6 @@ namespace CustomizacaoMoradias
         /// </param>
         private IList<IList<BoundarySegment>> GetLoopsInCircuit(PlanCircuit circuit)
         {
-            Document doc = uidoc.Document;
             Room room;
             IList<IList<BoundarySegment>> loops = null;
             SpatialElementBoundaryOptions opt = new SpatialElementBoundaryOptions
@@ -501,7 +498,6 @@ namespace CustomizacaoMoradias
         /// </param>
         public void CreateFloor(string floorTypeName)
         {
-            Document doc = uidoc.Document;
             PlanCircuitSet circuitSet = GetDocPlanCircuitSet(false);
 
             // get the floorType
@@ -1028,7 +1024,6 @@ namespace CustomizacaoMoradias
         /// <param name="curveArray"></param>
         private void DrawCurveArray(CurveArray curveArray)
         {
-            Document doc = uidoc.Document;
             Autodesk.Revit.DB.View currentView = doc.ActiveView;
             foreach (Curve curve in curveArray)
             {
@@ -1079,7 +1074,7 @@ namespace CustomizacaoMoradias
         /// </returns>
         public Floor CreateCeiling(string floorTypeName)
         {
-            Document doc = uidoc.Document;
+
             Floor ceiling = null;
             PlanCircuitSet circuitSet = GetDocPlanCircuitSet(false);
 
@@ -1122,6 +1117,13 @@ namespace CustomizacaoMoradias
             return new XYZ(cordX, cordY, cordZ);
         }
 
+        public enum RoofDesign
+        {
+            HiddenButterfly,
+            Hip,
+            Gable
+        }
+
         /// <summary>
         /// Create a generic roof in the Top Level.
         /// </summary>
@@ -1136,40 +1138,173 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns the created FootPrintRoof.
         /// </returns>
-        public FootPrintRoof CreateRoof(double overhang, double slope, XYZ slopeDirection)
+        public FootPrintRoof CreateRoof(double overhang, double slope, XYZ slopeDirection, RoofDesign roofDesign)
         {
             FootPrintRoof footPrintRoof = null;
             CurveArray footPrintCurve = GetHousePerimeter();
 
-            // Hip roof
-            if (slopeDirection.IsZeroLength())
+            switch (roofDesign)
             {
-                CurveArray offsetedFootPrint = CreateOffsetedCurveArray(overhang, footPrintCurve, null);
-                footPrintRoof = CreateFootPrintRoof(overhang, slope, slopeDirection, offsetedFootPrint);
-            }
-            // Gable roof
-            else
-            {
-                List<FootPrintRoof> roofs = new List<FootPrintRoof>();
-                List<CurveArray> convexFootPrint = GetConvexPerimeters(footPrintCurve, slopeDirection, out List<Line> cutLines);
-                
-                int n = convexFootPrint.Count();
-                for(int i = 0; i < n; i++)
-                {
-                    Line unchangedLine = i % 2 == 0 ? null : cutLines[0];
-                    CurveArray offsetedFootPrint = CreateOffsetedCurveArray(overhang, convexFootPrint[i], unchangedLine);
-                    footPrintRoof = CreateFootPrintRoof(overhang, slope, slopeDirection, offsetedFootPrint);
-                    CreateAllGableWalls(slopeDirection, slope, convexFootPrint[i]);
-                    roofs.Add(footPrintRoof);
-                }
+                case RoofDesign.Hip:
+                    CreateHipRoof(footPrintCurve, overhang, slope, slopeDirection);
+                    break;
 
-                for(int i = 0; i < n-1; i++)
+                case RoofDesign.Gable:
+                    CreateGableRoof(footPrintCurve, overhang, slope, slopeDirection);
+                    break;
+
+                case RoofDesign.HiddenButterfly:
+                    CreateHiddenButterflyRoof(footPrintCurve, slope, slopeDirection);
+                    break;       
+            }
+            return footPrintRoof;
+        }        
+
+        private void CreateHiddenButterflyRoof(CurveArray footPrint, double slope, XYZ slopeDirection)
+        {
+            List<CurveArray> convexFootPrint = GetConvexPerimeters(footPrint, slopeDirection, out List<Line> cutLines);
+
+            if(convexFootPrint.Count == 1)      
+                convexFootPrint = DivideCurveArrayInHalf(convexFootPrint[0], slopeDirection);
+
+            foreach (CurveArray curveArray in convexFootPrint)
+            {
+                // get a roof type
+                FilteredElementCollector collector = new FilteredElementCollector(doc);
+                collector.OfClass(typeof(RoofType));
+                RoofType roofType = collector.FirstElement() as RoofType;
+
+                // create the foot print of the roof
+                ModelCurveArray footPrintToModelCurveMapping = new ModelCurveArray();
+                FootPrintRoof footPrintRoof = doc.Create.NewFootPrintRoof(curveArray, topLevel, roofType, out footPrintToModelCurveMapping);
+
+                // apply the slope for the cutLines
+                ModelCurveArrayIterator iterator = footPrintToModelCurveMapping.ForwardIterator();
+                iterator.Reset();
+                while (iterator.MoveNext())
                 {
-                    JoinGeometryUtils.JoinGeometry(uidoc.Document, roofs[i], roofs[i + 1]);
+                    ModelCurve modelCurve = iterator.Current as ModelCurve;
+                    Curve curve = modelCurve.GeometryCurve;
+
+                    if (VerifyIntersectionInArray(curve, cutLines))
+                    {
+                        footPrintRoof.set_DefinesSlope(modelCurve, true);
+                        footPrintRoof.set_SlopeAngle(modelCurve, slope);
+                    }
+                }               
+            }
+            CreateParapetWall(footPrint);
+        }
+
+        private List<CurveArray> DivideCurveArrayInHalf(CurveArray curveArray, XYZ divisionDirection)
+        {
+            if (curveArray.Size != 4)
+                return null;
+
+            List<XYZ> newPoints = new List<XYZ>();
+            foreach(Curve curve in curveArray)
+            {
+                if(GetCurveDirection(curve).CrossProduct(divisionDirection).IsZeroLength())
+                {
+                    XYZ p0 = curve.GetEndPoint(0);
+                    XYZ p1 = curve.GetEndPoint(1);
+                    XYZ newPoint = (p0 + p1) / 2;
+                    newPoints.Add(newPoint);
                 }
             }
-            
-            return footPrintRoof;
+
+            if (newPoints.Count != 2)
+                return null;
+
+            var points = GetPoints(curveArray);
+
+            var node0 = FindPoint(points, ProjectInPlaneXY(newPoints[0]));
+            var node1 = FindPoint(points, ProjectInPlaneXY(newPoints[1]));                    
+
+            var newPolygon0 = CreatePolygonBetweenVertices(points, node0, node1);
+            var newPolygon1 = CreatePolygonBetweenVertices(points, node1, node0);
+
+            List<CurveArray> dividedCurveArrays = new List<CurveArray>
+            {
+                CreateCurveArrayFromPoints(newPolygon0),
+                CreateCurveArrayFromPoints(newPolygon1)
+            };
+
+            return dividedCurveArrays;
+        }
+
+        private void CreateParapetWall(CurveArray curveArray)
+        {
+            foreach(Curve curve in curveArray)
+            {
+                XYZ curveMiddlePoint = GetCurveMiddlePoint(curve);
+                Wall wall = FindHostingWall(curveMiddlePoint);
+                if (wall != null)
+                {
+                    wall.get_Parameter(BuiltInParameter.WALL_TOP_OFFSET).Set(MetersToFeet(0.8));
+                }
+                else
+                {
+                    WallType wallType = GetWallType(Properties.Settings.Default.WallTypeName);
+                    Wall.Create(doc, curve, wallType.Id, topLevel.Id, MetersToFeet(0.8), 0, false, false);
+                }
+            }                     
+        }
+
+        private void CreateHipRoof(CurveArray footPrint, double overhang, double slope, XYZ slopeDirection)
+        {
+            CurveArray offsetedFootPrint = CreateOffsetedCurveArray(overhang, footPrint, null);
+            CreateFootPrintRoof(overhang, slope, slopeDirection, offsetedFootPrint);
+        }
+
+        private void CreateGableRoof(CurveArray footPrint, double overhang, double slope, XYZ slopeDirection)
+        {
+            List<FootPrintRoof> roofs = new List<FootPrintRoof>();
+            List<CurveArray> convexFootPrint = GetConvexPerimeters(footPrint, slopeDirection, out List<Line> cutLines);
+
+            int n = convexFootPrint.Count();
+
+            // create the n convex compenents of the roof
+            for (int i = 0; i < n; i++)
+            {
+                Line unchangedLine = i % 2 == 0 ? null : cutLines[0];
+                CurveArray offsetedFootPrint = CreateOffsetedCurveArray(overhang, convexFootPrint[i], unchangedLine);
+                FootPrintRoof footPrintRoof = CreateFootPrintRoof(overhang, slope, slopeDirection, offsetedFootPrint);
+                CreateAllGableWalls(slopeDirection, slope, convexFootPrint[i]);
+                roofs.Add(footPrintRoof);
+            }
+
+            // connect the components if possible
+            for (int i = 0; i < n - 1; i++)
+            {
+                try
+                {
+                    JoinGeometryUtils.JoinGeometry(doc, roofs[i], roofs[i + 1]);
+                }
+                catch (Exception) { continue; }
+            }
+        }
+
+        private bool VerifyIntersectionInArray(Curve curve, List<Line> lines)
+        {
+            Transform transform = Transform.CreateTranslation( new XYZ(0, 0, -curve.GetEndPoint(0).Z));
+            curve = curve.CreateTransformed(transform);
+            foreach(Line line in lines)
+            {
+                // verifiy is the line is equal or a subset of the curve
+                var result = line.Intersect(curve);
+                if(result == SetComparisonResult.Equal ||
+                    result == SetComparisonResult.Subset)
+                {
+                    return true;
+                }
+                // verify if the line intersects and is parallel
+                if (result == SetComparisonResult.Overlap && (line.Direction.CrossProduct(GetCurveDirection(curve)).IsZeroLength()))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /// <summary>
@@ -1184,9 +1319,8 @@ namespace CustomizacaoMoradias
         /// </returns>
         private FootPrintRoof CreateFootPrintRoof(double overhang, double slope, XYZ slopeDirection, CurveArray footPrint)
         {
-            Document doc = uidoc.Document;
 
-            // create a roof type
+            // get a roof type
             FilteredElementCollector collector = new FilteredElementCollector(doc);
             collector.OfClass(typeof(RoofType));
             RoofType roofType = collector.FirstElement() as RoofType;
@@ -1194,6 +1328,8 @@ namespace CustomizacaoMoradias
             // create the foot print of the roof
             ModelCurveArray footPrintToModelCurveMapping = new ModelCurveArray();
             FootPrintRoof footPrintRoof = doc.Create.NewFootPrintRoof(footPrint, topLevel, roofType, out footPrintToModelCurveMapping);
+
+            // create the slope
             ApplySlope(overhang, slope, slopeDirection, footPrintRoof, footPrintToModelCurveMapping);              
 
             return footPrintRoof;
@@ -1293,7 +1429,6 @@ namespace CustomizacaoMoradias
         /// </returns>
         private IEnumerable<Room> GetRoomsAtLevel(Level level)
         {
-            Document doc = uidoc.Document;
             ElementId levelId = level.Id;
 
             FilteredElementCollector collector = new FilteredElementCollector(doc);
@@ -1350,7 +1485,6 @@ namespace CustomizacaoMoradias
         /// </summary>
         public void CreateNewSheet()
         {
-            Document doc = uidoc.Document;
             // create a filter to get all the title block type
             FilteredElementCollector collector = new FilteredElementCollector(doc);
             collector.OfCategory(BuiltInCategory.OST_TitleBlocks);
@@ -1402,7 +1536,6 @@ namespace CustomizacaoMoradias
         /// <returns></returns>
         private Wall CreateGableWall(Curve line, double slope)
         {
-            Document doc = uidoc.Document;
 
             // create the gable wall profile
             XYZ p0 = line.GetEndPoint(0);
@@ -1445,7 +1578,6 @@ namespace CustomizacaoMoradias
         [Obsolete("This Method is Deprecated. Use OffsetPolygon", true)]
         private Curve CreateOffsetedCurve(CurveArray housePerimeter, Curve curve, double offset, XYZ offsetVector)
         {
-            Document doc = uidoc.Document;
             // finds the middle point of the current curve
             XYZ middlePoint = GetCurveMiddlePoint(curve);
 
@@ -1459,7 +1591,7 @@ namespace CustomizacaoMoradias
                 XYZ wallNormalVector = wall.Orientation;
 
                 // Makes sure that the exterior of the wall is pointed to the exterior of the house
-                XYZ roomPoint = middlePoint.Add(wallNormalVector);
+                XYZ roomPoint = middlePoint + wallNormalVector;
                 Room room = doc.GetRoomAtPoint(roomPoint);
                 if (room.Name != "Exterior 0")
                 {
@@ -1470,7 +1602,7 @@ namespace CustomizacaoMoradias
                 if (wallNormalVector.CrossProduct(offsetVector).IsZeroLength())
                 {
                     // aplies the offset
-                    wallNormalVector = wallNormalVector.Multiply(offset);
+                    wallNormalVector = wallNormalVector * offset;
                     Transform transform = Transform.CreateTranslation(wallNormalVector);
                     curve = curve.CreateTransformed(transform);
                 }

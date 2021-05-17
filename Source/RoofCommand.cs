@@ -21,7 +21,7 @@ namespace CustomizacaoMoradias
                 using (Transaction transaction = new Transaction(commandData.Application.ActiveUIDocument.Document, "Roof Command"))
                 {
                     transaction.Start();
-                    elementPlacer.CreateRoof(offset, 0.3, new XYZ(1, 0, 0));
+                    elementPlacer.CreateRoof(offset, 0.3, new XYZ(1, 0, 0), ElementPlacer.RoofDesign.Gable);
                     transaction.Commit();
                 }
 
