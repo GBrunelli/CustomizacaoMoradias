@@ -15,6 +15,7 @@ namespace CustomizacaoMoradias
         public static string levelName;
         public static string topLevelName;
         public static string roofType;
+        public static string roofStyle;
 
         public PlaceElementsForm(ExternalEvent exEvent, UserInputHandler handler)
         {
@@ -45,6 +46,7 @@ namespace CustomizacaoMoradias
         private void okButton_Click(object sender, EventArgs e)
         {
             roofType = roofTypeComboBox.Text;
+            roofStyle = RoofStyleComboBox.Text;
             m_ExEvent.Raise();
         }
 

@@ -21,18 +21,19 @@ namespace CustomizacaoMoradias
                     string levelName = PlaceElementsForm.levelName;
                     string topLevelName = PlaceElementsForm.topLevelName;
                     XYZ roofVector = GetXYZFromString(PlaceElementsForm.roofType);
+                    ElementPlacer.RoofDesign roofDesign = GetRoofDesignFromString(PlaceElementsForm.roofStyle);
 
                     ElementPlacer elementPlacer = new ElementPlacer(uidoc, levelName, topLevelName, 0.3);
 
-                    elementPlacer.BuildJSON(path);
-                    elementPlacer.ClassifyRooms();
+                    elementPlacer.BuildJSON(path);                  
                     elementPlacer.CreateFloor(Properties.Settings.Default.FloorName);
                     elementPlacer.CreateCeiling(Properties.Settings.Default.CeilingName);
+                    elementPlacer.ClassifyRooms();
 
                     double offset = ElementPlacer.MetersToFeet(0.6);
                     if (roofVector == null)
                         roofVector = new XYZ(0, 0, 0);
-                    elementPlacer.CreateRoof(offset, 0.05, roofVector, ElementPlacer.RoofDesign.HiddenButterfly);                 
+                    elementPlacer.CreateRoof(offset, 0.05, roofVector, roofDesign);                 
                 }
                 catch (LevelNotFoundException lvlEx)
                 {
@@ -77,6 +78,20 @@ namespace CustomizacaoMoradias
             {
                 return null;
             }
+        }
+        
+        private ElementPlacer.RoofDesign GetRoofDesignFromString(string s)
+        {
+            switch (s)
+            {
+                case "Hip Roof":
+                    return ElementPlacer.RoofDesign.Hip;
+                case "Gable Roof":
+                    return ElementPlacer.RoofDesign.Gable;
+                case "Hidden Roof":
+                    return ElementPlacer.RoofDesign.HiddenButterfly;
+            }
+            return ElementPlacer.RoofDesign.Gable;
         }
     }
 }

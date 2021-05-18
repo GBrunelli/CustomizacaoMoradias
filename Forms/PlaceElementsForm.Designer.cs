@@ -41,6 +41,8 @@
             this.topLevelNametextBox = new System.Windows.Forms.TextBox();
             this.roofTypeComboBox = new System.Windows.Forms.ComboBox();
             this.roofTypeLabel = new System.Windows.Forms.Label();
+            this.RoofStyleComboBox = new System.Windows.Forms.ComboBox();
+            this.roofStyleLabel = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // fileLabel
@@ -97,7 +99,7 @@
             // 
             this.cancelButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cancelButton.Location = new System.Drawing.Point(343, 207);
+            this.cancelButton.Location = new System.Drawing.Point(343, 221);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(75, 23);
             this.cancelButton.TabIndex = 5;
@@ -109,7 +111,7 @@
             // 
             this.okButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.okButton.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.okButton.Location = new System.Drawing.Point(262, 207);
+            this.okButton.Location = new System.Drawing.Point(262, 221);
             this.okButton.Name = "okButton";
             this.okButton.Size = new System.Drawing.Size(75, 23);
             this.okButton.TabIndex = 4;
@@ -149,7 +151,7 @@
             "(0, 0, 0)",
             "(1, 0, 0)",
             "(0, 1, 0) "});
-            this.roofTypeComboBox.Location = new System.Drawing.Point(15, 144);
+            this.roofTypeComboBox.Location = new System.Drawing.Point(15, 186);
             this.roofTypeComboBox.Name = "roofTypeComboBox";
             this.roofTypeComboBox.Size = new System.Drawing.Size(121, 21);
             this.roofTypeComboBox.TabIndex = 9;
@@ -157,11 +159,32 @@
             // roofTypeLabel
             // 
             this.roofTypeLabel.AutoSize = true;
-            this.roofTypeLabel.Location = new System.Drawing.Point(12, 126);
+            this.roofTypeLabel.Location = new System.Drawing.Point(12, 168);
             this.roofTypeLabel.Name = "roofTypeLabel";
-            this.roofTypeLabel.Size = new System.Drawing.Size(54, 13);
+            this.roofTypeLabel.Size = new System.Drawing.Size(57, 13);
             this.roofTypeLabel.TabIndex = 10;
-            this.roofTypeLabel.Text = "RoofType";
+            this.roofTypeLabel.Text = "Roof Type";
+            // 
+            // RoofStyleComboBox
+            // 
+            this.RoofStyleComboBox.FormattingEnabled = true;
+            this.RoofStyleComboBox.Items.AddRange(new object[] {
+            "Hip Roof",
+            "Gable Roof",
+            "Hidden Roof"});
+            this.RoofStyleComboBox.Location = new System.Drawing.Point(15, 144);
+            this.RoofStyleComboBox.Name = "RoofStyleComboBox";
+            this.RoofStyleComboBox.Size = new System.Drawing.Size(121, 21);
+            this.RoofStyleComboBox.TabIndex = 11;
+            // 
+            // roofStyleLabel
+            // 
+            this.roofStyleLabel.AutoSize = true;
+            this.roofStyleLabel.Location = new System.Drawing.Point(12, 126);
+            this.roofStyleLabel.Name = "roofStyleLabel";
+            this.roofStyleLabel.Size = new System.Drawing.Size(56, 13);
+            this.roofStyleLabel.TabIndex = 12;
+            this.roofStyleLabel.Text = "Roof Style";
             // 
             // PlaceElementsForm
             // 
@@ -170,7 +193,9 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.AutoValidate = System.Windows.Forms.AutoValidate.EnableAllowFocusChange;
             this.CancelButton = this.cancelButton;
-            this.ClientSize = new System.Drawing.Size(430, 242);
+            this.ClientSize = new System.Drawing.Size(430, 256);
+            this.Controls.Add(this.roofStyleLabel);
+            this.Controls.Add(this.RoofStyleComboBox);
             this.Controls.Add(this.roofTypeLabel);
             this.Controls.Add(this.roofTypeComboBox);
             this.Controls.Add(this.topLevelNametextBox);
@@ -209,5 +234,7 @@
         private System.Windows.Forms.TextBox topLevelNametextBox;
         private System.Windows.Forms.ComboBox roofTypeComboBox;
         private System.Windows.Forms.Label roofTypeLabel;
+        private System.Windows.Forms.ComboBox RoofStyleComboBox;
+        private System.Windows.Forms.Label roofStyleLabel;
     }
 }

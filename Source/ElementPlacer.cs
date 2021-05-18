@@ -182,39 +182,68 @@ namespace CustomizacaoMoradias
                 throw new ArgumentNullException(nameof(path));
             }
 
-            try
-            {
-                string jsonText = File.ReadAllText(path);
-                ElementDeserializer ed = JsonConvert.DeserializeObject<ElementDeserializer>(jsonText);
+            string jsonText = File.ReadAllText(path);
+            ElementDeserializer ed = JsonConvert.DeserializeObject<ElementDeserializer>(jsonText);
 
-                foreach (WallProperty wall in ed.WallProperties)
+
+            foreach (WallProperty wall in ed.WallProperties)
+            {
+                try
                 {
                     CreateWall(wall, Properties.Settings.Default.WallTypeName);
                 }
+                catch
+                {
+                    MessageBox.Show("Erro ao inserir uma parede.");
+                }
+            }
 
-                foreach (WindowProperty window in ed.WindowProperties)
+            foreach (WindowProperty window in ed.WindowProperties)
+            {
+                try
                 {
                     CreateWindow(window);
                 }
+                catch
+                {
+                    MessageBox.Show("Erro ao inserir janela " + window.Type );
+                }              
+            }
 
-                foreach (DoorProperty door in ed.DoorProperties)
+            foreach (DoorProperty door in ed.DoorProperties)
+            {
+                try
                 {
                     CreateDoor(door);
                 }
+                catch
+                {
+                    MessageBox.Show("Erro ao inserir porta " + door.Type);
+                }              
+            }
 
-                foreach (HostedProperty element in ed.HostedProperties)
+            foreach (HostedProperty element in ed.HostedProperties)
+            {
+                try
                 {
                     CreateHostedElement(element);
                 }
+                catch
+                {
+                    MessageBox.Show("Erro ao inserir elemento hospedado " + element.Type);
+                }               
+            }
 
-                foreach (FurnitureProperty element in ed.FurnitureProperties)
+            foreach (FurnitureProperty element in ed.FurnitureProperties)
+            {
+                try
                 {
                     CreateFurniture(element);
                 }
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show(e.Message, "Erro");
+                catch
+                {
+                    MessageBox.Show("Erro ao inserir elemento mobiliário " + element.Type);
+                }                
             }
         }
 
