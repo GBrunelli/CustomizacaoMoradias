@@ -31,9 +31,8 @@ namespace CustomizacaoMoradias
                     elementPlacer.ClassifyRooms();
 
                     double offset = ElementPlacer.MetersToFeet(0.6);
-                    if (roofVector == null)
-                        roofVector = new XYZ(0, 0, 0);
-                    elementPlacer.CreateRoof(offset, 0.05, roofVector, roofDesign);                 
+                    double slope = GetSlopeByType(roofDesign);                       
+                    elementPlacer.CreateRoof(offset, slope, roofVector, roofDesign);                 
                 }
                 catch (LevelNotFoundException lvlEx)
                 {
@@ -92,6 +91,20 @@ namespace CustomizacaoMoradias
                     return ElementPlacer.RoofDesign.HiddenButterfly;
             }
             return ElementPlacer.RoofDesign.Gable;
+        }
+
+        private double GetSlopeByType(ElementPlacer.RoofDesign roofDesign)
+        {
+            switch (roofDesign)
+            {
+                case ElementPlacer.RoofDesign.Gable:
+                    return 0.3;
+                case ElementPlacer.RoofDesign.Hip:
+                    return 0.3;
+                case ElementPlacer.RoofDesign.HiddenButterfly:
+                    return 0.05;
+            }
+            return 0.3;
         }
     }
 }

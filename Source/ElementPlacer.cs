@@ -185,7 +185,6 @@ namespace CustomizacaoMoradias
             string jsonText = File.ReadAllText(path);
             ElementDeserializer ed = JsonConvert.DeserializeObject<ElementDeserializer>(jsonText);
 
-
             foreach (WallProperty wall in ed.WallProperties)
             {
                 try

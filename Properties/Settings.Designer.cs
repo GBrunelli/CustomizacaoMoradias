@@ -61,7 +61,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("parede 15 cm - branca")]
+        [global::System.Configuration.DefaultSettingValueAttribute("paredeBranca15cm")]
         public string WallTypeName {
             get {
                 return ((string)(this["WallTypeName"]));
@@ -73,7 +73,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("janela veneziana 1,50x1,0 - metal e vidro")]
+        [global::System.Configuration.DefaultSettingValueAttribute("janelaVeneziana150cm")]
         public string J1 {
             get {
                 return ((string)(this["J1"]));
@@ -85,7 +85,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("janela correr 1,50x1,0 - metal e vidro")]
+        [global::System.Configuration.DefaultSettingValueAttribute("janelaCorrerVidro150cm")]
         public string J2 {
             get {
                 return ((string)(this["J2"]));
@@ -97,7 +97,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("bandeira 0,60 x 0,40")]
+        [global::System.Configuration.DefaultSettingValueAttribute("bandeira60x40")]
         public string J3 {
             get {
                 return ((string)(this["J3"]));
@@ -109,7 +109,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("janelaVeneziana200cm")]
         public string J4 {
             get {
                 return ((string)(this["J4"]));
@@ -121,7 +121,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("janelaCorrerVidro200cm")]
         public string J5 {
             get {
                 return ((string)(this["J5"]));
@@ -133,7 +133,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("porta de abri 0.80x2.10 - madeira")]
+        [global::System.Configuration.DefaultSettingValueAttribute("portaDeAbrirMadeira80cm")]
         public string P1 {
             get {
                 return ((string)(this["P1"]));
@@ -145,7 +145,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("porta de abrur 0.80x2.10 - metal e vidro")]
+        [global::System.Configuration.DefaultSettingValueAttribute("portaDeAbrirMetalVidro90cm")]
         public string P2 {
             get {
                 return ((string)(this["P2"]));
@@ -157,7 +157,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("porta correr 1.60x2.10 - metal e vidro")]
+        [global::System.Configuration.DefaultSettingValueAttribute("portaCorrerMetalVidro160cm")]
         public string P3 {
             get {
                 return ((string)(this["P3"]));
@@ -193,7 +193,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Caixa Acoplada")]
+        [global::System.Configuration.DefaultSettingValueAttribute("caixaAcoplada")]
         public string H2 {
             get {
                 return ((string)(this["H2"]));
@@ -205,7 +205,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Grande Com Coluna")]
+        [global::System.Configuration.DefaultSettingValueAttribute("lavatorioColuna")]
         public string H3 {
             get {
                 return ((string)(this["H3"]));
@@ -265,7 +265,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Sofa_3 lugares")]
+        [global::System.Configuration.DefaultSettingValueAttribute("sofa3Lugares")]
         public string M1 {
             get {
                 return ((string)(this["M1"]));
@@ -277,7 +277,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("RACK COM TV")]
+        [global::System.Configuration.DefaultSettingValueAttribute("rackComTV")]
         public string M2 {
             get {
                 return ((string)(this["M2"]));
@@ -289,7 +289,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Poltrona-V1")]
+        [global::System.Configuration.DefaultSettingValueAttribute("poltrona")]
         public string M3 {
             get {
                 return ((string)(this["M3"]));
@@ -301,7 +301,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("mesa lateral")]
+        [global::System.Configuration.DefaultSettingValueAttribute("mesaLateral")]
         public string M4 {
             get {
                 return ((string)(this["M4"]));
@@ -313,7 +313,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("mesa jantar")]
+        [global::System.Configuration.DefaultSettingValueAttribute("mesaJantar")]
         public string M5 {
             get {
                 return ((string)(this["M5"]));
@@ -337,7 +337,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("pia cozinha - granilite 60cm")]
+        [global::System.Configuration.DefaultSettingValueAttribute("pia150cm")]
         public string M7 {
             get {
                 return ((string)(this["M7"]));
@@ -361,7 +361,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("fogao 4 bocas")]
+        [global::System.Configuration.DefaultSettingValueAttribute("fogao4Bocas")]
         public string M9 {
             get {
                 return ((string)(this["M9"]));
@@ -373,7 +373,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("armario cozinha baixo")]
+        [global::System.Configuration.DefaultSettingValueAttribute("armarioCozinhaBaixo60cm")]
         public string M10 {
             get {
                 return ((string)(this["M10"]));
@@ -385,7 +385,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Tanque - 1")]
+        [global::System.Configuration.DefaultSettingValueAttribute("tanqueLavarRoupa")]
         public string M11 {
             get {
                 return ((string)(this["M11"]));
@@ -397,7 +397,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("maquina lavar")]
+        [global::System.Configuration.DefaultSettingValueAttribute("maquinaLavar")]
         public string M12 {
             get {
                 return ((string)(this["M12"]));
@@ -409,7 +409,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("cama casal")]
+        [global::System.Configuration.DefaultSettingValueAttribute("camaCasal")]
         public string M13 {
             get {
                 return ((string)(this["M13"]));
@@ -421,7 +421,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("guarda roupa - 4 modulos")]
+        [global::System.Configuration.DefaultSettingValueAttribute("guardaRoupa4Modulos")]
         public string M14 {
             get {
                 return ((string)(this["M14"]));
@@ -433,7 +433,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("cama solteiro")]
+        [global::System.Configuration.DefaultSettingValueAttribute("camaSolteiro")]
         public string M15 {
             get {
                 return ((string)(this["M15"]));
@@ -445,7 +445,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("mesa cabeceira")]
+        [global::System.Configuration.DefaultSettingValueAttribute("mesaCabeceira")]
         public string M16 {
             get {
                 return ((string)(this["M16"]));
@@ -457,7 +457,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("guarda roupa - 2 modulos")]
+        [global::System.Configuration.DefaultSettingValueAttribute("guardaRoupa2Modulos")]
         public string M17 {
             get {
                 return ((string)(this["M17"]));
@@ -469,7 +469,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("mesa de estudo")]
+        [global::System.Configuration.DefaultSettingValueAttribute("mesaDeEstudo")]
         public string M18 {
             get {
                 return ((string)(this["M18"]));
@@ -481,7 +481,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("mesaDeCentro")]
         public string M19 {
             get {
                 return ((string)(this["M19"]));
@@ -493,7 +493,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("armarioCozinhaBaixo120cm")]
         public string M20 {
             get {
                 return ((string)(this["M20"]));
@@ -505,7 +505,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("mesaJantar6")]
         public string M21 {
             get {
                 return ((string)(this["M21"]));
@@ -517,7 +517,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("piso 10 cm - ceramico 40x40")]
+        [global::System.Configuration.DefaultSettingValueAttribute("piso10cmCeramico40x40")]
         public string FloorName {
             get {
                 return ((string)(this["FloorName"]));
@@ -529,13 +529,37 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("laje 10 cm - branca")]
+        [global::System.Configuration.DefaultSettingValueAttribute("laje10cmBranca")]
         public string CeilingName {
             get {
                 return ((string)(this["CeilingName"]));
             }
             set {
                 this["CeilingName"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("armarioCozinhaAlto120cm")]
+        public string M22 {
+            get {
+                return ((string)(this["M22"]));
+            }
+            set {
+                this["M22"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("armarioCozinhaAlto60cm")]
+        public string M23 {
+            get {
+                return ((string)(this["M23"]));
+            }
+            set {
+                this["M23"] = value;
             }
         }
     }
