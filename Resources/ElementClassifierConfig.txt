@@ -4,15 +4,23 @@
 		"Element": 
 		[
 			{
-				"Name": "Sofa_3 lugares",
+				"Name": "sofa3Lugares",
 				"Score": 2
 			},
 			{
-				"Name":"RACK COM TV",
+				"Name": "poltrona",
+				"Score": 2
+			},
+			{
+				"Name":"rackComTV",
 				"Score": 3
 			},
 			{
-				"Name":"mesa lateral",
+				"Name":"mesaLateral",
+				"Score": 1
+			},
+			{
+				"Name":"mesaDeCentro",
 				"Score": 1
 			}
 		]
@@ -22,16 +30,20 @@
 		"Element":
 		[
 			{
-				"Name": "mesa jantar",
+				"Name": "mesaJantar4",
 				"Score": 5
 			},
 			{
-				"Name": "RACK COM TV",
+				"Name": "mesaJantar6",
 				"Score": 1
 			},
 			{
 				"Name": "buffet",
 				"Score": 2
+			},
+			{
+				"Name": "mesa jantar - 6 lugares",
+				"Score": 5
 			}
 		]
 	},
@@ -40,7 +52,11 @@
 		"Element":
 		[
 			{
-				"Name": "pia cozinha - granilite 60cm",
+				"Name": "pia150cm",
+				"Score": 2
+			},
+			{
+				"Name": "pia200cm",
 				"Score": 2
 			},
 			{
@@ -48,11 +64,27 @@
 				"Score": 2
 			},
 			{
-				"Name": "fogao 4 bocas",
+				"Name": "fogao4Bocas",
 				"Score": 5
 			},
 			{
-				"Name": "armario cozinha baixo",
+				"Name": "fogao5Bocas",
+				"Score": 5
+			},
+			{
+				"Name": "armarioCozinhaBaixo60cm",
+				"Score": 1
+			},
+			{
+				"Name": "armarioCozinhaBaixo120cm",
+				"Score": 1
+			},
+			{
+				"Name": "armarioCozinhaAlto60cm",
+				"Score": 1
+			},
+			{
+				"Name": "armarioCozinhaAlto120cm",
 				"Score": 1
 			}
 		]
@@ -62,11 +94,11 @@
 		"Element":
 		[
 			{
-				"Name": "Tanque - 1",
+				"Name": "tanqueLavarRoupa",
 				"Score": 2
 			},
 			{
-				"Name": "maquina lavar",
+				"Name": "maquinaLavar",
 				"Score": 5
 			}
 		]
@@ -80,11 +112,11 @@
 				"Score": 5
 			},
 			{
-				"Name": "Caixa Acoplada",
+				"Name": "caixaAcoplada",
 				"Score": 5
 			},
 			{
-				"Name": "Grande com Coluna",
+				"Name": "lavatorioComColuna",
 				"Score": 2
 			}
 		]
@@ -94,16 +126,16 @@
 		"Element": 
 		[
 			{
-				"Name": "cama casal",
-				"Score": 5
+				"Name": "camaCasal",
+				"Score": 4
 			},
 			{
-				"Name": "mesa cabeceira",
+				"Name": "mesaCabeceira",
 				"Score": 2
 			},
 			{
-				"Name": "guarda roupa - 4 modulos",
-				"Score": 3
+				"Name": "guardaRoupa4Modulos",
+				"Score": 2
 			}
 		]
 	},
@@ -112,15 +144,15 @@
 		"Element": 
 		[
 			{
-				"Name": "cama solteiro",
+				"Name": "camaSolteiro",
+				"Score": 5
+			},
+			{
+				"Name": "mesaCabeceira",
 				"Score": 2
 			},
 			{
-				"Name": "mesa cabeceira",
-				"Score": 2
-			},
-			{
-				"Name": "guarda roupa - 2 modulos",
+				"Name": "guardaRoupa2Modulos",
 				"Score": 2
 			}
 		]
@@ -130,9 +162,10 @@
 		"Element":
 		[
 			{
-				"Name": "mesa de estudo",
+				"Name": "mesaDeEstudo",
 				"Score": 3
 			}
 		]
 	}
+
 ]
