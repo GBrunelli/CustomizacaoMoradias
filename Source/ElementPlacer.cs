@@ -132,15 +132,17 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns the Wall in the XYZ coords. Returns null if no wall was found.
         /// </returns>
-        private Wall FindHostingWall(XYZ xyz)
-        {
-            xyz = xyz.Subtract(new XYZ(0, 0, xyz.Z));
+        private Wall FindHostingWall(XYZ xyz, Level level)
+        {         
             if (xyz is null)
             {
                 throw new ArgumentNullException(nameof(xyz));
             }
+            
+            //xyz = xyz.Subtract(new XYZ(0, 0, xyz.Z));
+            xyz = new XYZ(xyz.X, xyz.Y, level.Elevation);
 
-            List<Wall> walls = GetWalls();
+            List<Wall> walls = GetWalls(level);
 
             Wall wall = null;
             double distance = double.MaxValue;
@@ -163,8 +165,7 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Get all walls in the document.
         /// </summary>
-        /// <returns></returns>
-        private List<Wall> GetWalls()
+        private List<Wall> GetWalls(Level level)
         {
             FilteredElementCollector collector = new FilteredElementCollector(doc);
             collector.OfClass(typeof(Wall));
@@ -337,7 +338,7 @@ namespace CustomizacaoMoradias
             try
             {
                 FamilySymbol familySymbol = GetFamilySymbol(doc, fsFamilyName);
-                Wall wall = FindHostingWall(point);
+                Wall wall = FindHostingWall(point, baseLevel);
                 if (wall == null)
                 {
                     return null;
@@ -714,6 +715,9 @@ namespace CustomizacaoMoradias
             return perimeters;
         }
 
+        /// <summary>
+        /// Class to sort CurveArray by the area determinated by the curves of the array.
+        /// </summary>
         private class SortingDescendingArea : IComparer<CurveArray>
         {
             public int Compare(CurveArray x, CurveArray y)
@@ -1239,6 +1243,12 @@ namespace CustomizacaoMoradias
         /// The slope will only be apllied on the edges that is orthogonal to the Slope Direction Vector.
         /// Note tha a 0 vector is ortoghonal to all vectors.
         /// </param>
+        /// <param name="slope">
+        /// The slope of the the roof.  
+        /// </param>
+        /// <param name="roofDesign">
+        /// The roof type that will be created.
+        /// </param>
         /// <returns>
         /// Returns the created FootPrintRoof.
         /// </returns>
@@ -1262,6 +1272,27 @@ namespace CustomizacaoMoradias
                     break;
             }
             return footPrintRoof;
+        }
+
+        /// <summary>
+        /// Create a generic roof in the Top Level.
+        /// </summary>
+        /// <param name="slopeDirection">
+        /// The slope will only be apllied on the edges that is orthogonal to the Slope Direction Vector.
+        /// Note tha a 0 vector is ortoghonal to all vectors.
+        /// </param>
+        /// <param name="slope">
+        /// The slope of the the roof.  
+        /// </param>
+        /// <param name="roofDesign">
+        /// The roof type that will be created.
+        /// </param>
+        /// <returns>
+        /// Returns the created FootPrintRoof.
+        /// </returns>
+        public FootPrintRoof CreateRoof(double slope, XYZ slopeDirection, RoofDesign roofDesign)
+        {
+            return CreateRoof(0, slope, slopeDirection, roofDesign);
         }
 
 
@@ -1351,7 +1382,7 @@ namespace CustomizacaoMoradias
             foreach (Curve curve in curveArray)
             {
                 XYZ curveMiddlePoint = GetCurveMiddlePoint(curve);
-                Wall wall = FindHostingWall(curveMiddlePoint);
+                Wall wall = FindHostingWall(curveMiddlePoint, baseLevel);
                 if (wall != null)
                 {
                     wall.get_Parameter(BuiltInParameter.WALL_TOP_OFFSET).Set(MetersToFeet(0.8));
@@ -1665,7 +1696,7 @@ namespace CustomizacaoMoradias
             };
 
             // get the wall type
-            WallType type = GetWallType("parede 15 cm - branca");
+            WallType type = GetWallType(Properties.Settings.Default.WallTypeName);
 
             // create the gable wall
             return Wall.Create(doc, profile, type.Id, topLevel.Id, false);
@@ -1681,95 +1712,7 @@ namespace CustomizacaoMoradias
             XYZ baseVector = p1.Subtract(p0);
             double p2z = (slope * baseVector.GetLength()) / 2;
             return new XYZ(p2x, p2y, p2z);
-        }
-
-        /// <summary>
-        /// Transform a curve to be offsetted.
-        /// </summary>
-        /// <param name="housePerimeter"></param>
-        /// <param name="curve"></param>
-        /// <param name="offset"></param>
-        /// <param name="offsetVector"></param>
-        /// <returns>
-        /// Returns the offsetted curve.
-        /// </returns>
-        [Obsolete("This Method is Deprecated. Use OffsetPolygon", true)]
-        private Curve CreateOffsetedCurve(CurveArray housePerimeter, Curve curve, double offset, XYZ offsetVector)
-        {
-            // finds the middle point of the current curve
-            XYZ middlePoint = GetCurveMiddlePoint(curve);
-
-            // expand the curve
-            curve.MakeBound(curve.GetEndParameter(0) - offset, curve.GetEndParameter(1) + offset);
-
-            // finds the wall below that curve, and retrives its normal vector
-            Wall wall = FindHostingWall(middlePoint);
-            if (wall != null)
-            {
-                XYZ wallNormalVector = wall.Orientation;
-
-                // Makes sure that the exterior of the wall is pointed to the exterior of the house
-                XYZ roomPoint = middlePoint + wallNormalVector;
-                Room room = doc.GetRoomAtPoint(roomPoint);
-                if (room.Name != "Exterior 0")
-                {
-                    wall.Flip();
-                    wallNormalVector = wall.Orientation;
-                }
-
-                if (wallNormalVector.CrossProduct(offsetVector).IsZeroLength())
-                {
-                    // aplies the offset
-                    wallNormalVector = wallNormalVector * offset;
-                    Transform transform = Transform.CreateTranslation(wallNormalVector);
-                    curve = curve.CreateTransformed(transform);
-                }
-            }
-
-            // verifies that the new curve intersects with other curves in the array,
-            // if that happens, both curves are ajusted to align perfectly 
-            foreach (Curve iterationCurve in housePerimeter)
-            {
-                // calculates and analyzes the intersections
-                SetComparisonResult setComparisonResult = curve.Intersect(iterationCurve, out IntersectionResultArray intersectionResultArray);
-                if (setComparisonResult == SetComparisonResult.Overlap)
-                {
-                    IntersectionResultArrayIterator iterator = intersectionResultArray.ForwardIterator();
-                    while (iterator.MoveNext())
-                    {
-                        IntersectionResult result = iterator.Current as IntersectionResult;
-                        XYZ intersectionPoint = result.XYZPoint;
-
-                        // remove the overlap of the both curves
-                        RemoveCurveOverlap(curve, intersectionPoint);
-                        RemoveCurveOverlap(iterationCurve, intersectionPoint);
-                    }
-                }
-            }
-            return curve;
-        }
-
-        /// <summary>
-        /// Set the bound of a curve to remove overlaps. This method is used to make CurveLoops.
-        /// </summary>
-        /// <seealso cref="CreateOffsetedCurve(CurveArray, Curve, double, XYZ)"/>
-        [Obsolete("This Method is Deprecated")]
-        private static void RemoveCurveOverlap(Curve curve, XYZ intersectionPoint)
-        {
-            double distanceToStart = curve.GetEndPoint(0).DistanceTo(intersectionPoint);
-            double distanceToEnd = curve.GetEndPoint(1).DistanceTo(intersectionPoint);
-
-            // In the case the start point is closer
-            if (distanceToStart < distanceToEnd)
-            {
-                curve.MakeBound(curve.GetEndParameter(0) + distanceToStart, curve.GetEndParameter(1));
-            }
-            // In the case the end point is closer
-            else
-            {
-                curve.MakeBound(curve.GetEndParameter(0), curve.GetEndParameter(1) - distanceToEnd);
-            }
-        }
+        }      
 
         private class ClockWisePointComparer : IComparer
         {
