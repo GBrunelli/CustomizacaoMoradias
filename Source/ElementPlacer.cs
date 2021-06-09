@@ -13,6 +13,8 @@ using Autodesk.Revit.UI;
 using CustomizacaoMoradias.Source;
 using Newtonsoft.Json;
 
+using System.Diagnostics;
+
 namespace CustomizacaoMoradias
 {
     [Transaction(TransactionMode.Manual)]
@@ -344,8 +346,8 @@ namespace CustomizacaoMoradias
                     return null;
                 }
 
-                // Create the element
-                instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
+                // Create the element                   
+                instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, baseLevel, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
             }
             catch (Exception e)
             {
@@ -355,7 +357,7 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Get the FamilySynbol from the settings.
+        /// Get the FamilySymbol from the settings.
         /// </summary>
         /// <param name="familyType"></param>
         private static string GetFamilySymbolName(string familyType)
@@ -843,12 +845,20 @@ namespace CustomizacaoMoradias
             Line line;
             for (int i = 1; i < n; i++)
             {
-                line = Line.CreateBound(TranformIn3D(node.Value), TranformIn3D(node.Next.Value));
-                curveArray.Append(line);
+                // for the cases that the 2 lines are colinear
+                if(!node.Value.IsAlmostEqualTo(node.Next.Value))
+                {
+                    line = Line.CreateBound(TranformIn3D(node.Value), TranformIn3D(node.Next.Value));
+                    curveArray.Append(line);
+                }
                 node = node.Next;
             }
-            line = Line.CreateBound(TranformIn3D(node.Value), TranformIn3D(points.First.Value));
-            curveArray.Append(line);
+            if(!node.Value.IsAlmostEqualTo(points.First.Value))
+            {
+                line = Line.CreateBound(TranformIn3D(node.Value), TranformIn3D(points.First.Value));
+                curveArray.Append(line);
+            }
+            
             return curveArray;
         }
 

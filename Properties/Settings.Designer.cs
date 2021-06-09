@@ -217,7 +217,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("pia150cm")]
         public string H4 {
             get {
                 return ((string)(this["H4"]));
@@ -229,7 +229,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("pia200cm")]
         public string H5 {
             get {
                 return ((string)(this["H5"]));
@@ -241,7 +241,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("maquinaLavar")]
         public string H6 {
             get {
                 return ((string)(this["H6"]));
@@ -253,7 +253,7 @@ namespace CustomizacaoMoradias.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("tanqueLavarRoupa")]
         public string H7 {
             get {
                 return ((string)(this["H7"]));

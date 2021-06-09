@@ -51,16 +51,16 @@
       <Value Profile="(Default)">lavatorioColuna</Value>
     </Setting>
     <Setting Name="H4" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">pia150cm</Value>
     </Setting>
     <Setting Name="H5" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">pia200cm</Value>
     </Setting>
     <Setting Name="H6" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">maquinaLavar</Value>
     </Setting>
     <Setting Name="H7" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">tanqueLavarRoupa</Value>
     </Setting>
     <Setting Name="M1" Type="System.String" Scope="User">
       <Value Profile="(Default)">sofa3Lugares</Value>
