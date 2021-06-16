@@ -18,61 +18,37 @@ namespace CustomizacaoMoradias.Source
         public List<Coordinate> Coordinate { get; set; }
     }
 
-    public class WindowProperty : Hosted
+    public class WindowProperty : IHosted
     {
         public List<Coordinate> Coordinate { get; set; }
         public string Type { get; set; }
         public int Rotation { get; set; }
 
-        public Coordinate GetCoordinate()
+        Coordinate IHosted.Coordinate => new Coordinate
         {
-            return new Coordinate
-            {
-                X = (Coordinate.ElementAt(0).X + Coordinate.ElementAt(1).X) / 2,
-                Y = (Coordinate.ElementAt(0).Y + Coordinate.ElementAt(1).Y) / 2
-            };
-        }
-        public string getType()
-        {
-            return Type;
-        }
+            X = (Coordinate.ElementAt(0).X + Coordinate.ElementAt(1).X) / 2,
+            Y = (Coordinate.ElementAt(0).Y + Coordinate.ElementAt(1).Y) / 2
+        };
     }
 
-    public class DoorProperty : Hosted
+    public class DoorProperty : IHosted
     {
         public List<Coordinate> Coordinate { get; set; }
         public string Type { get; set; }
         public int Rotation { get; set; }
 
-        public Coordinate GetCoordinate()
+        Coordinate IHosted.Coordinate => new Coordinate
         {
-            return new Coordinate
-            {
-                X = (Coordinate.ElementAt(0).X + Coordinate.ElementAt(1).X) / 2,
-                Y = (Coordinate.ElementAt(0).Y + Coordinate.ElementAt(1).Y) / 2
-            };
-        }
-
-        public string getType()
-        {
-            return Type;
-        }
+            X = (Coordinate.ElementAt(0).X + Coordinate.ElementAt(1).X) / 2,
+            Y = (Coordinate.ElementAt(0).Y + Coordinate.ElementAt(1).Y) / 2
+        };
     }
 
-    public class HostedProperty : Hosted
+    public class HostedProperty : IHosted
     {
         public Coordinate Coordinate { get; set; }
         public string Type { get; set; }
-
-        public Coordinate GetCoordinate()
-        {
-            return Coordinate;
-        }
-
-        public string getType()
-        {
-            return Type;
-        }
+        public int Rotation { get; set; }
     }
 
     public class FurnitureProperty
@@ -100,9 +76,12 @@ namespace CustomizacaoMoradias.Source
         public List<FurnitureProperty> FurnitureProperties { get; set; }
     }
 
-    interface Hosted
+    interface IHosted
     {
-        Coordinate GetCoordinate();
-        string getType();
+        Coordinate Coordinate { get; }
+
+        string Type { get; }
+
+        int Rotation { get; }
     }
 }

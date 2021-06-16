@@ -18,5 +18,16 @@ namespace CustomizacaoMoradias
         public string Name { get; set; }
         public List<RoomElement> Element { get; set; }
         public int RoomScore { get; set; }
+
+        public int GetElementScore(string elementName)
+        {
+            foreach(RoomElement roomElement in Element)
+            {
+                if (roomElement.Name.Equals(elementName))
+                    return roomElement.Score;
+            }
+            return 0;
+        }
+
     }
 }

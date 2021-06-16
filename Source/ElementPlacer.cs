@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
@@ -12,8 +11,6 @@ using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.UI;
 using CustomizacaoMoradias.Source;
 using Newtonsoft.Json;
-
-using System.Diagnostics;
 
 namespace CustomizacaoMoradias
 {
@@ -208,7 +205,7 @@ namespace CustomizacaoMoradias
                 }
                 catch
                 {
-                    MessageBox.Show("Erro ao inserir janela " + window.Type );
+                    MessageBox.Show("Erro ao inserir janela do tipo" + window.Type );
                 }              
             }
 
@@ -220,7 +217,7 @@ namespace CustomizacaoMoradias
                 }
                 catch
                 {
-                    MessageBox.Show("Erro ao inserir porta " + door.Type);
+                    MessageBox.Show("Erro ao inserir porta do tipo" + door.Type);
                 }              
             }
 
@@ -232,7 +229,7 @@ namespace CustomizacaoMoradias
                 }
                 catch
                 {
-                    MessageBox.Show("Erro ao inserir elemento hospedado " + element.Type);
+                    MessageBox.Show("Erro ao inserir elemento hospedado do tipo" + element.Type);
                 }               
             }
 
@@ -244,7 +241,7 @@ namespace CustomizacaoMoradias
                 }
                 catch
                 {
-                    MessageBox.Show("Erro ao inserir elemento mobiliário " + element.Type);
+                    MessageBox.Show("Erro ao inserir elemento mobiliário do tipo" + element.Type);
                 }                
             }
         }
@@ -334,24 +331,32 @@ namespace CustomizacaoMoradias
             }
 
             XYZ point = GetXYZFromProperties(properties.Coordinate);
-            string fsFamilyName = GetFamilySymbolName(properties.Type);
+            string fsName = GetFamilySymbolName(properties.Type);
+            double rotation = properties.Rotation;
 
-            FamilyInstance instance = null;
+            FamilyInstance instance;
             try
             {
-                FamilySymbol familySymbol = GetFamilySymbol(doc, fsFamilyName);
+                FamilySymbol familySymbol = GetFamilySymbol(doc, fsName);
                 Wall wall = FindHostingWall(point, baseLevel);
                 if (wall == null)
                 {
                     return null;
                 }
 
-                // Create the element                   
+                // Creates the element                   
                 instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, baseLevel, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
+
+                LocationPoint instanceLocation = instance.Location as LocationPoint;
+                if (instanceLocation.Point.DistanceTo(point) > MetersToFeet(scale - 0.1))
+                {
+                    instance.flipFacing();
+                }
+                
             }
             catch (Exception e)
             {
-                throw new Exception("Erro ao inserir elemento hospedeiro \"" + fsFamilyName + "\".", e);
+                throw new Exception("Erro ao inserir elemento hospedeiro \"" + fsName + "\".", e);
             }
             return instance;
         }
@@ -412,13 +417,13 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Converts an Hosted object in a HostedProperty.
         /// </summary>
-        private static HostedProperty ConvertToHosted(Hosted obj)
+        private static HostedProperty ConvertToHosted(IHosted obj)
         {
-            Coordinate c = obj.GetCoordinate();
+            Coordinate c = obj.Coordinate;
             HostedProperty hp = new HostedProperty()
             {
                 Coordinate = c,
-                Type = obj.getType()
+                Type = obj.Type
             };
             return hp;
         }
@@ -496,7 +501,7 @@ namespace CustomizacaoMoradias
         private IList<IList<BoundarySegment>> GetLoopsInCircuit(PlanCircuit circuit)
         {
             Room room;
-            IList<IList<BoundarySegment>> loops = null;
+            IList<IList<BoundarySegment>> loops;
             SpatialElementBoundaryOptions opt = new SpatialElementBoundaryOptions
             {
                 SpatialElementBoundaryLocation = SpatialElementBoundaryLocation.Center
@@ -519,45 +524,6 @@ namespace CustomizacaoMoradias
                     room.Name = "Exterior";
                     room.Number = "0";
                 }
-
-                #region Elevation Mark TEST
-
-                /* TEST 1
-                ViewFamilyType viewFamilyType = null;
-
-                FilteredElementCollector collector = new FilteredElementCollector(doc);
-                ICollection<Element> views = collector.OfClass(typeof(ViewFamilyType)).ToElements();                   
-
-                foreach(Element element in views)
-                {
-                    if (element.Name == "Floor Plan")
-                    {
-                        viewFamilyType = element as ViewFamilyType;
-                    }
-                }
-
-                BoundingBoxXYZ roomBoundingBox = room.get_BoundingBox(null);
-                XYZ center = (roomBoundingBox.Max + roomBoundingBox.Min) / 2;
-                
-                */
-
-                /* TEST 2
-
-                ViewFamilyType viewFamilyType;
-                FilteredElementCollector collector = new FilteredElementCollector(doc);
-                collector.OfClass(typeof(ViewFamilyType));
-                List<ViewFamilyType> viewFamilyTypes = collector.Cast<ViewFamilyType>().Where(view => view.Name == "Plantas de piso").ToList();
-                viewFamilyType = viewFamilyTypes.First();
-
-                BoundingBoxXYZ roomBoundingBox = room.get_BoundingBox(null);
-                XYZ center = (roomBoundingBox.Max + roomBoundingBox.Min) / 2;
-
-                */
-
-
-                // ElevationMarker marker = ElevationMarker.CreateElevationMarker(doc, viewFamilyType.Id, center, 2);
-
-                #endregion
             }
             return loops;
         }
@@ -1051,8 +1017,12 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Offset a polygon in all directions.
+        /// Offset a polygon in all directions, except the edge of this polygon that is collinear to the unchangedLine parameter.
         /// </summary>
+        /// <param name="vertices">A list of 2D coordinates that represents the vertices of the polygon. The list must be ordered counter-clockwise</param>
+        /// <param name="offset">The offset value.</param>
+        /// <param name="unchangedLine">If an edge of the polygon is collinear to this line, that edge will remain unchanged.</param>
+        /// <returns>Returns a List of 2D coordinates that represents the offseted polygon.</returns>
         private static List<UV> OffsetPolygon(List<UV> vertices, double offset, Line unchangedLine)
         {
             int num_points = vertices.Count();
@@ -1405,14 +1375,26 @@ namespace CustomizacaoMoradias
             }
         }
 
-
+        /// <summary>
+        /// Creates a Hip Roof within the footPrint.
+        /// </summary>
+        /// <param name="footPrint"></param>
+        /// <param name="overhang"></param>
+        /// <param name="slope"></param>
+        /// <param name="slopeDirection"></param>
         private void CreateHipRoof(CurveArray footPrint, double overhang, double slope, XYZ slopeDirection)
         {
             CurveArray offsetedFootPrint = CreateOffsetedCurveArray(overhang, footPrint, null);
             CreateFootPrintRoof(overhang, slope, slopeDirection, offsetedFootPrint);
         }
 
-
+        /// <summary>
+        /// Creates a Gable Roof within the footPrint.
+        /// </summary>
+        /// <param name="footPrint">An curve array that represents the footprint of the roof</param>
+        /// <param name="overhang">The overhang value.</param>
+        /// <param name="slope">The slope of the roof.</param>
+        /// <param name="slopeDirection">The edges that are perpendicular to this vector will have the slope applied.</param>
         private void CreateGableRoof(CurveArray footPrint, double overhang, double slope, XYZ slopeDirection)
         {
             List<FootPrintRoof> roofs = new List<FootPrintRoof>();
@@ -1430,7 +1412,7 @@ namespace CustomizacaoMoradias
                 roofs.Add(footPrintRoof);
             }
 
-            // connect the components if possible
+            // try to connect the components 
             for (int i = 0; i < n - 1; i++)
             {
                 try
@@ -1441,7 +1423,12 @@ namespace CustomizacaoMoradias
             }
         }
 
-
+        /// <summary>
+        /// Verifies if the curve is collinear and have atleast one point in common with any line in the given list of lines.
+        /// </summary>
+        /// <param name="curve">The curve that will be compared with the list.</param>
+        /// <param name="lines">The list of lines that the first will be compared with.</param>
+        /// <returns>Returns true if the curve intersects and is parallel to any line in the array.</returns>
         private bool VerifyIntersectionInArray(Curve curve, List<Line> lines)
         {
             Transform transform = Transform.CreateTranslation(new XYZ(0, 0, -curve.GetEndPoint(0).Z));
@@ -1549,32 +1536,37 @@ namespace CustomizacaoMoradias
             {
                 if (room.Area > 0)
                 {
-                    string roomName = null;
+                    int highestScore = 0;
+                    string roomName = room.Name;
                     List<Element> elements = GetFurniture(room);
-                    foreach (Element element in elements)
+                    foreach(RoomClassifier roomClassifier in deserializedRoomClassifier)
                     {
-                        int roomScore = 0;
-                        foreach (RoomClassifier roomClassifier in deserializedRoomClassifier)
+                        int score = GetScoreForRoom(elements, roomClassifier);
+                        if(score > highestScore)
                         {
-                            foreach (RoomElement furniture in roomClassifier.Element)
-                            {
-                                if (furniture.Name == element.Name)
-                                {
-                                    roomClassifier.RoomScore += furniture.Score;
-                                }
-                            }
-                            if (roomClassifier.RoomScore > roomScore)
-                            {
-                                roomName = roomClassifier.Name;
-                            }
+                            roomName = roomClassifier.Name;
+                            highestScore = score;
                         }
                     }
-                    if (roomName != null)
-                    {
-                        room.Name = roomName;
-                    }
+                    room.Name = roomName;
                 }
             }
+        }
+
+        /// <summary>
+        /// Calculates the score from a list of Elements for a given room. 
+        /// </summary>
+        /// <param name="elements">A list of elements.</param>
+        /// <param name="roomClassifier">The room classifier to be scored.</param>
+        /// <returns>Returns a score for the room.</returns>
+        private static int GetScoreForRoom(List<Element> elements, RoomClassifier roomClassifier)
+        {
+            int score = 0;
+            foreach(Element element in elements)
+            {
+                score += roomClassifier.GetElementScore(element.Name);
+            }
+            return score;
         }
 
         /// <summary>
@@ -1655,7 +1647,7 @@ namespace CustomizacaoMoradias
             viewSheet.Name = "NEW SHEET TEST";
             viewSheet.SheetNumber = "A-01";
 
-            Viewport viewport = Viewport.Create(doc, viewSheet.Id, doc.ActiveView.Id, new XYZ(0, 2, 0));
+            Viewport.Create(doc, viewSheet.Id, doc.ActiveView.Id, new XYZ(0, 2, 0));
         }
 
         /// <summary>
@@ -1723,92 +1715,5 @@ namespace CustomizacaoMoradias
             double p2z = (slope * baseVector.GetLength()) / 2;
             return new XYZ(p2x, p2y, p2z);
         }      
-
-        private class ClockWisePointComparer : IComparer
-        {
-            public static UV centroid;
-
-            [Obsolete("This Method is Deprecated")]
-            public int Compare(object x, object y)
-            {
-                UV a = x as UV;
-                UV b = y as UV;
-
-                if (a.U - centroid.U >= 0 && b.U - centroid.U < 0)
-                {
-                    return -1;
-                }
-
-                if (a.U - centroid.U < 0 && b.U - centroid.U >= 0)
-                {
-                    return 1;
-                }
-
-                if (a.U - centroid.U == 0 && b.U - centroid.U == 0)
-                {
-                    if (a.V - centroid.V >= 0 || b.V - centroid.V >= 0)
-                    {
-                        return Convert.ToInt32(a.V - b.V);
-                    }
-
-                    return Convert.ToInt32(b.V - a.V);
-                }
-
-                // compute the cross product of vectors (center -> a) x (center -> b)
-                double det = (a.U - centroid.U) * (b.V - centroid.V) - (b.U - centroid.U) * (a.V - centroid.V);
-                if (det < 0)
-                {
-                    return 1;
-                }
-
-                if (det > 0)
-                {
-                    return -1;
-                }
-
-                // points a and b are on the same line from the center
-                // check which point is closer to the center
-                double d1 = (a.U - centroid.U) * (a.U - centroid.U) + (a.V - centroid.V) * (a.V - centroid.V);
-                double d2 = (b.U - centroid.U) * (b.U - centroid.U) + (b.V - centroid.V) * (b.V - centroid.V);
-                return Convert.ToInt32(d1 - d2);
-
-            }
-
-            [Obsolete("This Method is Deprecated")]
-            public static UV Compute2DPolygonCentroid(LinkedList<UV> points)
-            {
-                centroid = new UV(0, 0);
-                int vertexCount = points.Count();
-                UV[] vertices = new UV[vertexCount];
-                points.CopyTo(vertices, 0);
-                double signedArea = 0.0;
-                double u0 = 0.0; // Current vertex X
-                double v0 = 0.0; // Current vertex Y
-                double u1 = 0.0; // Next vertex X
-                double v1 = 0.0; // Next vertex Y
-                double a = 0.0;  // Partial signed area
-
-                // For all vertices
-                for (int i = 0; i < vertexCount; i++)
-                {
-                    u0 = vertices[i].U;
-                    v0 = vertices[i].V;
-                    u1 = vertices[(i + 1) % vertexCount].U;
-                    v1 = vertices[(i + 1) % vertexCount].V;
-                    a = u0 * v1 - u1 * v0;
-                    signedArea += a;
-                    double tempU = (u0 + u1) * a;
-                    double tempV = (v0 + v1) * a;
-                    centroid.Add(new UV(tempU, tempV));
-                }
-
-                signedArea *= 0.5;
-                double newU = centroid.U / (6.0 * signedArea);
-                double newV = centroid.V / (6.0 * signedArea);
-                centroid = new UV(newU, newV);
-
-                return centroid;
-            }
-        }
     }
 }
