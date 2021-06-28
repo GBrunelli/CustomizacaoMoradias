@@ -115,8 +115,6 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <None Include="Resources\floor-plan.png" />
-    <None Include="Resources\floor-plan %281%29.png" />
-    <None Include="Resources\floor-plan %282%29.png" />
     <None Include="Resources\parquet.png" />
     <None Include="Resources\ceiling.png" />
     <None Include="Resources\roof.png" />
