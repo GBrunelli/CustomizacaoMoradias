@@ -9,6 +9,8 @@ namespace CustomizacaoMoradias
 {
     public class UserInputHandler : IExternalEventHandler
     {
+        public ElementPlacer elementPlacer = new ElementPlacer();
+
         public void Execute(UIApplication app)
         {
             UIDocument uidoc = app.ActiveUIDocument;
@@ -23,7 +25,7 @@ namespace CustomizacaoMoradias
                     XYZ roofVector = GetXYZFromString(PlaceElementsForm.roofType);
                     ElementPlacer.RoofDesign roofDesign = GetRoofDesignFromString(PlaceElementsForm.roofStyle);
 
-                    ElementPlacer elementPlacer = new ElementPlacer(uidoc.Document, levelName, topLevelName, 0.3);
+                    elementPlacer.SetProperties(uidoc.Document, levelName, topLevelName, 0.3);
 
                     elementPlacer.BuildJSON(path);                  
                     elementPlacer.CreateFloor(Properties.Settings.Default.FloorName);
