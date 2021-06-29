@@ -147,7 +147,6 @@
     <None Include="PropertiesDatabaseDataSet.xss">
       <DependentUpon>PropertiesDatabaseDataSet.xsd</DependentUpon>
     </None>
-    <None Include="Resources\ElementClassifierConfig.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Properties\Settings.settings">

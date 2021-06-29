@@ -22,7 +22,6 @@ namespace CustomizacaoMoradias.Source
 
         public List<ScoreDM> GetRoomElementsScore()
         {
-
             using (IDbConnection connection = new System.Data.SqlClient.SqlConnection(Properties.Settings.Default.PropertiesDatabaseConnectionString))
             {
                 return connection.Query<ScoreDM>(
