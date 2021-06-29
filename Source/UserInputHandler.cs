@@ -18,21 +18,24 @@ namespace CustomizacaoMoradias
             {
                 transaction.Start();
                 try
-                {                
+                {
+                    float scale = Properties.Settings.Default.Scale;
+                    float overhang = Properties.Settings.Default.Overhang;
+
                     string path = PlaceElementsForm.filePath;
                     string levelName = PlaceElementsForm.levelName;
                     string topLevelName = PlaceElementsForm.topLevelName;
                     XYZ roofVector = GetXYZFromString(PlaceElementsForm.roofType);
                     ElementPlacer.RoofDesign roofDesign = GetRoofDesignFromString(PlaceElementsForm.roofStyle);
 
-                    elementPlacer.SetProperties(uidoc.Document, levelName, topLevelName, 0.3);
+                    elementPlacer.SetProperties(uidoc.Document, levelName, topLevelName, scale);
 
                     elementPlacer.BuildJSON(path);                  
                     elementPlacer.CreateFloor(Properties.Settings.Default.FloorName);
                     elementPlacer.CreateCeiling(Properties.Settings.Default.CeilingName);
                     elementPlacer.ClassifyRooms();
 
-                    double offset = ElementPlacer.MetersToFeet(0.6);
+                    double offset = ElementPlacer.MetersToFeet(overhang);
                     double slope = GetSlopeByType(roofDesign);                       
                     elementPlacer.CreateRoof(offset, slope, roofVector, roofDesign);                 
                 }

@@ -105,5 +105,29 @@ namespace CustomizacaoMoradias.Properties {
                 return ((string)(this["PropertiesDatabaseConnectionString"]));
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.3")]
+        public float Scale {
+            get {
+                return ((float)(this["Scale"]));
+            }
+            set {
+                this["Scale"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.6")]
+        public float Overhang {
+            get {
+                return ((float)(this["Overhang"]));
+            }
+            set {
+                this["Overhang"] = value;
+            }
+        }
     }
 }
