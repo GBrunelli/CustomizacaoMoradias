@@ -22,7 +22,6 @@ namespace CustomizacaoMoradias
     {
         private readonly DataAccess db;
 
-        private readonly UIDocument uidoc;
         private readonly Document doc;
 
         private readonly Level baseLevel;
@@ -42,11 +41,10 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Default contructor.
         /// </summary>
-        public ElementPlacer(UIDocument uidoc, string level, string topLevel, double scale)
+        public ElementPlacer(Document doc, string baseLevel, string topLevel, double scale)
         {
-            this.uidoc = uidoc;
-            doc = uidoc.Document;
-            baseLevel = GetLevelFromName(level);
+            this.doc = doc;
+            this.baseLevel = GetLevelFromName(baseLevel);
             this.topLevel = GetLevelFromName(topLevel);
             this.scale = scale;
             docPlanCircuitSet = null;

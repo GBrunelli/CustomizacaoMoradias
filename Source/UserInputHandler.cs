@@ -23,7 +23,7 @@ namespace CustomizacaoMoradias
                     XYZ roofVector = GetXYZFromString(PlaceElementsForm.roofType);
                     ElementPlacer.RoofDesign roofDesign = GetRoofDesignFromString(PlaceElementsForm.roofStyle);
 
-                    ElementPlacer elementPlacer = new ElementPlacer(uidoc, levelName, topLevelName, 0.3);
+                    ElementPlacer elementPlacer = new ElementPlacer(uidoc.Document, levelName, topLevelName, 0.3);
 
                     elementPlacer.BuildJSON(path);                  
                     elementPlacer.CreateFloor(Properties.Settings.Default.FloorName);
