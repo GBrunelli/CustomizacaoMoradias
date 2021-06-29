@@ -39,7 +39,6 @@ namespace CustomizacaoMoradias
             m_ExEvent = null;
             m_Handler = null;
 
-            // do not forget to call the base class
             base.OnFormClosed(e);
         }
 

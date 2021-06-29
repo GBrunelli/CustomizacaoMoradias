@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Windows.Forms;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Architecture;
 using Autodesk.Revit.DB.IFC;
-using Autodesk.Revit.UI;
 using CustomizacaoMoradias.DataModel;
 using CustomizacaoMoradias.Source;
 using Newtonsoft.Json;
@@ -20,14 +19,23 @@ namespace CustomizacaoMoradias
     [Journaling(JournalingMode.NoCommandData)]
     public class ElementPlacer
     {
-        private readonly DataAccess db;
+        private DataAccess db;
 
-        private readonly Document doc;
+        private Document doc;
 
-        private readonly Level baseLevel;
-        private readonly Level topLevel;       
+        private Level baseLevel;
+        private Level topLevel;
 
-        private readonly double scale;
+        private Thread scoreThread;
+        private List<ScoreDM> roomElementsScore;
+
+        private Thread roomThread;
+        private List<RoomDM> roomNames;
+
+        private Thread elementThread;
+        private List<ElementDM> elements;
+
+        private double scale;
 
         private PlanCircuitSet docPlanCircuitSet;
 
@@ -43,12 +51,53 @@ namespace CustomizacaoMoradias
         /// </summary>
         public ElementPlacer(Document doc, string baseLevel, string topLevel, double scale)
         {
+            SetProperties(doc, baseLevel, topLevel, scale);
+            ThreadInit();
+        }
+
+        public ElementPlacer()
+        {
+            db = new DataAccess();
+            ThreadInit();
+        }
+
+        public void SetProperties(Document doc, string baseLevel, string topLevel, double scale)
+        {
             this.doc = doc;
             this.baseLevel = GetLevelFromName(baseLevel);
             this.topLevel = GetLevelFromName(topLevel);
             this.scale = scale;
             docPlanCircuitSet = null;
-            db = new DataAccess();
+        }
+
+        public void ThreadInit()
+        {
+            scoreThread = new Thread(new ThreadStart(ScoreWorker));
+            scoreThread.Name = "Score Thread";
+            scoreThread.Start();
+
+            roomThread = new Thread(new ThreadStart(RoomWorker));
+            roomThread.Name = "Room Thread";
+            roomThread.Start();
+
+            elementThread = new Thread(new ThreadStart(ElementWorker));
+            elementThread.Name = "Element Thread";
+            elementThread.Start();
+        }       
+
+        public void ScoreWorker()
+        {
+            roomElementsScore = db.GetRoomElementsScore();
+        }
+
+        public void RoomWorker()
+        {
+            roomNames = db.GetRooms();
+        }
+
+        public void ElementWorker()
+        {
+            elements = db.GetElement();
         }
 
         /// <summary>
@@ -375,9 +424,12 @@ namespace CustomizacaoMoradias
         /// <param name="familyType"></param>
         private string GetFamilySymbolName(string familyType)
         {
-            List<ElementDM> elements = db.GetElement(familyType);
-            if (elements.Count == 1)
-                return elements[0].Name;
+            elementThread.Join();
+            foreach (ElementDM e in elements)
+            {
+                if (e.ElementID.Trim().Equals(familyType))
+                    return e.Name;
+            }
             return null;
         }
 
@@ -1526,16 +1578,14 @@ namespace CustomizacaoMoradias
         /// </summary>
         public void ClassifyRooms()
         {
-            List<ScoreDM> roomElementsScore = db.GetRoomElementsScore();
-            List<RoomDM> roomNames = db.GetRooms();
-
             List<Room> rooms = GetRoomsAtLevel(baseLevel).ToList();
-
             foreach(Room room in rooms)
             {
                 if(room.Area > 0)
                 {
                     List<string> elements = GetFurniture(room);
+                    scoreThread.Join();
+                    roomThread.Join();
                     string roomName = GetRoomFromScore(elements, roomElementsScore, roomNames);
                     if (roomName != null) 
                     {
