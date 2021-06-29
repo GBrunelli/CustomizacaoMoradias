@@ -9,6 +9,7 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Architecture;
 using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.UI;
+using CustomizacaoMoradias.DataModel;
 using CustomizacaoMoradias.Source;
 using Newtonsoft.Json;
 
@@ -19,6 +20,8 @@ namespace CustomizacaoMoradias
     [Journaling(JournalingMode.NoCommandData)]
     public class ElementPlacer
     {
+        private readonly DataAccess db;
+
         private readonly UIDocument uidoc;
         private readonly Document doc;
 
@@ -28,6 +31,13 @@ namespace CustomizacaoMoradias
         private readonly double scale;
 
         private PlanCircuitSet docPlanCircuitSet;
+
+        public enum RoofDesign
+        {
+            HiddenButterfly,
+            Hip,
+            Gable
+        }
 
         /// <summary>
         /// Default contructor.
@@ -40,6 +50,7 @@ namespace CustomizacaoMoradias
             this.topLevel = GetLevelFromName(topLevel);
             this.scale = scale;
             docPlanCircuitSet = null;
+            db = new DataAccess();
         }
 
         /// <summary>
@@ -267,8 +278,7 @@ namespace CustomizacaoMoradias
             // Creates a point above the furniture to serve as a rotation axis
             XYZ axisPoint = new XYZ(point.X, point.Y, baseLevel.Elevation + 1);
             Line axis = Line.CreateBound(point, axisPoint);
-            FamilyInstance furniture = null;
-
+            FamilyInstance furniture;
             try
             {
                 FamilySymbol familySymbol = GetFamilySymbol(doc, fsFamilyName);
@@ -365,15 +375,11 @@ namespace CustomizacaoMoradias
         /// Get the FamilySymbol from the settings.
         /// </summary>
         /// <param name="familyType"></param>
-        private static string GetFamilySymbolName(string familyType)
+        private string GetFamilySymbolName(string familyType)
         {
-            foreach (SettingsProperty currentProperty in Properties.Settings.Default.Properties)
-            {
-                if (familyType == currentProperty.Name)
-                {
-                    return (string)currentProperty.DefaultValue;
-                }
-            }
+            List<ElementDM> elements = db.GetElement(familyType);
+            if (elements.Count == 1)
+                return elements[0].Name;
             return null;
         }
 
@@ -1205,13 +1211,6 @@ namespace CustomizacaoMoradias
             return new XYZ(cordX, cordY, cordZ);
         }
 
-        public enum RoofDesign
-        {
-            HiddenButterfly,
-            Hip,
-            Gable
-        }
-
         /// <summary>
         /// Create a generic roof in the Top Level.
         /// </summary>
@@ -1529,44 +1528,55 @@ namespace CustomizacaoMoradias
         /// </summary>
         public void ClassifyRooms()
         {
-            string jsonElementClassifier = Properties.Resources.ElementClassifierConfig;
-            List<RoomClassifier> deserializedRoomClassifier = JsonConvert.DeserializeObject<List<RoomClassifier>>(jsonElementClassifier);
+            List<ScoreDM> roomElementsScore = db.GetRoomElementsScore();
+            List<RoomDM> roomNames = db.GetRooms();
+
             List<Room> rooms = GetRoomsAtLevel(baseLevel).ToList();
-            foreach (Room room in rooms)
+
+            foreach(Room room in rooms)
             {
-                if (room.Area > 0)
+                if(room.Area > 0)
                 {
-                    int highestScore = 0;
-                    string roomName = room.Name;
-                    List<Element> elements = GetFurniture(room);
-                    foreach(RoomClassifier roomClassifier in deserializedRoomClassifier)
+                    List<string> elements = GetFurniture(room);
+                    string roomName = GetRoomFromScore(elements, roomElementsScore, roomNames);
+                    if (roomName != null) 
                     {
-                        int score = GetScoreForRoom(elements, roomClassifier);
-                        if(score > highestScore)
-                        {
-                            roomName = roomClassifier.Name;
-                            highestScore = score;
-                        }
+                        room.Name = roomName;
                     }
-                    room.Name = roomName;
                 }
             }
         }
 
-        /// <summary>
-        /// Calculates the score from a list of Elements for a given room. 
-        /// </summary>
-        /// <param name="elements">A list of elements.</param>
-        /// <param name="roomClassifier">The room classifier to be scored.</param>
-        /// <returns>Returns a score for the room.</returns>
-        private static int GetScoreForRoom(List<Element> elements, RoomClassifier roomClassifier)
+        private string GetRoomFromScore(List<string> elements, List<ScoreDM> sdm, List<RoomDM> rooms)
         {
-            int score = 0;
-            foreach(Element element in elements)
+            int[] score = new int[rooms.Count()];
+
+            for (int i = 0; i < elements.Count; i++)
             {
-                score += roomClassifier.GetElementScore(element.Name);
+                foreach (ScoreDM s in sdm)
+                {
+                    if (elements[i].Equals(s.ElementName))
+                    {
+                        score[s.RoomID] += s.score;
+                    }
+                }
             }
-            return score;
+
+            int maxIndex = 0;
+            int max = 0;
+            for (int i = 0; i < score.Count(); i++)
+            {
+                if (score[i] > max)
+                {
+                    max = score[i];
+                    maxIndex = i;
+                }
+            }
+
+            if (max == 0)
+                return null;
+            else
+                return rooms[maxIndex-1].Name;
         }
 
         /// <summary>
@@ -1599,7 +1609,7 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns a List with those elements.
         /// </returns>
-        private static List<Element> GetFurniture(Room room)
+        private static List<string> GetFurniture(Room room)
         {
             Document doc = room.Document;
             BoundingBoxXYZ boundingBox = room.get_BoundingBox(null);
@@ -1614,7 +1624,7 @@ namespace CustomizacaoMoradias
                 .WherePasses(filter);
 
             int roomid = room.Id.IntegerValue;
-            List<Element> elementsInsideTheRoom = new List<Element>();
+            List<string> elementsInsideTheRoom = new List<string>();
 
             foreach (FamilyInstance instance in collector)
             {
@@ -1622,7 +1632,7 @@ namespace CustomizacaoMoradias
                 {
                     if (instance.Room.Id.IntegerValue.Equals(roomid))
                     {
-                        elementsInsideTheRoom.Add(instance);
+                        elementsInsideTheRoom.Add(instance.Name);
                     }
                 }
             }

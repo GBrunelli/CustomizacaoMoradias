@@ -47,6 +47,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Dapper, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Dapper.2.0.90\lib\net461\Dapper.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -75,6 +78,10 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataModel\Element_RoomDM.cs" />
+    <Compile Include="DataModel\RoomDM.cs" />
+    <Compile Include="DataModel\ScoreDM.cs" />
+    <Compile Include="DataModel\StyleDM.cs" />
     <Compile Include="PropertiesDatabaseDataSet.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -93,7 +100,9 @@
     <Compile Include="Settings.cs" />
     <Compile Include="Source\CeilingCommand.cs" />
     <Compile Include="Source\ClassifyRoomsCommand.cs" />
+    <Compile Include="Source\DataAccess.cs" />
     <Compile Include="Source\ElementDeserializer.cs" />
+    <Compile Include="DataModel\ElementDM.cs" />
     <Compile Include="Source\ElementPlacerCommand.cs" />
     <Compile Include="Source\FloorCommand.cs" />
     <Compile Include="Source\RoofCommand.cs" />
