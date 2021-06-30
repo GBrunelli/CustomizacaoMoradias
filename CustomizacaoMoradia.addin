@@ -4,7 +4,7 @@
 		<Name>CustomizacaoMoradias</Name>
 		<Assembly>CustomizacaoMoradias.dll</Assembly>
 		<AddInId>
-			78B43DCB-4D9C-4883-A539-5B23BF731FC3
+			6658EE91-B4EA-47E1-AEBB-E1F0800737CC
 		</AddInId>
 		<FullClassName>CustomizacaoMoradias.PlaceElementsApplication</FullClassName>
 		<VendorId>GustavoHenriqueBrunelli</VendorId>

@@ -24,6 +24,8 @@ namespace CustomizacaoMoradias
             application.CreateRibbonTab("Customização de Moradias");
             string path = Assembly.GetExecutingAssembly().Location;
 
+            #region Main pannel
+
             // Creates the main panel
             RibbonPanel elementPlacerRibbonPanel = application.CreateRibbonPanel("Customização de Moradias", "Geração Completa");
 
@@ -31,6 +33,15 @@ namespace CustomizacaoMoradias
             PushButtonData elementPlacerButtonData = new PushButtonData("ElementPlacerButton", "Contruir JSON", path, "CustomizacaoMoradias.ElementPlacerCommand");
             PushButton elementPlacerButton = elementPlacerRibbonPanel.AddItem(elementPlacerButtonData) as PushButton;
             elementPlacerButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.floor_plan_32px);
+
+            // Config button
+            PushButtonData configButtonData = new PushButtonData("configButton", "Opções", path, "CustomizacaoMoradias.ConfigCommand");
+            PushButton configButton = elementPlacerRibbonPanel.AddItem(configButtonData) as PushButton;
+            configButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.config);
+
+            #endregion
+
+            #region Standalone pannel
 
             // Creates the standalone panel
             RibbonPanel standaloneRibbonPanel = application.CreateRibbonPanel("Customização de Moradias", "Funções");
@@ -53,10 +64,10 @@ namespace CustomizacaoMoradias
             // Rooms classification button
             PushButtonData roomButtonData = new PushButtonData("roomButton", "Classificar Ambientes", path, "CustomizacaoMoradias.ClassifyRoomsCommand");
             PushButton roomButton = standaloneRibbonPanel.AddItem(roomButtonData) as PushButton;
-            roomButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.blueprint);            
+            roomButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.blueprint);
 
-            selectorForm = null;   // no dialog needed yet; the command will bring it
-            thisApp = this;  // static access to this application instance
+            #endregion
+
             return Result.Succeeded;
         }
 
