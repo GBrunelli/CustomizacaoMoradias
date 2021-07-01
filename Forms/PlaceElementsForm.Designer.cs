@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
             this.fileLabel = new System.Windows.Forms.Label();
             this.fileTextBox = new System.Windows.Forms.TextBox();
             this.openButton = new System.Windows.Forms.Button();
@@ -37,7 +36,6 @@
             this.cancelButton = new System.Windows.Forms.Button();
             this.okButton = new System.Windows.Forms.Button();
             this.topLevelNameLabel = new System.Windows.Forms.Label();
-            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.topLevelNametextBox = new System.Windows.Forms.TextBox();
             this.roofTypeComboBox = new System.Windows.Forms.ComboBox();
             this.roofTypeLabel = new System.Windows.Forms.Label();
@@ -128,11 +126,6 @@
             this.topLevelNameLabel.TabIndex = 8;
             this.topLevelNameLabel.Text = "Top Level Name";
             // 
-            // contextMenuStrip1
-            // 
-            this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(61, 4);
-            // 
             // topLevelNametextBox
             // 
             this.topLevelNametextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
@@ -191,7 +184,7 @@
             this.AcceptButton = this.okButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-            this.AutoValidate = System.Windows.Forms.AutoValidate.EnableAllowFocusChange;
+            this.AutoValidate = System.Windows.Forms.AutoValidate.Disable;
             this.CancelButton = this.cancelButton;
             this.ClientSize = new System.Drawing.Size(430, 256);
             this.Controls.Add(this.roofStyleLabel);
@@ -215,6 +208,7 @@
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Place Elements";
+            this.Load += new System.EventHandler(this.PlaceElementsForm_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -230,7 +224,6 @@
         private System.Windows.Forms.Button cancelButton;
         private System.Windows.Forms.Button okButton;
         private System.Windows.Forms.Label topLevelNameLabel;
-        private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.TextBox topLevelNametextBox;
         private System.Windows.Forms.ComboBox roofTypeComboBox;
         private System.Windows.Forms.Label roofTypeLabel;

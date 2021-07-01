@@ -79,5 +79,10 @@ namespace CustomizacaoMoradias
         {
             topLevelName = topLevelNametextBox.Text;
         }
+
+        private void PlaceElementsForm_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

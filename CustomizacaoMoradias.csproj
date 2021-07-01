@@ -84,6 +84,36 @@
     <Compile Include="DataModel\RoomDM.cs" />
     <Compile Include="DataModel\ScoreDM.cs" />
     <Compile Include="DataModel\StyleDM.cs" />
+    <Compile Include="Forms\ClassifierConfigControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\ClassifierConfigControl.Designer.cs">
+      <DependentUpon>ClassifierConfigControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\ConfigForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ConfigForm.Designer.cs">
+      <DependentUpon>ConfigForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\ElementConfigControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\ElementConfigControl.Designer.cs">
+      <DependentUpon>ElementConfigControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\GeneralConfigControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\GeneralConfigControl.Designer.cs">
+      <DependentUpon>GeneralConfigControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\RoomConfigControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\RoomConfigControl.Designer.cs">
+      <DependentUpon>RoomConfigControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="PropertiesDatabaseDataSet.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -130,6 +160,21 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Forms\ClassifierConfigControl.resx">
+      <DependentUpon>ClassifierConfigControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\ConfigForm.resx">
+      <DependentUpon>ConfigForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\ElementConfigControl.resx">
+      <DependentUpon>ElementConfigControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\GeneralConfigControl.resx">
+      <DependentUpon>GeneralConfigControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\RoomConfigControl.resx">
+      <DependentUpon>RoomConfigControl.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
