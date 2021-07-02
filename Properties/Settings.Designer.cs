@@ -102,7 +102,10 @@ namespace CustomizacaoMoradias.Properties {
             "abase.mdf;Integrated Security=True")]
         public string PropertiesDatabaseConnectionString {
             get {
-                return ((string)(this["PropertiesDatabaseConnectionString"]));
+                string assemblyFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                string mdfFileName = System.IO.Path.Combine(assemblyFolder, "PropertiesDatabase.mdf");
+                string dataSource = "Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=" + mdfFileName + ";Integrated Security=True";
+                return dataSource;
             }
         }
         

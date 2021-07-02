@@ -1605,7 +1605,7 @@ namespace CustomizacaoMoradias
                 {
                     if (elements[i].Equals(s.ElementName))
                     {
-                        score[s.RoomID] += s.score;
+                        score[s.RoomID] += s.Score;
                     }
                 }
             }

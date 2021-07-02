@@ -15,6 +15,6 @@ namespace CustomizacaoMoradias.DataModel
 
         public string ElementName { get; set; }
 
-        public int score { get; set; }
+        public int Score { get; set; }
     }
 }

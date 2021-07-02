@@ -58,7 +58,7 @@ namespace CustomizacaoMoradias.Forms
             this.generalButton.FlatAppearance.BorderSize = 0;
             this.generalButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.generalButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.generalButton.Location = new System.Drawing.Point(0, 90);
+            this.generalButton.Location = new System.Drawing.Point(0, 87);
             this.generalButton.Name = "generalButton";
             this.generalButton.Size = new System.Drawing.Size(168, 23);
             this.generalButton.TabIndex = 2;
@@ -73,7 +73,7 @@ namespace CustomizacaoMoradias.Forms
             this.classifierButton.FlatAppearance.BorderSize = 0;
             this.classifierButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.classifierButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.classifierButton.Location = new System.Drawing.Point(0, 61);
+            this.classifierButton.Location = new System.Drawing.Point(0, 58);
             this.classifierButton.Name = "classifierButton";
             this.classifierButton.Size = new System.Drawing.Size(168, 23);
             this.classifierButton.TabIndex = 1;
@@ -88,7 +88,7 @@ namespace CustomizacaoMoradias.Forms
             this.elementButton.FlatAppearance.BorderSize = 0;
             this.elementButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.elementButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.elementButton.Location = new System.Drawing.Point(0, 32);
+            this.elementButton.Location = new System.Drawing.Point(0, 29);
             this.elementButton.Name = "elementButton";
             this.elementButton.Size = new System.Drawing.Size(168, 23);
             this.elementButton.TabIndex = 1;
@@ -103,7 +103,7 @@ namespace CustomizacaoMoradias.Forms
             this.roomButton.FlatAppearance.BorderSize = 0;
             this.roomButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.roomButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.roomButton.Location = new System.Drawing.Point(0, 3);
+            this.roomButton.Location = new System.Drawing.Point(0, 0);
             this.roomButton.Name = "roomButton";
             this.roomButton.Size = new System.Drawing.Size(168, 23);
             this.roomButton.TabIndex = 0;
@@ -138,6 +138,7 @@ namespace CustomizacaoMoradias.Forms
             this.Name = "ConfigForm";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Configurações";
             this.TopMost = true;
             this.optionPanel.ResumeLayout(false);
