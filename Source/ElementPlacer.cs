@@ -19,7 +19,7 @@ namespace CustomizacaoMoradias
     [Journaling(JournalingMode.NoCommandData)]
     public class ElementPlacer
     {
-        private DataAccess db;
+        private readonly DataAccess db;
 
         private Document doc;
 
@@ -72,33 +72,21 @@ namespace CustomizacaoMoradias
 
         public void ThreadInit()
         {
-            scoreThread = new Thread(new ThreadStart(ScoreWorker));
-            scoreThread.Name = "Score Thread";
+            scoreThread = new Thread(new ThreadStart(ScoreWorker)) { Name = "Score Thread" };
             scoreThread.Start();
 
-            roomThread = new Thread(new ThreadStart(RoomWorker));
-            roomThread.Name = "Room Thread";
+            roomThread = new Thread(new ThreadStart(RoomWorker)) { Name = "Room Thread" };
             roomThread.Start();
 
-            elementThread = new Thread(new ThreadStart(ElementWorker));
-            elementThread.Name = "Element Thread";
+            elementThread = new Thread(new ThreadStart(ElementWorker)) { Name = "Element Thread" };
             elementThread.Start();
         }       
 
-        public void ScoreWorker()
-        {
-            roomElementsScore = db.GetRoomElementsScore();
-        }
+        public void ScoreWorker() { roomElementsScore = db.GetRoomElementsScore(); }
 
-        public void RoomWorker()
-        {
-            roomNames = db.GetRooms();
-        }
+        public void RoomWorker() { roomNames = db.GetRooms(); }
 
-        public void ElementWorker()
-        {
-            elements = db.GetElement();
-        }
+        public void ElementWorker() { elements = db.GetElement(); }
 
         /// <summary>
         /// Convert from meters to feet.

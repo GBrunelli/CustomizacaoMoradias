@@ -1,7 +1,6 @@
 ﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using System;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
@@ -23,10 +22,10 @@ namespace CustomizacaoMoradias
                     float overhang = Properties.Settings.Default.Overhang;
 
                     string path = PlaceElementsForm.filePath;
-                    string levelName = PlaceElementsForm.levelName;
-                    string topLevelName = PlaceElementsForm.topLevelName;
-                    XYZ roofVector = GetXYZFromString(PlaceElementsForm.roofType);
-                    ElementPlacer.RoofDesign roofDesign = GetRoofDesignFromString(PlaceElementsForm.roofStyle);
+                    XYZ roofVector = PlaceElementsForm.roofSelector.SlopeVector;
+                    ElementPlacer.RoofDesign roofDesign = PlaceElementsForm.roofSelector.RoofStyle;
+                    string levelName = Properties.Settings.Default.BaseLevelName;
+                    string topLevelName = Properties.Settings.Default.TopLevelName;
 
                     elementPlacer.SetProperties(uidoc.Document, levelName, topLevelName, scale);
 
@@ -53,11 +52,6 @@ namespace CustomizacaoMoradias
             }
             
             PlaceElementsForm.CloseForm();
-        }
-
-        public string GetName()
-        {
-            return "External User Input Event";
         }
 
         private XYZ GetXYZFromString(string s)
@@ -110,6 +104,11 @@ namespace CustomizacaoMoradias
                     return 0.05;
             }
             return 0.3;
+        }
+
+        public string GetName()
+        {
+            return "Build JSON";
         }
     }
 }

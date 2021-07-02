@@ -43,6 +43,8 @@ namespace CustomizacaoMoradias.Forms
             this.scaleLabel = new System.Windows.Forms.Label();
             this.okButton = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.panel2 = new System.Windows.Forms.Panel();
+            this.panel2.SuspendLayout();
             this.SuspendLayout();
             // 
             // baseLevelLabel
@@ -156,7 +158,7 @@ namespace CustomizacaoMoradias.Forms
             // okButton
             // 
             this.okButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.okButton.Location = new System.Drawing.Point(348, 364);
+            this.okButton.Location = new System.Drawing.Point(1, 1);
             this.okButton.Name = "okButton";
             this.okButton.Size = new System.Drawing.Size(75, 23);
             this.okButton.TabIndex = 13;
@@ -174,12 +176,20 @@ namespace CustomizacaoMoradias.Forms
             this.panel1.Size = new System.Drawing.Size(399, 1);
             this.panel1.TabIndex = 14;
             // 
+            // panel2
+            // 
+            this.panel2.BackColor = System.Drawing.SystemColors.Highlight;
+            this.panel2.Controls.Add(this.okButton);
+            this.panel2.Location = new System.Drawing.Point(346, 363);
+            this.panel2.Name = "panel2";
+            this.panel2.Size = new System.Drawing.Size(77, 25);
+            this.panel2.TabIndex = 15;
+            // 
             // GeneralConfigControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.panel1);
-            this.Controls.Add(this.okButton);
             this.Controls.Add(this.scaleTextBox);
             this.Controls.Add(this.scaleLabel);
             this.Controls.Add(this.wallTypeTextBox);
@@ -192,8 +202,10 @@ namespace CustomizacaoMoradias.Forms
             this.Controls.Add(this.topLevelLabel);
             this.Controls.Add(this.baseLevelTextBox);
             this.Controls.Add(this.baseLevelLabel);
+            this.Controls.Add(this.panel2);
             this.Name = "GeneralConfigControl";
             this.Size = new System.Drawing.Size(448, 403);
+            this.panel2.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -215,5 +227,6 @@ namespace CustomizacaoMoradias.Forms
         private System.Windows.Forms.Label scaleLabel;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Button okButton;
+        private System.Windows.Forms.Panel panel2;
     }
 }

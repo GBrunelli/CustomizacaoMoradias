@@ -108,6 +108,12 @@
     <Compile Include="Forms\GeneralConfigControl.Designer.cs">
       <DependentUpon>GeneralConfigControl.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\RoofSelector.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\RoofSelector.Designer.cs">
+      <DependentUpon>RoofSelector.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\RoomConfigControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -171,6 +177,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\GeneralConfigControl.resx">
       <DependentUpon>GeneralConfigControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\RoofSelector.resx">
+      <DependentUpon>RoofSelector.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\RoomConfigControl.resx">
       <DependentUpon>RoomConfigControl.cs</DependentUpon>

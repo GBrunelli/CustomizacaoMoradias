@@ -1,11 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace CustomizacaoMoradias.Forms
@@ -30,6 +23,7 @@ namespace CustomizacaoMoradias.Forms
                 settings.CeilingName   = ceilingTypeTextBox.Text;
                 settings.WallTypeName  = wallTypeTextBox.Text;
                 settings.Scale         = float.Parse(scaleTextBox.Text);
+                settings.Save();
             }
             catch (Exception error)
             {

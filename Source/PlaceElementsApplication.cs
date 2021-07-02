@@ -34,11 +34,6 @@ namespace CustomizacaoMoradias
             PushButton elementPlacerButton = elementPlacerRibbonPanel.AddItem(elementPlacerButtonData) as PushButton;
             elementPlacerButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.floor_plan_32px);
 
-            // Config button
-            PushButtonData configButtonData = new PushButtonData("configButton", "Opções", path, "CustomizacaoMoradias.ConfigCommand");
-            PushButton configButton = elementPlacerRibbonPanel.AddItem(configButtonData) as PushButton;
-            configButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.config);
-
             #endregion
 
             #region Standalone pannel
@@ -65,6 +60,14 @@ namespace CustomizacaoMoradias
             PushButtonData roomButtonData = new PushButtonData("roomButton", "Classificar Ambientes", path, "CustomizacaoMoradias.ClassifyRoomsCommand");
             PushButton roomButton = standaloneRibbonPanel.AddItem(roomButtonData) as PushButton;
             roomButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.blueprint);
+
+            // Creates the general panel
+            RibbonPanel generalRibbonPanel = application.CreateRibbonPanel("Customização de Moradias", "Geral");
+
+            // Config button
+            PushButtonData configButtonData = new PushButtonData("configButton", "Opções", path, "CustomizacaoMoradias.ConfigCommand");
+            PushButton configButton = generalRibbonPanel.AddItem(configButtonData) as PushButton;
+            configButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.config);
 
             #endregion
 
