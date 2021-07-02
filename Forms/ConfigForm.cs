@@ -17,9 +17,10 @@ namespace CustomizacaoMoradias.Forms
         public ConfigForm()
         {
             InitializeComponent();
+            form = this;
         }
 
-        private void ShowControl(Control control)
+        public void ShowControl(Control control)
         {
             mainPanel.Controls.Clear();
 
@@ -28,6 +29,11 @@ namespace CustomizacaoMoradias.Forms
             control.Focus();
 
             mainPanel.Controls.Add(control);
+        }
+
+        public void ClearControl()
+        {
+            mainPanel.Controls.Clear();
         }
 
         private void ClearButtons()
