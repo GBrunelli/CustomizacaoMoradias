@@ -9,6 +9,8 @@ namespace CustomizacaoMoradias.Forms
     {
         string connectionString = Properties.Settings.Default.PropertiesDatabaseConnectionString;
 
+        bool inDataSource = false;
+
         public RoomConfigControl()
         {
             InitializeComponent();
@@ -17,6 +19,8 @@ namespace CustomizacaoMoradias.Forms
 
         private void roomDataGridView_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
+            if (inDataSource) return;
+
             if(roomDataGridView.CurrentRow != null)
             {
                 DataGridViewRow dgvRow = roomDataGridView.CurrentRow;
@@ -93,7 +97,9 @@ namespace CustomizacaoMoradias.Forms
                 SqlDataAdapter sqlDa = new SqlDataAdapter("SELECT * FROM Room", sqlCon);
                 DataTable dtbl = new DataTable();
                 sqlDa.Fill(dtbl);
+                inDataSource = true;
                 roomDataGridView.DataSource = dtbl;
+                inDataSource = false;
             }
         }
     }

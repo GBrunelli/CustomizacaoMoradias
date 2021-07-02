@@ -1,12 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace CustomizacaoMoradias.Forms
@@ -61,9 +55,8 @@ namespace CustomizacaoMoradias.Forms
             {
                 sqlCon.Open();
                 SqlCommand sqlCmd = new SqlCommand("[dbo].[ElementAddOrEdit]", sqlCon) { CommandType = CommandType.StoredProcedure };
-                sqlCmd.Parameters.AddWithValue("ElementID", (dgvRow.Cells["elementIDDataGridViewTextBoxColumn"].Value));
-                sqlCmd.Parameters.AddWithValue("Name", dgvRow.Cells["nameDataGridViewTextBoxColumn"].Value == DBNull.Value ?
-                    "" : dgvRow.Cells["nameDataGridViewTextBoxColumn"].Value.ToString());
+                sqlCmd.Parameters.AddWithValue("ElementID", dgvRow.Cells["elementIDDataGridViewTextBoxColumn"].Value);
+                sqlCmd.Parameters.AddWithValue("Name", dgvRow.Cells["nameDataGridViewTextBoxColumn"].Value.ToString());
                 sqlCmd.ExecuteNonQuery();
             }
         }
