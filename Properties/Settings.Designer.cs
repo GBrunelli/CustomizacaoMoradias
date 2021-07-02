@@ -104,8 +104,7 @@ namespace CustomizacaoMoradias.Properties {
             get {
                 string assemblyFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
                 string mdfFileName = System.IO.Path.Combine(assemblyFolder, "PropertiesDatabase.mdf");
-                string dataSource = "Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=" + mdfFileName + ";Integrated Security=True";
-                return dataSource;
+                return "Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=" + mdfFileName + ";Integrated Security=True";
             }
         }
         

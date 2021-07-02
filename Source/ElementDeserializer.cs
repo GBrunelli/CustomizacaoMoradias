@@ -16,6 +16,16 @@ namespace CustomizacaoMoradias.Source
     public class WallProperty
     {
         public List<Coordinate> Coordinate { get; set; }
+
+        override public string ToString()
+        {
+            int x0 = Coordinate[0].X;
+            int y0 = Coordinate[0].Y;
+
+            int x1 = Coordinate[1].X;
+            int y1 = Coordinate[1].Y;
+            return $"({x0}, {y0}), ({x1}, {y1})";
+        }
     }
 
     public class WindowProperty : IHosted
@@ -41,7 +51,7 @@ namespace CustomizacaoMoradias.Source
         {
             X = (Coordinate.ElementAt(0).X + Coordinate.ElementAt(1).X) / 2,
             Y = (Coordinate.ElementAt(0).Y + Coordinate.ElementAt(1).Y) / 2
-        };
+        };      
     }
 
     public class HostedProperty : IHosted
@@ -49,6 +59,7 @@ namespace CustomizacaoMoradias.Source
         public Coordinate Coordinate { get; set; }
         public string Type { get; set; }
         public int Rotation { get; set; }
+
     }
 
     public class FurnitureProperty
@@ -83,5 +94,6 @@ namespace CustomizacaoMoradias.Source
         string Type { get; }
 
         int Rotation { get; }
+
     }
 }

@@ -251,7 +251,7 @@ namespace CustomizacaoMoradias
                 }
                 catch
                 {
-                    MessageBox.Show("Erro ao inserir uma parede.");
+                    MessageBox.Show("Erro ao inserir parede " + wall.ToString());
                 }
             }
 
@@ -263,7 +263,7 @@ namespace CustomizacaoMoradias
                 }
                 catch
                 {
-                    MessageBox.Show("Erro ao inserir janela do tipo" + window.Type );
+                    MessageBox.Show("Erro ao inserir janela do tipo " + window.Type );
                 }              
             }
 
@@ -275,7 +275,7 @@ namespace CustomizacaoMoradias
                 }
                 catch
                 {
-                    MessageBox.Show("Erro ao inserir porta do tipo" + door.Type);
+                    MessageBox.Show("Erro ao inserir porta do tipo " + door.Type);
                 }              
             }
 
@@ -287,7 +287,7 @@ namespace CustomizacaoMoradias
                 }
                 catch
                 {
-                    MessageBox.Show("Erro ao inserir elemento hospedado do tipo" + element.Type);
+                    MessageBox.Show("Erro ao inserir elemento hospedado do tipo " + element.Type);
                 }               
             }
 
@@ -299,7 +299,7 @@ namespace CustomizacaoMoradias
                 }
                 catch
                 {
-                    MessageBox.Show("Erro ao inserir elemento mobiliário do tipo" + element.Type);
+                    MessageBox.Show("Erro ao inserir elemento mobiliário do tipo " + element.Type);
                 }                
             }
         }

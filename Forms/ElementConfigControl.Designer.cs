@@ -33,10 +33,10 @@ namespace CustomizacaoMoradias.Forms
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.propertiesDatabaseDataSet = new CustomizacaoMoradias.PropertiesDatabaseDataSet();
             this.elementDataGridView = new System.Windows.Forms.DataGridView();
-            this.elementBindingSource = new System.Windows.Forms.BindingSource(this.components);
-            this.elementTableAdapter = new CustomizacaoMoradias.PropertiesDatabaseDataSetTableAdapters.ElementTableAdapter();
             this.elementIDDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.nameDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.elementBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.elementTableAdapter = new CustomizacaoMoradias.PropertiesDatabaseDataSetTableAdapters.ElementTableAdapter();
             ((System.ComponentModel.ISupportInitialize)(this.propertiesDatabaseDataSet)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.elementDataGridView)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.elementBindingSource)).BeginInit();
@@ -74,17 +74,9 @@ namespace CustomizacaoMoradias.Forms
             this.elementDataGridView.RowHeadersVisible = false;
             this.elementDataGridView.Size = new System.Drawing.Size(442, 397);
             this.elementDataGridView.TabIndex = 2;
+            this.elementDataGridView.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.elementDataGridView_CellClick);
             this.elementDataGridView.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.elementDataGridView_CellValueChanged);
             this.elementDataGridView.UserDeletedRow += new System.Windows.Forms.DataGridViewRowEventHandler(this.elementDataGridView_UserDeletedRow);
-            // 
-            // elementBindingSource
-            // 
-            this.elementBindingSource.DataMember = "Element";
-            this.elementBindingSource.DataSource = this.propertiesDatabaseDataSet;
-            // 
-            // elementTableAdapter
-            // 
-            this.elementTableAdapter.ClearBeforeFill = true;
             // 
             // elementIDDataGridViewTextBoxColumn
             // 
@@ -98,6 +90,15 @@ namespace CustomizacaoMoradias.Forms
             this.nameDataGridViewTextBoxColumn.HeaderText = "Name";
             this.nameDataGridViewTextBoxColumn.Name = "nameDataGridViewTextBoxColumn";
             this.nameDataGridViewTextBoxColumn.Width = 320;
+            // 
+            // elementBindingSource
+            // 
+            this.elementBindingSource.DataMember = "Element";
+            this.elementBindingSource.DataSource = this.propertiesDatabaseDataSet;
+            // 
+            // elementTableAdapter
+            // 
+            this.elementTableAdapter.ClearBeforeFill = true;
             // 
             // ElementConfigControl
             // 
