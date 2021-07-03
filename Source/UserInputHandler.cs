@@ -27,12 +27,13 @@ namespace CustomizacaoMoradias
                     string levelName = Properties.Settings.Default.BaseLevelName;
                     string topLevelName = Properties.Settings.Default.TopLevelName;
 
-                    elementPlacer.SetProperties(uidoc.Document, levelName, topLevelName, scale);
+                    elementPlacer.SetProperties(uidoc, levelName, topLevelName, scale);
 
                     elementPlacer.BuildJSON(path);                  
                     elementPlacer.CreateFloor(Properties.Settings.Default.FloorName);
                     elementPlacer.CreateCeiling(Properties.Settings.Default.CeilingName);
                     elementPlacer.ClassifyRooms();
+                    elementPlacer.DimensioningBuilding();
 
                     double offset = ElementPlacer.MetersToFeet(overhang);
                     double slope = GetSlopeByType(roofDesign);                       

@@ -8,6 +8,7 @@ using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Architecture;
 using Autodesk.Revit.DB.IFC;
+using Autodesk.Revit.UI;
 using CustomizacaoMoradias.DataModel;
 using CustomizacaoMoradias.Source;
 using Newtonsoft.Json;
@@ -22,6 +23,7 @@ namespace CustomizacaoMoradias
         private readonly DataAccess db;
 
         private Document doc;
+        private UIDocument uidoc;
 
         private Level baseLevel;
         private Level topLevel;
@@ -49,9 +51,9 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Default contructor.
         /// </summary>
-        public ElementPlacer(Document doc, string baseLevel, string topLevel, double scale)
+        public ElementPlacer(UIDocument uidoc, string baseLevel, string topLevel, double scale)
         {
-            SetProperties(doc, baseLevel, topLevel, scale);
+            SetProperties(uidoc, baseLevel, topLevel, scale);
             ThreadInit();
         }
 
@@ -61,9 +63,10 @@ namespace CustomizacaoMoradias
             ThreadInit();
         }
 
-        public void SetProperties(Document doc, string baseLevel, string topLevel, double scale)
+        public void SetProperties(UIDocument uidoc, string baseLevel, string topLevel, double scale)
         {
-            this.doc = doc;
+            this.uidoc = uidoc;
+            this.doc = uidoc.Document;
             this.baseLevel = GetLevelFromName(baseLevel);
             this.topLevel = GetLevelFromName(topLevel);
             this.scale = scale;
@@ -1760,6 +1763,45 @@ namespace CustomizacaoMoradias
             XYZ baseVector = p1.Subtract(p0);
             double p2z = (slope * baseVector.GetLength()) / 2;
             return new XYZ(p2x, p2y, p2z);
-        }      
+        }    
+        
+        public void DimensioningBuilding()
+        {
+            var rooms = GetRoomsAtLevel(baseLevel);
+            foreach (Room room in rooms)
+            {
+                SpatialElementBoundaryOptions op = new SpatialElementBoundaryOptions { SpatialElementBoundaryLocation = SpatialElementBoundaryLocation.Center };
+                IList<IList<BoundarySegment>> boundarySegmentsList = room.GetBoundarySegments(op);
+
+                foreach (IList<BoundarySegment> boundarySegments in boundarySegmentsList)
+                {
+                    foreach(BoundarySegment boundarySegment in boundarySegments)
+                    {
+                        Curve curve = boundarySegment.GetCurve();
+
+                        XYZ p1 = new XYZ(
+                            curve.GetEndPoint(0).X,
+                            curve.GetEndPoint(0).Y,
+                            curve.GetEndPoint(0).Z);
+
+                        XYZ p2 = new XYZ(
+                            curve.GetEndPoint(1).X,
+                            curve.GetEndPoint(1).Y,
+                            curve.GetEndPoint(1).Z);
+
+                        Line line = Line.CreateBound(p1, p2);
+                        ModelCurve modelCurve = doc.Create.NewModelCurve(line, SketchPlane.Create(doc, room.LevelId));
+
+                        if(line != null)
+                        {
+                            ReferenceArray references = new ReferenceArray();
+                            references.Append(modelCurve.GeometryCurve.GetEndPointReference(0));
+                            references.Append(modelCurve.GeometryCurve.GetEndPointReference(1));
+                            doc.Create.NewDimension(doc.ActiveView, line, references);
+                        }
+                    }                       
+                }
+            }
+        }
     }
 }

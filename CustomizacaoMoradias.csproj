@@ -156,6 +156,7 @@
     </Compile>
     <Compile Include="Source\ElementPlacer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Source\test.cs" />
     <Compile Include="Source\UserInputHandler.cs" />
   </ItemGroup>
   <ItemGroup>

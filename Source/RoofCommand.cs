@@ -15,7 +15,7 @@ namespace CustomizacaoMoradias
             try
             {
                 UIDocument uidoc = commandData.Application.ActiveUIDocument;
-                ElementPlacer elementPlacer = new ElementPlacer(uidoc.Document, "PLANTA BAIXA", "COBERTURA", 0.3);
+                ElementPlacer elementPlacer = new ElementPlacer(uidoc, "PLANTA BAIXA", "COBERTURA", 0.3);
 
                 double offset = ElementPlacer.MetersToFeet(0.6);
                 using (Transaction transaction = new Transaction(commandData.Application.ActiveUIDocument.Document, "Roof Command"))
