@@ -7,16 +7,16 @@ namespace CustomizacaoMoradias
 {
     public partial class PlaceElementsForm : Form
     {
-        private ExternalEvent m_ExEvent;
+        private ExternalEvent exEvent;
         public static PlaceElementsForm form;
         public static string filePath;
         public static RoofSelector roofSelector;
 
-        public PlaceElementsForm(ExternalEvent exEvent, UserInputHandler handler)
+        public PlaceElementsForm(ExternalEvent exEvent)
         {
             InitializeComponent();
             fileTextBox.Text = Properties.Settings.Default.FileName;
-            m_ExEvent = exEvent;
+            this.exEvent = exEvent;
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
@@ -25,13 +25,13 @@ namespace CustomizacaoMoradias
             // we should dispose it before we are closed
             Properties.Settings.Default.FileName = fileTextBox.Text;
             Properties.Settings.Default.Save();
-            m_ExEvent.Dispose();
+            exEvent.Dispose();
             base.OnFormClosed(e);
         }
 
         private void okButton_Click(object sender, EventArgs e)
         {
-            m_ExEvent.Raise();
+            exEvent.Raise();
         }
 
         private void cancelButton_Click(object sender, EventArgs e)

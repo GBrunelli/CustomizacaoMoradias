@@ -77,14 +77,14 @@ namespace CustomizacaoMoradias
         public Result OnShutdown(UIControlledApplication application)
         {
             if (selectorForm != null && selectorForm.Visible)
-            {
                 selectorForm.Close();
-            }
+            if (roofForm != null && roofForm.Visible)
+                roofForm.Close();
             return Result.Succeeded;
         }       
 
         // The external command invokes this on the end-user's request
-        public void ShowPlaceElementsForm(UIApplication uiapp)
+        public void ShowPlaceElementsForm()
         {
             // If we do not have a dialog yet, create and show it
             if (selectorForm == null || selectorForm.IsDisposed)
@@ -95,9 +95,9 @@ namespace CustomizacaoMoradias
                 // External Event for the dialog to use (to post requests)
                 ExternalEvent exEvent = ExternalEvent.Create(handler);
 
-                // We give the objects to the new dialog;
+                // We give the objects to the new dialog; 
                 // The dialog becomes the owner responsible for disposing them, eventually.
-                selectorForm = new PlaceElementsForm(exEvent, handler);
+                selectorForm = new PlaceElementsForm(exEvent);
                 PlaceElementsForm.form = selectorForm;
                 selectorForm.Show();
             }
@@ -106,12 +106,8 @@ namespace CustomizacaoMoradias
         {
             if (roofForm == null || roofForm.IsDisposed)
             {
-                // A new handler to handle request posting by the dialog
                 RoofSelectorHandler handler = new RoofSelectorHandler();
-
-                // External Event for the dialog to use (to post requests)
                 ExternalEvent exEvent = ExternalEvent.Create(handler);
-
                 roofForm = new BuildRoofForm(exEvent);
                 BuildRoofForm.form = roofForm;
                 roofForm.Show();

@@ -36,6 +36,12 @@ namespace CustomizacaoMoradias.Forms
             this.exEvent = exEvent;
         }
 
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            exEvent.Dispose();
+            base.OnFormClosed(e);
+        }
+
         private void okButton_Click(object sender, EventArgs e)
         {
             exEvent.Raise();
