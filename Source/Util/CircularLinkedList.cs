@@ -12,10 +12,10 @@ namespace CustomizacaoMoradias.Source.Util
     public sealed class CircularLinkedList<T> : ICollection<T>, IEnumerable<T>
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private Node<T> head = null;
+        private CircularLinkedListNode<T> head = null;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private Node<T> tail = null;
+        private CircularLinkedListNode<T> tail = null;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private int count = 0;
@@ -66,12 +66,12 @@ namespace CustomizacaoMoradias.Source.Util
         /// <summary>
         /// Gets Tail node. Returns NULL if no tail node found
         /// </summary>
-        public Node<T> Tail => tail;
+        public CircularLinkedListNode<T> Tail => tail;
 
         /// <summary>
         /// Gets the head node. Returns NULL if no node found
         /// </summary>
-        public Node<T> Head => head;
+        public CircularLinkedListNode<T> Head => head;
 
         /// <summary>
         /// Gets total number of items in the list
@@ -83,7 +83,7 @@ namespace CustomizacaoMoradias.Source.Util
         /// </summary>
         /// <param name="index">Zero-based index</param>
         /// <exception cref="ArgumentOutOfRangeException">index is out of range</exception>
-        public Node<T> this[int index]
+        public CircularLinkedListNode<T> this[int index]
         {
             get
             {
@@ -93,7 +93,7 @@ namespace CustomizacaoMoradias.Source.Util
                 }
                 else
                 {
-                    Node<T> node = head;
+                    CircularLinkedListNode<T> node = head;
                     for (int i = 0; i < index; i++)
                     {
                         node = node.Next;
@@ -117,7 +117,7 @@ namespace CustomizacaoMoradias.Source.Util
             }
             else
             {
-                Node<T> newNode = new Node<T>(item);
+                CircularLinkedListNode<T> newNode = new CircularLinkedListNode<T>(item);
                 tail.Next = newNode;
                 newNode.Next = head;
                 newNode.Previous = tail;
@@ -129,7 +129,7 @@ namespace CustomizacaoMoradias.Source.Util
 
         private void AddFirstItem(T item)
         {
-            head = new Node<T>(item);
+            head = new CircularLinkedListNode<T>(item);
             tail = head;
             head.Next = tail;
             head.Previous = tail;
@@ -147,7 +147,7 @@ namespace CustomizacaoMoradias.Source.Util
             }
             else
             {
-                Node<T> newNode = new Node<T>(item);
+                CircularLinkedListNode<T> newNode = new CircularLinkedListNode<T>(item);
                 head.Previous = newNode;
                 newNode.Previous = tail;
                 newNode.Next = head;
@@ -164,20 +164,20 @@ namespace CustomizacaoMoradias.Source.Util
         /// <param name="item">New item to be inserted</param>
         /// <exception cref="ArgumentNullException"><paramref name="node"/> is NULL</exception>
         /// <exception cref="InvalidOperationException"><paramref name="node"/> doesn't belongs to list</exception>
-        public void AddAfter(Node<T> node, T item)
+        public CircularLinkedListNode<T> AddAfter(CircularLinkedListNode<T> node, T item)
         {
             if (node == null)
             {
                 throw new ArgumentNullException("node");
             }
             // ensuring the supplied node belongs to this list
-            Node<T> temp = FindNode(head, node.Value);
+            CircularLinkedListNode<T> temp = FindNode(head, node.Value);
             if (temp != node)
             {
                 throw new InvalidOperationException("Node doesn't belongs to this list");
             }
 
-            Node<T> newNode = new Node<T>(item)
+            CircularLinkedListNode<T> newNode = new CircularLinkedListNode<T>(item)
             {
                 Next = node.Next
             };
@@ -192,6 +192,8 @@ namespace CustomizacaoMoradias.Source.Util
             }
 
             ++count;
+
+            return newNode;
         }
 
         /// <summary>
@@ -203,7 +205,7 @@ namespace CustomizacaoMoradias.Source.Util
         public void AddAfter(T existingItem, T newItem)
         {
             // finding a node for the existing item
-            Node<T> node = Find(existingItem);
+            CircularLinkedListNode<T> node = Find(existingItem);
             if (node == null)
             {
                 throw new ArgumentException("existingItem doesn't exist in the list");
@@ -219,20 +221,20 @@ namespace CustomizacaoMoradias.Source.Util
         /// <param name="item">New item to be inserted</param>
         /// <exception cref="ArgumentNullException"><paramref name="node"/> is NULL</exception>
         /// <exception cref="InvalidOperationException"><paramref name="node"/> doesn't belongs to list</exception>
-        public void AddBefore(Node<T> node, T item)
+        public CircularLinkedListNode<T> AddBefore(CircularLinkedListNode<T> node, T item)
         {
             if (node == null)
             {
                 throw new ArgumentNullException("node");
             }
             // ensuring the supplied node belongs to this list
-            Node<T> temp = FindNode(head, node.Value);
+            CircularLinkedListNode<T> temp = FindNode(head, node.Value);
             if (temp != node)
             {
                 throw new InvalidOperationException("Node doesn't belongs to this list");
             }
 
-            Node<T> newNode = new Node<T>(item);
+            CircularLinkedListNode<T> newNode = new CircularLinkedListNode<T>(item);
             node.Previous.Next = newNode;
             newNode.Previous = node.Previous;
             newNode.Next = node;
@@ -245,6 +247,8 @@ namespace CustomizacaoMoradias.Source.Util
             }
 
             ++count;
+
+            return newNode;
         }
 
         /// <summary>
@@ -256,7 +260,7 @@ namespace CustomizacaoMoradias.Source.Util
         public void AddBefore(T existingItem, T newItem)
         {
             // finding a node for the existing item
-            Node<T> node = Find(existingItem);
+            CircularLinkedListNode<T> node = Find(existingItem);
             if (node == null)
             {
                 throw new ArgumentException("existingItem doesn't exist in the list");
@@ -269,10 +273,10 @@ namespace CustomizacaoMoradias.Source.Util
         /// Finds the supplied item and returns a node which contains item. Returns NULL if item not found
         /// </summary>
         /// <param name="item">Item to search</param>
-        /// <returns><see cref="Node&lt;T&gt;"/> instance or NULL</returns>
-        public Node<T> Find(T item)
+        /// <returns><see cref="CircularLinkedListNode&lt;T&gt;"/> instance or NULL</returns>
+        public CircularLinkedListNode<T> Find(T item)
         {
-            Node<T> node = FindNode(head, item);
+            CircularLinkedListNode<T> node = FindNode(head, item);
             return node;
         }
 
@@ -284,7 +288,7 @@ namespace CustomizacaoMoradias.Source.Util
         public bool Remove(T item)
         {
             // finding the first occurance of this item
-            Node<T> nodeToRemove = Find(item);
+            CircularLinkedListNode<T> nodeToRemove = Find(item);
             if (nodeToRemove != null)
             {
                 return RemoveNode(nodeToRemove);
@@ -293,9 +297,9 @@ namespace CustomizacaoMoradias.Source.Util
             return false;
         }
 
-        private bool RemoveNode(Node<T> nodeToRemove)
+        private bool RemoveNode(CircularLinkedListNode<T> nodeToRemove)
         {
-            Node<T> previous = nodeToRemove.Previous;
+            CircularLinkedListNode<T> previous = nodeToRemove.Previous;
             previous.Next = nodeToRemove.Next;
             nodeToRemove.Next.Previous = nodeToRemove.Previous;
 
@@ -354,9 +358,9 @@ namespace CustomizacaoMoradias.Source.Util
             return RemoveNode(tail);
         }
 
-        private Node<T> FindNode(Node<T> node, T valueToCompare)
+        private CircularLinkedListNode<T> FindNode(CircularLinkedListNode<T> node, T valueToCompare)
         {
-            Node<T> result = null;
+            CircularLinkedListNode<T> result = null;
             if (comparer.Equals(node.Value, valueToCompare))
             {
                 result = node;
@@ -375,7 +379,7 @@ namespace CustomizacaoMoradias.Source.Util
         /// <returns></returns>
         public IEnumerator<T> GetEnumerator()
         {
-            Node<T> current = head;
+            CircularLinkedListNode<T> current = head;
             if (current != null)
             {
                 do
@@ -392,7 +396,7 @@ namespace CustomizacaoMoradias.Source.Util
         /// <returns></returns>
         public IEnumerator<T> GetReverseEnumerator()
         {
-            Node<T> current = tail;
+            CircularLinkedListNode<T> current = tail;
             if (current != null)
             {
                 do
@@ -430,7 +434,7 @@ namespace CustomizacaoMoradias.Source.Util
                 throw new ArgumentOutOfRangeException("arrayIndex");
             }
 
-            Node<T> node = head;
+            CircularLinkedListNode<T> node = head;
             do
             {
                 array[arrayIndex++] = node.Value;
@@ -452,7 +456,7 @@ namespace CustomizacaoMoradias.Source.Util
     /// </summary>
     /// <typeparam name="T"></typeparam>
     [DebuggerDisplay("Value = {Value}")]
-    public sealed class Node<T>
+    public sealed class CircularLinkedListNode<T>
     {
         /// <summary>
         /// Gets the Value
@@ -462,18 +466,18 @@ namespace CustomizacaoMoradias.Source.Util
         /// <summary>
         /// Gets next node
         /// </summary>
-        public Node<T> Next { get; internal set; }
+        public CircularLinkedListNode<T> Next { get; internal set; }
 
         /// <summary>
         /// Gets previous node
         /// </summary>
-        public Node<T> Previous { get; internal set; }
+        public CircularLinkedListNode<T> Previous { get; internal set; }
 
         /// <summary>
         /// Initializes a new <see cref="Node"/> instance
         /// </summary>
         /// <param name="item">Value to be assigned</param>
-        internal Node(T item)
+        internal CircularLinkedListNode(T item)
         {
             Value = item;
         }

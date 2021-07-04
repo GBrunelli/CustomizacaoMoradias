@@ -142,6 +142,7 @@
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Build JSON";
+            this.TopMost = true;
             this.Load += new System.EventHandler(this.PlaceElementsForm_Load);
             this.panel1.ResumeLayout(false);
             this.ResumeLayout(false);

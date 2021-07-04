@@ -11,6 +11,7 @@ using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.UI;
 using CustomizacaoMoradias.DataModel;
 using CustomizacaoMoradias.Source;
+using CustomizacaoMoradias.Source.Util;
 using Newtonsoft.Json;
 
 namespace CustomizacaoMoradias
@@ -625,9 +626,9 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns a Linked List of UV points ordered in clock wise order.
         /// </returns>
-        private LinkedList<UV> GetPoints(CurveArray curveArray)
+        private CircularLinkedList<UV> GetPoints(CurveArray curveArray)
         {
-            LinkedList<UV> points = new LinkedList<UV>();
+            CircularLinkedList<UV> points = new CircularLinkedList<UV>();
             foreach (Curve curve in curveArray)
             {
                 UV point2D = ProjectInPlaneXY(curve.GetEndPoint(0));
@@ -659,45 +660,22 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns a List with the notches.
         /// </returns>
-        private List<UV> GetNotches(LinkedList<UV> points)
+        private List<UV> GetNotches(CircularLinkedList<UV> points)
         {
             List<UV> notches = new List<UV>();
-            int n = points.Count();
-            double angle;
+            if(points.Count < 5) return notches;
 
-            // calculates the angle for the first node
-            UV p0 = points.Last();
-            UV p1 = points.First();
-            UV p2 = points.First.Next.Value;
-            angle = CalculatesAngle(p0, p1, p2);
-            if (angle > Math.PI)
+            CircularLinkedListNode<UV> node = points.Head;
+            do
             {
-                notches.Add(p1);
-            }
-
-            // calculates the angle for the middle nodes
-            LinkedListNode<UV> node = points.First;
-            for (int i = 1; i < n - 1; i++)
-            {
-                node = node.Next;
-                p0 = node.Previous.Value;
-                p1 = node.Value;
-                p2 = node.Next.Value;
-                angle = CalculatesAngle(p0, p1, p2);
-                if (angle > Math.PI)
-                {
+                UV p0 = node.Value;
+                UV p1 = node.Next.Value;
+                UV p2 = node.Next.Next.Value;
+                double angle = CalculatesAngle(p0, p1, p2);
+                if (angle > Math.PI)           
                     notches.Add(p1);
-                }
-            }
-            // calculates the angle fot the last node
-            p0 = points.Last.Previous.Value;
-            p1 = points.Last();
-            p2 = points.First();
-            angle = CalculatesAngle(p0, p1, p2);
-            if (angle > Math.PI)
-            {
-                notches.Add(p1);
-            }
+                node = node.Next;
+            } while (node != points.Head);
 
             return notches;
         }
@@ -712,7 +690,7 @@ namespace CustomizacaoMoradias
         /// </returns>
         public List<CurveArray> GetConvexPerimeters(CurveArray curveArray, XYZ preferredOrientation, out List<Line> cutLines)
         {
-            LinkedList<UV> points = GetPoints(curveArray);
+            CircularLinkedList<UV> points = GetPoints(curveArray);
             List<UV> notches = GetNotches(points);
             List<CurveArray> perimeters = new List<CurveArray>();
             cutLines = new List<Line>();
@@ -721,6 +699,7 @@ namespace CustomizacaoMoradias
                 perimeters.Add(curveArray);
                 return perimeters;
             }
+
             foreach (UV notche in notches)
             {
                 List<CurveArray> result = EliminateNotch(notche, curveArray, points, preferredOrientation, out Line line);
@@ -775,13 +754,15 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns the list of the CurveArrays.
         /// </returns>
-        private List<CurveArray> EliminateNotch(UV notch, CurveArray curveArray, LinkedList<UV> points, XYZ preferredOrientation, out Line cutLine)
+        private List<CurveArray> EliminateNotch(UV notch, CurveArray curveArray, CircularLinkedList<UV> points, XYZ preferredOrientation, out Line cutLine)
         {
             XYZ notche3D = TranformIn3D(notch);
             Line line1 = Line.CreateUnbound(notche3D, preferredOrientation);
+
             XYZ otherOrientation = new XYZ(preferredOrientation.Y, preferredOrientation.X, 0);
             Line line2 = Line.CreateUnbound(notche3D, otherOrientation);
-            LinkedListNode<UV> notchNode = FindPoint(points, notch);
+
+            CircularLinkedListNode<UV> notchNode = FindPoint(points, notch);
 
             // get the posible curves for the new point
             CurveArray posibleCurves = new CurveArray();
@@ -802,7 +783,7 @@ namespace CustomizacaoMoradias
             // iterate for each possible curve, and if
             // a intersection is found, the point will 
             // added in the linked list
-            LinkedListNode<UV> newNode;
+            CircularLinkedListNode<UV> newNode;
             newNode = FindNewNode(points, line1, posibleCurves);
 
             if (newNode == null)
@@ -811,8 +792,8 @@ namespace CustomizacaoMoradias
             }
 
             // generates the 2 new polygons    
-            LinkedList<UV> polygonA = CreatePolygonBetweenVertices(points, newNode, notchNode);
-            LinkedList<UV> polygonB = CreatePolygonBetweenVertices(points, notchNode, newNode);
+            CircularLinkedList<UV> polygonA = CreatePolygonBetweenVertices(newNode, notchNode);
+            CircularLinkedList<UV> polygonB = CreatePolygonBetweenVertices(notchNode, newNode);
 
             // creates the curves
             List<CurveArray> list = new List<CurveArray>
@@ -834,12 +815,12 @@ namespace CustomizacaoMoradias
         /// <param name="line1"></param>
         /// <param name="posibleCurves"></param>
         /// <returns></returns>
-        private static LinkedListNode<UV> FindNewNode(LinkedList<UV> points, Line line1, CurveArray posibleCurves)
+        private static CircularLinkedListNode<UV> FindNewNode(CircularLinkedList<UV> points, Line line1, CurveArray posibleCurves)
         {
             // iterate for each possible curve, and if
-            // a intersection is found, the point will 
+            // a intersection is found, the point wilsl 
             // added in the linked list
-            LinkedListNode<UV> newNode = null;
+            CircularLinkedListNode<UV> newNode = null;
             foreach (Curve curve in posibleCurves)
             {
                 SetComparisonResult intersection = curve.Intersect(line1, out IntersectionResultArray resultArray);
@@ -855,55 +836,40 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Create a CurveArray given its vertices.
         /// </summary>
-        private CurveArray CreateCurveArrayFromPoints(LinkedList<UV> points)
+        private CurveArray CreateCurveArrayFromPoints(CircularLinkedList<UV> points)
         {
             CurveArray curveArray = new CurveArray();
-            int n = points.Count();
-            LinkedListNode<UV> node = points.First;
+            CircularLinkedListNode<UV> node = points.Head;
             Line line;
-            for (int i = 1; i < n; i++)
-            {
+            do {
                 // for the cases that the 2 lines are colinear
-                if(!node.Value.IsAlmostEqualTo(node.Next.Value))
+                if (!node.Value.IsAlmostEqualTo(node.Next.Value))
                 {
                     line = Line.CreateBound(TranformIn3D(node.Value), TranformIn3D(node.Next.Value));
                     curveArray.Append(line);
                 }
                 node = node.Next;
-            }
-            if(!node.Value.IsAlmostEqualTo(points.First.Value))
-            {
-                line = Line.CreateBound(TranformIn3D(node.Value), TranformIn3D(points.First.Value));
-                curveArray.Append(line);
-            }
-            
+            } while (node != points.Head);
             return curveArray;
         }
 
         /// <summary>
         /// Create a sub group of the linkedList that starts with node 'first' and ends with node 'last'.
         /// </summary>
-        /// <param name="points"></param>
         /// <param name="first"></param>
         /// <param name="last"></param>
         /// <returns>
         /// Returns the vertives of the new polygon.
         /// </returns>
-        private LinkedList<UV> CreatePolygonBetweenVertices(LinkedList<UV> points, LinkedListNode<UV> first, LinkedListNode<UV> last)
+        private CircularLinkedList<UV> CreatePolygonBetweenVertices(CircularLinkedListNode<UV> first, CircularLinkedListNode<UV> last)
         {
-            LinkedList<UV> polygon = new LinkedList<UV>();
-            LinkedListNode<UV> node = first;
-
-            while (node != last)
+            CircularLinkedList<UV> polygon = new CircularLinkedList<UV>();
+            CircularLinkedListNode<UV> node = first;
+            do
             {
-                // TEMPORARY: change for a circular list
-                if (node == null)
-                {
-                    node = points.First;
-                }
                 polygon.AddLast(node.Value);
                 node = node.Next;
-            }
+            } while (node != last);
             polygon.AddLast(node.Value);
             return polygon;
         }
@@ -914,11 +880,12 @@ namespace CustomizacaoMoradias
         /// <param name="points"></param>
         /// <param name="resultArray"></param>
         /// <param name="curve"></param>
-        private static LinkedListNode<UV> AddPointsInList(LinkedList<UV> points, IntersectionResultArray resultArray, Curve curve)
+        private static CircularLinkedListNode<UV> AddPointsInList(CircularLinkedList<UV> points, IntersectionResultArray resultArray, Curve curve)
         {
             UV p0 = ProjectInPlaneXY(curve.GetEndPoint(0));
-            LinkedListNode<UV> newNode = null;
-            LinkedListNode<UV> node = FindPoint(points, p0);
+            CircularLinkedListNode<UV> newNode = null;
+            CircularLinkedListNode<UV> node = FindPoint(points, p0);
+
             IntersectionResultArrayIterator iterator = resultArray.ForwardIterator();
             iterator.Reset();
             while (iterator.MoveNext())
@@ -936,19 +903,16 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns the node.
         /// </returns>
-        private static LinkedListNode<UV> FindPoint(LinkedList<UV> points, UV key)
+        private static CircularLinkedListNode<UV> FindPoint(CircularLinkedList<UV> points, UV key)
         {
-            LinkedListNode<UV> node = points.First;
-            while (node != null)
+            CircularLinkedListNode<UV> node = points.Head;
+            do
             {
                 UV point = node.Value;
                 if (point.U == key.U && point.V == key.V)
-                {
                     return node;
-                }
-
                 node = node.Next;
-            }
+            } while (node != points.Head);
             return null;
         }
 
@@ -1063,8 +1027,10 @@ namespace CustomizacaoMoradias
 
             List<UV> points = GetPoints(curveArray).ToList();
             List<UV> offsetedPoints = OffsetPolygon(points, offset, unchangedLine);
-            LinkedList<UV> linkedOffsetedPoints = new LinkedList<UV>(offsetedPoints);
+
+            CircularLinkedList<UV> linkedOffsetedPoints = new CircularLinkedList<UV>(offsetedPoints);
             CurveArray offsetedCurveArray = CreateCurveArrayFromPoints(linkedOffsetedPoints);
+
             return offsetedCurveArray;
         }
 
@@ -1327,7 +1293,9 @@ namespace CustomizacaoMoradias
 
             if (convexFootPrint.Count == 1)
             {
-                convexFootPrint = DivideCurveArrayInHalf(convexFootPrint[0], slopeDirection);
+                XYZ divisionDirection = new XYZ(-slopeDirection.Y, slopeDirection.X, 0);
+                convexFootPrint = DivideCurveArrayInHalf(convexFootPrint[0], divisionDirection, out Line cutLine);
+                cutLines.Add(cutLine);
             }
 
             foreach (CurveArray curveArray in convexFootPrint)
@@ -1359,38 +1327,40 @@ namespace CustomizacaoMoradias
             CreateParapetWall(footPrint);
         }
 
-
-        private List<CurveArray> DivideCurveArrayInHalf(CurveArray curveArray, XYZ divisionDirection)
+        private List<CurveArray> DivideCurveArrayInHalf(CurveArray curveArray, XYZ divisionDirection, out Line cutLine)
         {
-            if (curveArray.Size != 4)
+            CurveArray normalizedCurveArray = NormalizeCurveArray(curveArray);
+            if (normalizedCurveArray.Size != 4)
             {
-                curveArray = NormalizeCurveArray(curveArray);
+                cutLine = null;
+                return null;
             }
+                
 
-            List<XYZ> newPoints = new List<XYZ>();
-            foreach (Curve curve in curveArray)
+            CircularLinkedList<UV> points = GetPoints(normalizedCurveArray);
+            List<CircularLinkedListNode<UV>> newPoints = new List<CircularLinkedListNode<UV>>();
+
+            foreach (Curve curve in normalizedCurveArray)
             {
+                // if they are parralel
                 if (GetCurveDirection(curve).CrossProduct(divisionDirection).IsZeroLength())
                 {
                     XYZ p0 = curve.GetEndPoint(0);
                     XYZ p1 = curve.GetEndPoint(1);
-                    XYZ newPoint = (p0 + p1) / 2;
-                    newPoints.Add(newPoint);
+                    UV newPoint = ProjectInPlaneXY((p0 + p1) / 2);
+                    newPoints.Add(AddPointBetween(points, ProjectInPlaneXY(p0), ProjectInPlaneXY(p1), newPoint));
                 }
             }
 
             if (newPoints.Count != 2)
             {
+                cutLine = null;
                 return null;
             }
+                     
 
-            LinkedList<UV> points = GetPoints(curveArray);
-
-            LinkedListNode<UV> node0 = FindPoint(points, ProjectInPlaneXY(newPoints[0]));
-            LinkedListNode<UV> node1 = FindPoint(points, ProjectInPlaneXY(newPoints[1]));
-
-            LinkedList<UV> newPolygon0 = CreatePolygonBetweenVertices(points, node0, node1);
-            LinkedList<UV> newPolygon1 = CreatePolygonBetweenVertices(points, node1, node0);
+            CircularLinkedList<UV> newPolygon0 = CreatePolygonBetweenVertices(newPoints[0], newPoints[1]);
+            CircularLinkedList<UV> newPolygon1 = CreatePolygonBetweenVertices(newPoints[1], newPoints[0]);
 
             List<CurveArray> dividedCurveArrays = new List<CurveArray>
             {
@@ -1398,12 +1368,24 @@ namespace CustomizacaoMoradias
                 CreateCurveArrayFromPoints(newPolygon1)
             };
 
+            cutLine = Line.CreateBound(TranformIn3D(newPoints[0].Value), TranformIn3D(newPoints[1].Value));
             return dividedCurveArrays;
+        }
+
+        private static CircularLinkedListNode<UV> AddPointBetween(CircularLinkedList<UV> points, UV p0, UV p1, UV newPoint)
+        {
+            CircularLinkedListNode<UV> p0Node = FindPoint(points, p0);
+            CircularLinkedListNode<UV> p1Node = FindPoint(points, p1);
+            if (p0Node.Next.Equals(p1Node))
+                return points.AddAfter(p0Node, newPoint);
+            if (p1Node.Next.Equals(p0Node))
+                return points.AddAfter(p1Node, newPoint);
+            throw new ArgumentException("The points are not sequential.");
         }
 
         private CurveArray NormalizeCurveArray(CurveArray curveArray)
         {
-            throw new NotImplementedException();
+            return CreateOffsetedCurveArray(0, curveArray, null);
         }
 
         private void CreateParapetWall(CurveArray curveArray)
@@ -1720,7 +1702,7 @@ namespace CustomizacaoMoradias
         /// </param>
         public void CreateAllGableWalls(XYZ vectorDirection, double slope, CurveArray perimeter)
         {
-            CurveArray normalizedCurve = CreateOffsetedCurveArray(0, perimeter, null);
+            CurveArray normalizedCurve = NormalizeCurveArray(perimeter);
             foreach (Curve line in normalizedCurve)
             {
                 XYZ lineDirection = GetCurveDirection(line);
