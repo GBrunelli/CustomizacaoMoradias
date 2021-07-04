@@ -8,23 +8,23 @@ namespace CustomizacaoMoradias
     [Transaction(TransactionMode.Manual)]
     [Regeneration(RegenerationOption.Manual)]
     [Journaling(JournalingMode.NoCommandData)]
-    public class RoofCommand : IExternalCommand
+    public class ClassifyRoomsCommand : IExternalCommand
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
+            var uidoc = commandData.Application.ActiveUIDocument;
+            var baseLevel = Properties.Settings.Default.BaseLevelName;
+            var topLevel = Properties.Settings.Default.TopLevelName;
+            var scale = Properties.Settings.Default.Scale;
+            ElementPlacer elementPlacer = new ElementPlacer(uidoc, baseLevel, topLevel, scale);
             try
             {
-                UIDocument uidoc = commandData.Application.ActiveUIDocument;
-                ElementPlacer elementPlacer = new ElementPlacer(uidoc, "PLANTA BAIXA", "COBERTURA", 0.3);
-
-                double offset = ElementPlacer.MetersToFeet(0.6);
-                using (Transaction transaction = new Transaction(commandData.Application.ActiveUIDocument.Document, "Roof Command"))
+                using (Transaction transaction = new Transaction(uidoc.Document, "Classify Rooms"))
                 {
                     transaction.Start();
-                    elementPlacer.CreateRoof(offset, 0.3, new XYZ(1, 0, 0), ElementPlacer.RoofDesign.Gable);
+                    elementPlacer.ClassifyRooms();
                     transaction.Commit();
                 }
-
                 return Result.Succeeded;
             }
             catch (Exception e)

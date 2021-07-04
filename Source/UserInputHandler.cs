@@ -1,7 +1,7 @@
 ﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
+using CustomizacaoMoradias.Forms;
 using System;
-using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace CustomizacaoMoradias
@@ -12,103 +12,56 @@ namespace CustomizacaoMoradias
 
         public void Execute(UIApplication app)
         {
-            UIDocument uidoc = app.ActiveUIDocument;
-            using (Transaction transaction = new Transaction(uidoc.Document, "Contruir JSON"))
-            {
-                transaction.Start();
-                try
-                {
-                    float scale = Properties.Settings.Default.Scale;
-                    float overhang = Properties.Settings.Default.Overhang;
+            UIDocument uidoc    = app.ActiveUIDocument;
+            Document doc        = uidoc.Document;
 
-                    string path = PlaceElementsForm.filePath;
-                    XYZ roofVector = PlaceElementsForm.roofSelector.SlopeVector;
-                    ElementPlacer.RoofDesign roofDesign = PlaceElementsForm.roofSelector.RoofStyle;
-                    string levelName = Properties.Settings.Default.BaseLevelName;
-                    string topLevelName = Properties.Settings.Default.TopLevelName;
+            float scale         = Properties.Settings.Default.Scale;
+            float overhang      = Properties.Settings.Default.Overhang;
+            string levelName    = Properties.Settings.Default.BaseLevelName;
+            string topLevelName = Properties.Settings.Default.TopLevelName;
 
-                    elementPlacer.SetProperties(uidoc, levelName, topLevelName, scale);
+            string path         = PlaceElementsForm.filePath;
+            XYZ roofVector      = PlaceElementsForm.roofSelector.SlopeVector;
+            var roofDesign      = PlaceElementsForm.roofSelector.RoofStyle;
 
-                    elementPlacer.BuildJSON(path);                  
-                    elementPlacer.CreateFloor(Properties.Settings.Default.FloorName);
-                    elementPlacer.CreateCeiling(Properties.Settings.Default.CeilingName);
-                    elementPlacer.ClassifyRooms();
+            elementPlacer.SetProperties(uidoc, levelName, topLevelName, scale);
 
-                    double offset = ElementPlacer.MetersToFeet(overhang);
-                    double slope = GetSlopeByType(roofDesign);                       
-                    elementPlacer.CreateRoof(offset, slope, roofVector, roofDesign);                 
-                }
-                catch (LevelNotFoundException lvlEx)
-                {
-                    MessageBox.Show(lvlEx.Message, "Erro");
-                    throw lvlEx;
-                }
-                catch (Exception e)
-                {
-                    MessageBox.Show(e.Message, "Erro");
-                }
-
-                transaction.Commit();
-            }
-            
-            PlaceElementsForm.CloseForm();
-        }
-
-        private XYZ GetXYZFromString(string s)
-        {
             try
             {
-                XYZ coordinate = null;
-                string[] splitedString = Regex.Split(s, @"\D+");
-
-                int j = 0;
-                int[] numbers = new int[3];
-                for (int i = 0; i < splitedString.Length; i++)
+                using (Transaction transaction = new Transaction(doc, "Contruir JSON"))
                 {
-                    bool isValid = int.TryParse(splitedString[i], out int currentNumber);
-                    if (isValid)
-                        numbers[j++] = currentNumber;
+                    transaction.Start();
+                    elementPlacer.BuildJSON(path);
+                    elementPlacer.ClassifyRooms();
+                    elementPlacer.CreateFloor(Properties.Settings.Default.FloorName);
+                    elementPlacer.CreateCeiling(Properties.Settings.Default.CeilingName);
+                    transaction.Commit();
                 }
-                coordinate = new XYZ(numbers[0], numbers[1], numbers[2]);
-                return coordinate;
+                using (Transaction transaction = new Transaction(doc, "Contruir Telhado"))
+                {
+                    transaction.Start();
+                    double offset = ElementPlacer.MetersToFeet(overhang);
+                    double slope = RoofSelector.GetSlopeByType(roofDesign);
+                    elementPlacer.CreateRoof(offset, slope, roofVector, roofDesign);
+                    transaction.Commit();
+                }
             }
-            catch(Exception)
+            catch (LevelNotFoundException lvlEx)
             {
-                return null;
+                MessageBox.Show(lvlEx.Message, "Erro");
+                throw lvlEx;
             }
-        }
-        
-        private ElementPlacer.RoofDesign GetRoofDesignFromString(string s)
-        {
-            switch (s)
+            catch (Exception e)
             {
-                case "Hip Roof":
-                    return ElementPlacer.RoofDesign.Hip;
-                case "Gable Roof":
-                    return ElementPlacer.RoofDesign.Gable;
-                case "Hidden Roof":
-                    return ElementPlacer.RoofDesign.HiddenButterfly;
+                MessageBox.Show(e.Message, "Erro");
             }
-            return ElementPlacer.RoofDesign.Gable;
-        }
 
-        private double GetSlopeByType(ElementPlacer.RoofDesign roofDesign)
-        {
-            switch (roofDesign)
-            {
-                case ElementPlacer.RoofDesign.Gable:
-                    return 0.3;
-                case ElementPlacer.RoofDesign.Hip:
-                    return 0.3;
-                case ElementPlacer.RoofDesign.HiddenButterfly:
-                    return 0.05;
-            }
-            return 0.3;
+            PlaceElementsForm.CloseForm();
         }
 
         public string GetName()
         {
-            return "Build JSON";
+            return "User Input Handler";
         }
     }
 }

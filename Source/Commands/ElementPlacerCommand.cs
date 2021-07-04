@@ -15,7 +15,7 @@ namespace CustomizacaoMoradias
             try
             {
                 PlaceElementsApplication.thisApp = new PlaceElementsApplication();
-                PlaceElementsApplication.thisApp.ShowForm(commandData.Application);
+                PlaceElementsApplication.thisApp.ShowPlaceElementsForm(commandData.Application);
                 return Result.Succeeded;
             }
             catch (Exception e)

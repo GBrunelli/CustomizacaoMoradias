@@ -93,6 +93,20 @@ namespace CustomizacaoMoradias.Forms
             }
         }
 
+        public static double GetSlopeByType(ElementPlacer.RoofDesign roofDesign)
+        {
+            switch (roofDesign)
+            {
+                case ElementPlacer.RoofDesign.Gable:
+                    return 0.3;
+                case ElementPlacer.RoofDesign.Hip:
+                    return 0.3;
+                case ElementPlacer.RoofDesign.HiddenButterfly:
+                    return 0.05;
+            }
+            return 0.3;
+        }
+
         public XYZ SlopeVector
         {
             get

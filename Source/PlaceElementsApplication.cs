@@ -7,6 +7,8 @@ using System.Windows.Media;
 using System.Drawing;
 using System.Windows.Interop;
 using System.Windows;
+using CustomizacaoMoradias.Forms;
+using CustomizacaoMoradias.Source;
 
 namespace CustomizacaoMoradias
 {
@@ -17,6 +19,7 @@ namespace CustomizacaoMoradias
 
         // ModelessForm instance
         private PlaceElementsForm selectorForm;
+        private BuildRoofForm roofForm;
 
         public Result OnStartup(UIControlledApplication application)
         {
@@ -81,7 +84,7 @@ namespace CustomizacaoMoradias
         }       
 
         // The external command invokes this on the end-user's request
-        public void ShowForm(UIApplication uiapp)
+        public void ShowPlaceElementsForm(UIApplication uiapp)
         {
             // If we do not have a dialog yet, create and show it
             if (selectorForm == null || selectorForm.IsDisposed)
@@ -97,6 +100,21 @@ namespace CustomizacaoMoradias
                 selectorForm = new PlaceElementsForm(exEvent, handler);
                 PlaceElementsForm.form = selectorForm;
                 selectorForm.Show();
+            }
+        }
+        public void ShowRoofSelectorForm()
+        {
+            if (roofForm == null || roofForm.IsDisposed)
+            {
+                // A new handler to handle request posting by the dialog
+                RoofSelectorHandler handler = new RoofSelectorHandler();
+
+                // External Event for the dialog to use (to post requests)
+                ExternalEvent exEvent = ExternalEvent.Create(handler);
+
+                roofForm = new BuildRoofForm(exEvent);
+                BuildRoofForm.form = roofForm;
+                roofForm.Show();
             }
         }
 

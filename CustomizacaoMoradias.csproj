@@ -84,6 +84,12 @@
     <Compile Include="DataModel\RoomDM.cs" />
     <Compile Include="DataModel\ScoreDM.cs" />
     <Compile Include="DataModel\StyleDM.cs" />
+    <Compile Include="Forms\BuildRoofForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\BuildRoofForm.Designer.cs">
+      <DependentUpon>BuildRoofForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\ClassifierConfigControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -136,16 +142,17 @@
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
     <Compile Include="Settings.cs" />
-    <Compile Include="Source\CeilingCommand.cs" />
-    <Compile Include="Source\ClassifyRoomsCommand.cs" />
-    <Compile Include="Source\ConfigCommand.cs" />
+    <Compile Include="Source\Commands\CeilingCommand.cs" />
+    <Compile Include="Source\Commands\ClassifyRoomsCommand.cs" />
+    <Compile Include="Source\Commands\ConfigCommand.cs" />
     <Compile Include="Source\DataAccess.cs" />
-    <Compile Include="Source\DimensionCommand.cs" />
+    <Compile Include="Source\Commands\DimensionCommand.cs" />
     <Compile Include="Source\ElementDeserializer.cs" />
     <Compile Include="DataModel\ElementDM.cs" />
-    <Compile Include="Source\ElementPlacerCommand.cs" />
-    <Compile Include="Source\FloorCommand.cs" />
-    <Compile Include="Source\RoofCommand.cs" />
+    <Compile Include="Source\Commands\ElementPlacerCommand.cs" />
+    <Compile Include="Source\Commands\FloorCommand.cs" />
+    <Compile Include="Source\Commands\RoofCommand.cs" />
+    <Compile Include="Source\RoofSelectorHandler.cs" />
     <Compile Include="Source\RoomClassifier.cs" />
     <Compile Include="Source\LevelNotFoundException.cs" />
     <Compile Include="Source\PlaceElementsApplication.cs" />
@@ -168,6 +175,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Forms\BuildRoofForm.resx">
+      <DependentUpon>BuildRoofForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\ClassifierConfigControl.resx">
       <DependentUpon>ClassifierConfigControl.cs</DependentUpon>
     </EmbeddedResource>
