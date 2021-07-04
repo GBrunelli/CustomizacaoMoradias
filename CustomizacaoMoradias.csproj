@@ -140,6 +140,7 @@
     <Compile Include="Source\ClassifyRoomsCommand.cs" />
     <Compile Include="Source\ConfigCommand.cs" />
     <Compile Include="Source\DataAccess.cs" />
+    <Compile Include="Source\DimensionCommand.cs" />
     <Compile Include="Source\ElementDeserializer.cs" />
     <Compile Include="DataModel\ElementDM.cs" />
     <Compile Include="Source\ElementPlacerCommand.cs" />
@@ -226,6 +227,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <DependentUpon>PropertiesDatabase.mdf</DependentUpon>
     </Content>
+    <None Include="Resources\dimension.png" />
     <None Include="Resources\icons8-engrenagem-32.png" />
   </ItemGroup>
   <ItemGroup>

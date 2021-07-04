@@ -33,7 +33,6 @@ namespace CustomizacaoMoradias
                     elementPlacer.CreateFloor(Properties.Settings.Default.FloorName);
                     elementPlacer.CreateCeiling(Properties.Settings.Default.CeilingName);
                     elementPlacer.ClassifyRooms();
-                    elementPlacer.DimensioningBuilding();
 
                     double offset = ElementPlacer.MetersToFeet(overhang);
                     double slope = GetSlopeByType(roofDesign);                       

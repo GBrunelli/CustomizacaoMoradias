@@ -24,8 +24,6 @@ namespace CustomizacaoMoradias
             application.CreateRibbonTab("Customização de Moradias");
             string path = Assembly.GetExecutingAssembly().Location;
 
-            #region Main pannel
-
             // Creates the main panel
             RibbonPanel elementPlacerRibbonPanel = application.CreateRibbonPanel("Customização de Moradias", "Geração Completa");
 
@@ -33,10 +31,6 @@ namespace CustomizacaoMoradias
             PushButtonData elementPlacerButtonData = new PushButtonData("ElementPlacerButton", "Contruir JSON", path, "CustomizacaoMoradias.ElementPlacerCommand");
             PushButton elementPlacerButton = elementPlacerRibbonPanel.AddItem(elementPlacerButtonData) as PushButton;
             elementPlacerButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.floor_plan_32px);
-
-            #endregion
-
-            #region Standalone pannel
 
             // Creates the standalone panel
             RibbonPanel standaloneRibbonPanel = application.CreateRibbonPanel("Customização de Moradias", "Funções");
@@ -61,6 +55,11 @@ namespace CustomizacaoMoradias
             PushButton roomButton = standaloneRibbonPanel.AddItem(roomButtonData) as PushButton;
             roomButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.blueprint);
 
+            // Dimensioning button
+            PushButtonData dimensionButtonData = new PushButtonData("dimensionButton", "Cotar", path, "CustomizacaoMoradias.DimensionCommand");
+            PushButton dimensionButton = standaloneRibbonPanel.AddItem(dimensionButtonData) as PushButton;
+            dimensionButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.dimension);
+
             // Creates the general panel
             RibbonPanel generalRibbonPanel = application.CreateRibbonPanel("Customização de Moradias", "Geral");
 
@@ -68,8 +67,6 @@ namespace CustomizacaoMoradias
             PushButtonData configButtonData = new PushButtonData("configButton", "Opções", path, "CustomizacaoMoradias.ConfigCommand");
             PushButton configButton = generalRibbonPanel.AddItem(configButtonData) as PushButton;
             configButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.config);
-
-            #endregion
 
             return Result.Succeeded;
         }

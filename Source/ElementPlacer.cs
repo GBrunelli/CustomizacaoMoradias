@@ -21,7 +21,7 @@ namespace CustomizacaoMoradias
     [Journaling(JournalingMode.NoCommandData)]
     public class ElementPlacer
     {
-        private readonly DataAccess db;
+        private readonly DataAccess db = new DataAccess();
 
         private Document doc;
         private UIDocument uidoc;
@@ -60,7 +60,6 @@ namespace CustomizacaoMoradias
 
         public ElementPlacer()
         {
-            db = new DataAccess();
             ThreadInit();
         }
 
