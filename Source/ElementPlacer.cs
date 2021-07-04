@@ -586,7 +586,7 @@ namespace CustomizacaoMoradias
         /// </param>
         public void CreateFloor(string floorTypeName)
         {
-            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(false);
+            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(true);
 
             // get the floorType
             FilteredElementCollector collector = new FilteredElementCollector(doc);
@@ -716,6 +716,11 @@ namespace CustomizacaoMoradias
             List<UV> notches = GetNotches(points);
             List<CurveArray> perimeters = new List<CurveArray>();
             cutLines = new List<Line>();
+            if (notches.Count == 0)
+            {
+                perimeters.Add(curveArray);
+                return perimeters;
+            }
             foreach (UV notche in notches)
             {
                 List<CurveArray> result = EliminateNotch(notche, curveArray, points, preferredOrientation, out Line line);
@@ -982,7 +987,7 @@ namespace CustomizacaoMoradias
         public CurveArray GetHousePerimeter()
         {
             // retrives the circuit set of the active document
-            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(false);
+            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(true);
 
             foreach (PlanCircuit circuit in circuitSet)
             {
@@ -1208,7 +1213,7 @@ namespace CustomizacaoMoradias
         {
 
             Floor ceiling = null;
-            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(false);
+            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(true);
 
             // creates a ceiling if in a room there is more than one loop,
             // and finds the smallest loop
@@ -1359,7 +1364,7 @@ namespace CustomizacaoMoradias
         {
             if (curveArray.Size != 4)
             {
-                return null;
+                curveArray = NormalizeCurveArray(curveArray);
             }
 
             List<XYZ> newPoints = new List<XYZ>();
@@ -1396,6 +1401,10 @@ namespace CustomizacaoMoradias
             return dividedCurveArrays;
         }
 
+        private CurveArray NormalizeCurveArray(CurveArray curveArray)
+        {
+            throw new NotImplementedException();
+        }
 
         private void CreateParapetWall(CurveArray curveArray)
         {

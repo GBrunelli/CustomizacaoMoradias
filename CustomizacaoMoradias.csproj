@@ -157,6 +157,7 @@
     <Compile Include="Source\ElementPlacer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Source\UserInputHandler.cs" />
+    <Compile Include="Source\Util\CircularLinkedList.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -239,6 +240,7 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy "$(TargetDir)"."" "$(AppData)\Autodesk\Revit\Addins\2021\"</PostBuildEvent>
