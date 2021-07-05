@@ -6,7 +6,6 @@ namespace CustomizacaoMoradias.Source
 {
     class RoofSelectorHandler : IExternalEventHandler
     {
-
         public ElementPlacer elementPlacer = new ElementPlacer();
 
         public void Execute(UIApplication app)
@@ -17,7 +16,7 @@ namespace CustomizacaoMoradias.Source
             var baseLevel    = Properties.Settings.Default.BaseLevelName;
             var topLevel     = Properties.Settings.Default.TopLevelName;
             var scale        = Properties.Settings.Default.Scale;
-            double overhang  = Properties.Settings.Default.Overhang;
+            double overhang  = UnitUtils.ConvertToInternalUnits(Properties.Settings.Default.Overhang, UnitTypeId.Meters); ;
                              
             var slopeVector  = BuildRoofForm.SlopeVector;
             var roofDesign   = BuildRoofForm.RoofDesign;

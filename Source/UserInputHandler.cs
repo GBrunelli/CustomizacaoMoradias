@@ -16,13 +16,14 @@ namespace CustomizacaoMoradias
             Document doc        = uidoc.Document;
 
             float scale         = Properties.Settings.Default.Scale;
-            float overhang      = Properties.Settings.Default.Overhang;
+            double overhang     = UnitUtils.ConvertToInternalUnits(Properties.Settings.Default.Overhang, UnitTypeId.Meters);
             string levelName    = Properties.Settings.Default.BaseLevelName;
             string topLevelName = Properties.Settings.Default.TopLevelName;
 
             string path         = PlaceElementsForm.filePath;
             XYZ roofVector      = PlaceElementsForm.roofSelector.SlopeVector;
             var roofDesign      = PlaceElementsForm.roofSelector.RoofStyle;
+            double slope        = RoofSelector.GetSlopeByType(roofDesign);
 
             elementPlacer.SetProperties(uidoc, levelName, topLevelName, scale);
 
@@ -40,9 +41,7 @@ namespace CustomizacaoMoradias
                 using (Transaction transaction = new Transaction(doc, "Contruir Telhado"))
                 {
                     transaction.Start();
-                    double offset = ElementPlacer.MetersToFeet(overhang);
-                    double slope = RoofSelector.GetSlopeByType(roofDesign);
-                    elementPlacer.CreateRoof(offset, slope, roofVector, roofDesign);
+                    elementPlacer.CreateRoof(overhang, slope, roofVector, roofDesign);
                     transaction.Commit();
                 }
             }
