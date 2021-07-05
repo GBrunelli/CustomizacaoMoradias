@@ -33,9 +33,9 @@ namespace CustomizacaoMoradias
                 {
                     transaction.Start();
                     elementPlacer.BuildJSON(path);
-                    elementPlacer.ClassifyRooms();
                     elementPlacer.CreateFloor(Properties.Settings.Default.FloorName);
                     elementPlacer.CreateCeiling(Properties.Settings.Default.CeilingName);
+                    elementPlacer.ClassifyRooms();
                     transaction.Commit();
                 }
                 using (Transaction transaction = new Transaction(doc, "Contruir Telhado"))

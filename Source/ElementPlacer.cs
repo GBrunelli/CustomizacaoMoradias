@@ -40,7 +40,24 @@ namespace CustomizacaoMoradias
 
         private double scale;
 
-        private PlanCircuitSet docPlanCircuitSet;
+        private PlanCircuitSet Circuits
+        {
+            get
+            {
+                PhaseArray phases = doc.Phases;
+
+                // get the last phase
+                Phase createRoomsInPhase = phases.get_Item(phases.Size - 1);
+
+                if (createRoomsInPhase is null)
+                {
+                    throw new Exception("Não foi encontrada nenhuma fase no documento atual.");
+                }
+
+                PlanTopology topology = doc.get_PlanTopology(baseLevel, createRoomsInPhase);
+                return  topology.Circuits;
+            }
+        }
 
         public enum RoofDesign
         {
@@ -70,7 +87,6 @@ namespace CustomizacaoMoradias
             this.baseLevel = GetLevelFromName(baseLevel);
             this.topLevel = GetLevelFromName(topLevel);
             this.scale = scale;
-            docPlanCircuitSet = null;
         }
 
         public void ThreadInit()
@@ -90,14 +106,6 @@ namespace CustomizacaoMoradias
         public void RoomWorker() { roomNames = db.GetRooms(); }
 
         public void ElementWorker() { elements = db.GetElement(); }
-
-        /// <summary>
-        /// Convert from meters to feet.
-        /// </summary>
-        public static double MetersToFeet(double meters)
-        {
-            return UnitUtils.Convert(meters, UnitTypeId.Meters, UnitTypeId.Feet);
-        }
 
         /// <summary>
         /// Opens the Explorer to the user select a file.
@@ -148,10 +156,10 @@ namespace CustomizacaoMoradias
         {
             // Convert the values from the csv file
             double x0 = coords.X;
-            x0 = MetersToFeet(x0 * scale);
+            x0 = UnitUtils.ConvertToInternalUnits(x0 * scale, UnitTypeId.Meters);
 
             double y0 = coords.Y;
-            y0 = MetersToFeet(y0 * scale);
+            y0 = UnitUtils.ConvertToInternalUnits(y0 * scale, UnitTypeId.Meters);
 
             // Creates the point where the piece of furniture will be inserted
             return new XYZ(x0, y0, baseLevel.Elevation);
@@ -353,16 +361,15 @@ namespace CustomizacaoMoradias
                 WallType wallType = GetWallType(wallTypeName);
 
                 // Creating the wall
-
-                wall = Wall.Create(doc, curve, wallType.Id, baseLevel.Id, MetersToFeet(2.8), 0, false, false);
+                double height = UnitUtils.ConvertToInternalUnits(2.8, UnitTypeId.Meters);
+                wall = Wall.Create(doc, curve, wallType.Id, baseLevel.Id, height, 0, false, false);
                 wall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(topLevel.Id);
-                wall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET).Set(MetersToFeet(-0.10));
+                wall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET).Set(UnitUtils.ConvertToInternalUnits(-0.1, UnitTypeId.Meters));
 
             }
             catch (Exception e)
             {
-                MessageBox.Show(e.Message, "Erro");
-                //throw new Exception("Erro ao inserir parede de coodenadas: (" + p0 + ", " + p1 + ").", e);
+                throw new Exception($"Erro ao inserir parede {properties}.", e);
             }
             return wall;
         }
@@ -396,7 +403,7 @@ namespace CustomizacaoMoradias
                 instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, baseLevel, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
 
                 LocationPoint instanceLocation = instance.Location as LocationPoint;
-                if (instanceLocation.Point.DistanceTo(point) > MetersToFeet(scale - 0.1))
+                if (instanceLocation.Point.DistanceTo(point) > UnitUtils.ConvertToInternalUnits(scale - 0.1, UnitTypeId.Meters))             
                 {
                     instance.flipFacing();
                 }
@@ -455,7 +462,7 @@ namespace CustomizacaoMoradias
 
             if (window != null)
             {
-                window.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(MetersToFeet(2.00));
+                window.get_Parameter(BuiltInParameter.INSTANCE_HEAD_HEIGHT_PARAM).Set(UnitUtils.ConvertToInternalUnits(2, UnitTypeId.Meters));
             }
 
             return window;
@@ -500,36 +507,6 @@ namespace CustomizacaoMoradias
                 throw new LevelNotFoundException("Nível \"" + levelName + "\" não encontrado.", e);
             }
             return level;
-        }
-
-        /// <summary>
-        /// Get all the plan circuits of an level. 
-        /// </summary>
-        /// <param name="update">
-        /// If the update flag is true, the circuit will be recalculated,
-        /// use it if new walls were added after the last time that this method was called.
-        /// </param>
-        /// <returns>
-        /// Return a PlanCircuitSet with all circuits of the level.
-        /// </returns>
-        private PlanCircuitSet GetDocPlanCircuitSet(bool update)
-        {
-            if (docPlanCircuitSet == null || update == true)
-            {
-                PhaseArray phases = doc.Phases;
-
-                // get the last phase
-                Phase createRoomsInPhase = phases.get_Item(phases.Size - 1);
-
-                if (createRoomsInPhase is null)
-                {
-                    throw new Exception("Não foi encontrada nenhuma fase no documento atual.");
-                }
-
-                PlanTopology topology = doc.get_PlanTopology(baseLevel, createRoomsInPhase);
-                docPlanCircuitSet = topology.Circuits;
-            }          
-            return docPlanCircuitSet;
         }
 
         /// <summary>
@@ -581,32 +558,19 @@ namespace CustomizacaoMoradias
         /// </param>
         public void CreateFloor(string floorTypeName)
         {
-            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(true);
-
             // get the floorType
             FilteredElementCollector collector = new FilteredElementCollector(doc);
             collector.OfClass(typeof(FloorType));
             FloorType floorType = collector.First(y => y.Name == floorTypeName) as FloorType;
 
-            foreach (PlanCircuit circuit in circuitSet)
+            foreach (PlanCircuit circuit in Circuits)
             {
-                IList<IList<BoundarySegment>> loops = GetLoopsInCircuit(circuit);
-
-                if (loops != null)
+                IList<IList<BoundarySegment>> loops = GetLoopsInCircuit(circuit);              
+                // creates a floor in a single room if there is only one loop
+                if ((loops != null) && loops.Count == 1)
                 {
-                    // creates a floor in a single room if there is only one loop
-                    if (loops.Count == 1)
-                    {
-                        CurveArray curve = new CurveArray();
-                        foreach (IList<BoundarySegment> loop in loops)
-                        {
-                            foreach (BoundarySegment seg in loop)
-                            {
-                                curve.Append(seg.GetCurve());
-                            }
-                            doc.Create.NewFloor(curve, floorType, baseLevel, true);
-                        }
-                    }
+                    CurveArray curve = BoundarySegmentToCurveArray(loops.First());
+                    doc.Create.NewFloor(curve, floorType, baseLevel, false);
                 }
             }
         }
@@ -994,10 +958,7 @@ namespace CustomizacaoMoradias
         /// </returns>
         public CurveArray GetHousePerimeter()
         {
-            // retrives the circuit set of the active document
-            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(true);
-
-            foreach (PlanCircuit circuit in circuitSet)
+            foreach (PlanCircuit circuit in Circuits)
             {
                 // get all the closed loops in the circuit
                 IList<IList<BoundarySegment>> loopsSegments = GetLoopsInCircuit(circuit);
@@ -1217,13 +1178,7 @@ namespace CustomizacaoMoradias
         /// </returns>
         public Floor CreateCeiling(string floorTypeName)
         {
-
             Floor ceiling = null;
-            PlanCircuitSet circuitSet = GetDocPlanCircuitSet(true);
-
-            // creates a ceiling if in a room there is more than one loop,
-            // and finds the smallest loop
-
             CurveArray curve = GetHousePerimeter();
 
             // create a floor type
@@ -1450,15 +1405,14 @@ namespace CustomizacaoMoradias
             foreach (Curve curve in curveArray)
             {
                 XYZ curveMiddlePoint = GetCurveMiddlePoint(curve);
+                WallType wallType = GetWallType(Properties.Settings.Default.WallTypeName);
+                Wall parapetWall = Wall.Create(doc, curve, wallType.Id, topLevel.Id, UnitUtils.ConvertToInternalUnits(0.8, UnitTypeId.Meters), 0, false, false);
+
                 Wall wall = FindHostingWall(curveMiddlePoint, baseLevel);
                 if (wall != null)
                 {
-                    wall.get_Parameter(BuiltInParameter.WALL_TOP_OFFSET).Set(MetersToFeet(0.8));
-                }
-                else
-                {
-                    WallType wallType = GetWallType(Properties.Settings.Default.WallTypeName);
-                    Wall.Create(doc, curve, wallType.Id, topLevel.Id, MetersToFeet(0.8), 0, false, false);
+                    try { JoinGeometryUtils.JoinGeometry(doc, wall, parapetWall); }
+                    catch { continue; }
                 }
             }
         }
@@ -1488,6 +1442,7 @@ namespace CustomizacaoMoradias
             List<FootPrintRoof> roofs = new List<FootPrintRoof>();
             List<Line> cutLines = new List<Line>();
             List<CurveArray> convexFootPrint = GetConvexPerimeters(footPrint, slopeDirection, cutLines);
+            List<Wall> gableWalls = new List<Wall>();
 
             int n = convexFootPrint.Count();
 
@@ -1498,19 +1453,22 @@ namespace CustomizacaoMoradias
                 if (offsetedFootPrint != null)
                 {
                     FootPrintRoof footPrintRoof = CreateFootPrintRoof(overhang, slope, slopeDirection, offsetedFootPrint);
-                    CreateAllGableWalls(slopeDirection, slope, convexFootPrint[i]);
+                    CreateAllGableWalls(slopeDirection, slope, NormalizeCurveArray(convexFootPrint[i]), gableWalls);
                     roofs.Add(footPrintRoof);
                 }
             }
 
             // try to connect the components 
-            for (int i = 0; i < n - 1; i++)
+            foreach(FootPrintRoof roof in roofs)
             {
-                try
+                foreach(FootPrintRoof uniteRoof in roofs)
                 {
-                    JoinGeometryUtils.JoinGeometry(doc, roofs[i], roofs[i + 1]);
+                    try
+                    {
+                        JoinGeometryUtils.JoinGeometry(doc, roof, uniteRoof);
+                    }
+                    catch (Exception) { continue; }
                 }
-                catch (Exception) { continue; }
             }
         }
 
@@ -1595,7 +1553,7 @@ namespace CustomizacaoMoradias
                     footPrintRoof.set_SlopeAngle(modelCurve, slope);
                 }
 
-                double elevation = -(overhang - MetersToFeet(0.1)) / 3;
+                double elevation = -(overhang - UnitUtils.ConvertToInternalUnits(0.1, UnitTypeId.Meters)) / 3;
                 footPrintRoof.set_Offset(modelCurve, elevation);
             }
         }
@@ -1760,7 +1718,7 @@ namespace CustomizacaoMoradias
         /// <param name="slope">
         /// The slope of the gable, must match the slope of the roof.
         /// </param>
-        public void CreateAllGableWalls(XYZ vectorDirection, double slope, CurveArray perimeter)
+        public void CreateAllGableWalls(XYZ vectorDirection, double slope, CurveArray perimeter, List<Wall> gableWalls)
         {
             CurveArray normalizedCurve = NormalizeCurveArray(perimeter);
             foreach (Curve line in normalizedCurve)
@@ -1768,9 +1726,51 @@ namespace CustomizacaoMoradias
                 XYZ lineDirection = GetCurveDirection(line);
                 if (lineDirection.CrossProduct(vectorDirection).IsZeroLength())
                 {
-                    CreateGableWall(line, slope);
+                    Wall newGableWall = CreateGableWall(line, slope);
+                    Wall intersectionWall = FindIntersectionWall(gableWalls, newGableWall);
+                    bool insert = true;
+                    if(intersectionWall != null)
+                    {
+                        LocationCurve intersectionWallLocation = intersectionWall.Location as LocationCurve;
+                        LocationCurve newGableWallLocation = newGableWall.Location as LocationCurve;
+                        Wall deleteWall;
+
+                        if(intersectionWallLocation.Curve.Length > newGableWallLocation.Curve.Length)
+                        {
+                            deleteWall = newGableWall;
+                            insert = false;
+                        }
+                        else
+                        {
+                            deleteWall = intersectionWall;
+                        }
+                        gableWalls.Remove(deleteWall);
+                        doc.Delete(deleteWall.Id);
+                    }
+                    if(insert)
+                        gableWalls.Add(newGableWall);              
                 }
             }
+        }
+
+        private Wall FindIntersectionWall(List<Wall> walls, Wall comparisonWall)
+        {
+            LocationCurve locationCurve = comparisonWall.Location as LocationCurve;
+            Curve wallCurve = locationCurve.Curve as Line;
+        
+            foreach (Wall wall in walls)
+            {
+                LocationCurve lc = wall.Location as LocationCurve;
+                Curve c = lc.Curve;
+
+                SetComparisonResult intersection = wallCurve.Intersect(c, out IntersectionResultArray resultArray);
+                if (intersection == SetComparisonResult.Equal || intersection == SetComparisonResult.Overlap || 
+                    intersection == SetComparisonResult.Subset || intersection == SetComparisonResult.Superset)
+                {
+                    return wall;
+                }
+            }
+            return null;
         }
 
         /// <summary>
@@ -1785,7 +1785,6 @@ namespace CustomizacaoMoradias
         /// <returns></returns>
         private Wall CreateGableWall(Curve line, double slope)
         {
-
             // create the gable wall profile
             XYZ p0 = line.GetEndPoint(0);
             XYZ p1 = line.GetEndPoint(1);
