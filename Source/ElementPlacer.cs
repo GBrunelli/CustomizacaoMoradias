@@ -917,7 +917,7 @@ namespace CustomizacaoMoradias
             do
             {
                 UV point = node.Value;
-                if (point.U == key.U && point.V == key.V)
+                if(point.IsAlmostEqualTo(key, 0.01))
                     return node;
                 node = node.Next;
             } while (node != points.Head);
@@ -1029,8 +1029,9 @@ namespace CustomizacaoMoradias
             {
                 return null;
             }
-          
-            CircularLinkedList<UV> points = GetPoints(NormalizeCurveArray(curveArray));
+
+            NormalizeCurveArray(ref curveArray);
+            CircularLinkedList<UV> points = GetPoints(curveArray);
             CircularLinkedList<UV> offsetedPoints = OffsetPolygon(points, offset, unchangedLines);
 
             CircularLinkedList<UV> linkedOffsetedPoints = new CircularLinkedList<UV>(offsetedPoints);
@@ -1325,18 +1326,18 @@ namespace CustomizacaoMoradias
 
         private List<CurveArray> DivideCurveArrayInHalf(CurveArray curveArray, XYZ divisionDirection, out Line cutLine)
         {
-            CurveArray normalizedCurveArray = NormalizeCurveArray(curveArray);
-            if (normalizedCurveArray.Size != 4)
+            NormalizeCurveArray(ref curveArray);
+            if (curveArray.Size != 4)
             {
                 cutLine = null;
                 return null;
             }
                 
 
-            CircularLinkedList<UV> points = GetPoints(normalizedCurveArray);
+            CircularLinkedList<UV> points = GetPoints(curveArray);
             List<CircularLinkedListNode<UV>> newPoints = new List<CircularLinkedListNode<UV>>();
 
-            foreach (Curve curve in normalizedCurveArray)
+            foreach (Curve curve in curveArray)
             {
                 // if they are parralel
                 if (GetCurveDirection(curve).CrossProduct(divisionDirection).IsZeroLength())
@@ -1379,25 +1380,38 @@ namespace CustomizacaoMoradias
             throw new ArgumentException("The points are not sequential.");
         }
 
-        private CurveArray NormalizeCurveArray(CurveArray curveArray)
+        bool AlmostEqual(double a, double b, double delta)
         {
+            return Math.Abs(a - b) < delta;
+        }
+
+        private bool NormalizeCurveArray(ref CurveArray curveArray)
+        {
+            bool normalized = true;
             var points = GetPoints(curveArray);
             var node = points.Head;
+
             do
             {
                 UV p0 = node.Previous.Value;
                 UV p1 = node.Value;
                 UV p2 = node.Next.Value;
 
-                if(CalculatesAngle(p0, p1, p2) == Math.PI)
+                double angle = CalculatesAngle(p0, p1, p2);
+                if (AlmostEqual(angle, Math.PI, 0.01) || AlmostEqual(angle, 0, 0.01))
                 {
                     points.Remove(p1);
-                }              
-
-                node = node.Next; 
+                    normalized = false;
+                }
+                node = node.Next;
             } while (node != points.Head);
 
-            return CreateCurveArrayFromPoints(points);
+            curveArray = CreateCurveArrayFromPoints(points);
+
+            if (!normalized)
+                NormalizeCurveArray(ref curveArray);        
+
+            return normalized;
         }
 
         private void CreateParapetWall(CurveArray curveArray)
@@ -1453,7 +1467,7 @@ namespace CustomizacaoMoradias
                 if (offsetedFootPrint != null)
                 {
                     FootPrintRoof footPrintRoof = CreateFootPrintRoof(overhang, slope, slopeDirection, offsetedFootPrint);
-                    CreateAllGableWalls(slopeDirection, slope, NormalizeCurveArray(convexFootPrint[i]), gableWalls);
+                    CreateAllGableWalls(slopeDirection, slope, convexFootPrint[i], gableWalls);
                     roofs.Add(footPrintRoof);
                 }
             }
@@ -1720,8 +1734,8 @@ namespace CustomizacaoMoradias
         /// </param>
         public void CreateAllGableWalls(XYZ vectorDirection, double slope, CurveArray perimeter, List<Wall> gableWalls)
         {
-            CurveArray normalizedCurve = NormalizeCurveArray(perimeter);
-            foreach (Curve line in normalizedCurve)
+            NormalizeCurveArray(ref perimeter);
+            foreach (Curve line in perimeter)
             {
                 XYZ lineDirection = GetCurveDirection(line);
                 if (lineDirection.CrossProduct(vectorDirection).IsZeroLength())
@@ -1818,14 +1832,44 @@ namespace CustomizacaoMoradias
         public void DimensioningBuilding()
         {
             var rooms = GetRoomsAtLevel(baseLevel);
+
+            var perimeter = GetHousePerimeter();
+            perimeter = CreateOffsetedCurveArray(2, perimeter, null);
+
+            foreach (Curve curve in perimeter)
+            {
+                XYZ p1 = new XYZ(
+                    curve.GetEndPoint(0).X,
+                    curve.GetEndPoint(0).Y,
+                    curve.GetEndPoint(0).Z);
+
+                XYZ p2 = new XYZ(
+                    curve.GetEndPoint(1).X,
+                    curve.GetEndPoint(1).Y,
+                    curve.GetEndPoint(1).Z);
+
+                Line line = Line.CreateBound(p1, p2);
+                Plane plane = Plane.CreateByNormalAndOrigin(XYZ.BasisZ, XYZ.Zero);
+                ModelCurve modelCurve = doc.Create.NewModelCurve(line, SketchPlane.Create(doc, plane));
+
+                if (line != null)
+                {
+                    ReferenceArray references = new ReferenceArray();
+                    references.Append(modelCurve.GeometryCurve.GetEndPointReference(0));
+                    references.Append(modelCurve.GeometryCurve.GetEndPointReference(1));
+                    var dim = doc.Create.NewDimension(doc.ActiveView, line, references);
+                }
+            }
+
+            /*
             foreach (Room room in rooms)
             {
                 SpatialElementBoundaryOptions op = new SpatialElementBoundaryOptions { SpatialElementBoundaryLocation = SpatialElementBoundaryLocation.Center };
                 IList<IList<BoundarySegment>> boundarySegmentsList = room.GetBoundarySegments(op);
 
-                foreach (IList<BoundarySegment> boundarySegments in boundarySegmentsList)
+                if (boundarySegmentsList.Count < 2)
                 {
-                    foreach(BoundarySegment boundarySegment in boundarySegments)
+                    foreach(BoundarySegment boundarySegment in boundarySegmentsList[0])
                     {
                         Curve curve = boundarySegment.GetCurve();
 
@@ -1847,11 +1891,12 @@ namespace CustomizacaoMoradias
                             ReferenceArray references = new ReferenceArray();
                             references.Append(modelCurve.GeometryCurve.GetEndPointReference(0));
                             references.Append(modelCurve.GeometryCurve.GetEndPointReference(1));
-                            doc.Create.NewDimension(doc.ActiveView, line, references);
+                            var dim = doc.Create.NewDimension(doc.ActiveView, line, references);
                         }
                     }                       
                 }
             }
+            */
         }
     }
 }
