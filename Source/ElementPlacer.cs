@@ -1831,10 +1831,7 @@ namespace CustomizacaoMoradias
         
         public void DimensioningBuilding()
         {
-            var rooms = GetRoomsAtLevel(baseLevel);
-
             var perimeter = GetHousePerimeter();
-            perimeter = CreateOffsetedCurveArray(2, perimeter, null);
 
             foreach (Curve curve in perimeter)
             {
@@ -1848,7 +1845,12 @@ namespace CustomizacaoMoradias
                     curve.GetEndPoint(1).Y,
                     curve.GetEndPoint(1).Z);
 
+                XYZ normal = new XYZ(-(p2 - p1).Y, (p2 - p1).X, 0).Normalize();
+                Transform transform = Transform.CreateTranslation(normal);               
+
                 Line line = Line.CreateBound(p1, p2);
+                line = line.CreateTransformed(transform) as Line;
+
                 Plane plane = Plane.CreateByNormalAndOrigin(XYZ.BasisZ, XYZ.Zero);
                 ModelCurve modelCurve = doc.Create.NewModelCurve(line, SketchPlane.Create(doc, plane));
 
@@ -1857,46 +1859,9 @@ namespace CustomizacaoMoradias
                     ReferenceArray references = new ReferenceArray();
                     references.Append(modelCurve.GeometryCurve.GetEndPointReference(0));
                     references.Append(modelCurve.GeometryCurve.GetEndPointReference(1));
-                    var dim = doc.Create.NewDimension(doc.ActiveView, line, references);
+                    doc.Create.NewDimension(doc.ActiveView, line, references);                   
                 }
             }
-
-            /*
-            foreach (Room room in rooms)
-            {
-                SpatialElementBoundaryOptions op = new SpatialElementBoundaryOptions { SpatialElementBoundaryLocation = SpatialElementBoundaryLocation.Center };
-                IList<IList<BoundarySegment>> boundarySegmentsList = room.GetBoundarySegments(op);
-
-                if (boundarySegmentsList.Count < 2)
-                {
-                    foreach(BoundarySegment boundarySegment in boundarySegmentsList[0])
-                    {
-                        Curve curve = boundarySegment.GetCurve();
-
-                        XYZ p1 = new XYZ(
-                            curve.GetEndPoint(0).X,
-                            curve.GetEndPoint(0).Y,
-                            curve.GetEndPoint(0).Z);
-
-                        XYZ p2 = new XYZ(
-                            curve.GetEndPoint(1).X,
-                            curve.GetEndPoint(1).Y,
-                            curve.GetEndPoint(1).Z);
-
-                        Line line = Line.CreateBound(p1, p2);
-                        ModelCurve modelCurve = doc.Create.NewModelCurve(line, SketchPlane.Create(doc, room.LevelId));
-
-                        if(line != null)
-                        {
-                            ReferenceArray references = new ReferenceArray();
-                            references.Append(modelCurve.GeometryCurve.GetEndPointReference(0));
-                            references.Append(modelCurve.GeometryCurve.GetEndPointReference(1));
-                            var dim = doc.Create.NewDimension(doc.ActiveView, line, references);
-                        }
-                    }                       
-                }
-            }
-            */
         }
     }
 }
