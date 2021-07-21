@@ -22,7 +22,8 @@ namespace CustomizacaoMoradias
                 using (Transaction transaction = new Transaction(commandData.Application.ActiveUIDocument.Document, "Dimensioning"))
                 {
                     transaction.Start();
-                    elementPlacer.DimensioningBuilding();
+                    elementPlacer.DimensioningBuilding(2, false);
+                    elementPlacer.DimensioningBuilding(4, true);
                     transaction.Commit();
                 }
                 return Result.Succeeded;

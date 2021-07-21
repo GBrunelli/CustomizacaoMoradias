@@ -13,6 +13,7 @@ using CustomizacaoMoradias.DataModel;
 using CustomizacaoMoradias.Source;
 using CustomizacaoMoradias.Source.Util;
 using Newtonsoft.Json;
+using View = Autodesk.Revit.DB.View;
 
 namespace CustomizacaoMoradias
 {
@@ -42,22 +43,39 @@ namespace CustomizacaoMoradias
 
         private PlanCircuitSet Circuits
         {
+            get { return doc.get_PlanTopology(baseLevel).Circuits; }
+        }
+
+        private IList<Room> Rooms
+        {
             get
             {
-                PhaseArray phases = doc.Phases;
-
-                // get the last phase
-                Phase createRoomsInPhase = phases.get_Item(phases.Size - 1);
-
-                if (createRoomsInPhase is null)
+                List<Room> rooms = new List<Room>();      
+                List<UV> roomPoints = new List<UV>();
+                foreach (PlanCircuit circuit in Circuits)
                 {
-                    throw new Exception("Não foi encontrada nenhuma fase no documento atual.");
+                    roomPoints.Add(circuit.GetPointInside());
                 }
 
-                PlanTopology topology = doc.get_PlanTopology(baseLevel, createRoomsInPhase);
-                return  topology.Circuits;
+                foreach(UV point in roomPoints)
+                {
+                    XYZ point3D = new XYZ(point.U, point.V, baseLevel.Elevation);
+                    Room room = doc.GetRoomAtPoint(point3D);
+                    if(room == null)
+                    {
+                        Room newRoom = doc.Create.NewRoom(baseLevel, point);
+                        rooms.Add(newRoom);
+                        doc.Create.NewRoomTag(new LinkElementId(newRoom.Id), point, GetBaseLevelView().Id);
+                    }
+                    else
+                    {
+                        rooms.Add(room);
+                    }
+                }
+                return rooms;
             }
         }
+
 
         public enum RoofDesign
         {
@@ -141,12 +159,17 @@ namespace CustomizacaoMoradias
         private static FamilySymbol GetFamilySymbol(Document doc, string fsFamilyName)
         {
             // Retrieve the familySymbol of the piece of furniture
-            FamilySymbol symbol = (from familySymbol in new FilteredElementCollector(doc).
-                 OfClass(typeof(FamilySymbol)).
-                 Cast<FamilySymbol>()
-                                   where (familySymbol.Name == fsFamilyName)
-                                   select familySymbol).First();
+            FamilySymbol symbol = (from familySymbol in new FilteredElementCollector(doc).OfClass(typeof(FamilySymbol)).
+                 Cast<FamilySymbol>() where (familySymbol.Name == fsFamilyName) select familySymbol).First();
             return symbol;
+        }
+
+
+        private View GetBaseLevelView()
+        {
+            View view = (from v in new FilteredElementCollector(doc).OfClass(typeof(View))
+                         .Cast<View>() where (v.Name == baseLevel.Name) select v).First();
+            return view;
         }
 
         /// <summary>
@@ -211,7 +234,7 @@ namespace CustomizacaoMoradias
                     wall = w;
                 }
             }
-            if (distance < 1)
+            if (distance < UnitUtils.ConvertToInternalUnits(scale + 0.2, UnitTypeId.Meters))
             {
                 return wall;
             }
@@ -235,71 +258,41 @@ namespace CustomizacaoMoradias
         public void BuildJSON(string path)
         {
             if (path is null)
-            {
                 throw new ArgumentNullException(nameof(path));
-            }
-
             string jsonText = File.ReadAllText(path);
             ElementDeserializer ed = JsonConvert.DeserializeObject<ElementDeserializer>(jsonText);
-
+            string errorMessage = "";
             foreach (WallProperty wall in ed.WallProperties)
             {
-                try
-                {
-                    CreateWall(wall, Properties.Settings.Default.WallTypeName);
-                }
-                catch
-                {
-                    MessageBox.Show("Erro ao inserir parede " + wall.ToString());
-                }
+                try { CreateWall(wall, Properties.Settings.Default.WallTypeName); }
+                catch { errorMessage += $"Parede {wall}, "; }      
             }
-
             foreach (WindowProperty window in ed.WindowProperties)
             {
-                try
-                {
-                    CreateWindow(window);
-                }
-                catch
-                {
-                    MessageBox.Show("Erro ao inserir janela do tipo " + window.Type );
-                }              
+                try { CreateWindow(window); }
+                catch { errorMessage += $"{window.Type}, "; }
             }
-
             foreach (DoorProperty door in ed.DoorProperties)
             {
-                try
-                {
-                    CreateDoor(door);
-                }
-                catch
-                {
-                    MessageBox.Show("Erro ao inserir porta do tipo " + door.Type);
-                }              
+                try { CreateDoor(door); }
+                catch { errorMessage += $"{door.Type}, "; }                    
             }
-
             foreach (HostedProperty element in ed.HostedProperties)
             {
-                try
-                {
-                    CreateHostedElement(element);
-                }
-                catch
-                {
-                    MessageBox.Show("Erro ao inserir elemento hospedado do tipo " + element.Type);
-                }               
+                try { CreateHostedElement(element); }
+                catch { errorMessage += $"{element.Type}, "; }
+                
             }
-
             foreach (FurnitureProperty element in ed.FurnitureProperties)
             {
-                try
-                {
-                    CreateFurniture(element);
-                }
-                catch
-                {
-                    MessageBox.Show("Erro ao inserir elemento mobiliário do tipo " + element.Type);
-                }                
+                try { CreateFurniture(element); }
+                catch { errorMessage += $"{element.Type}, "; }
+            }
+
+            if (errorMessage.EndsWith(", "))
+            {
+                errorMessage = errorMessage.Remove(errorMessage.Length - 2, 2);
+                MessageBox.Show($"Erro ao inserir elementos: \n{errorMessage}.", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -390,29 +383,40 @@ namespace CustomizacaoMoradias
             double rotation = properties.Rotation;
 
             FamilyInstance instance;
-            try
+
+            FamilySymbol familySymbol = GetFamilySymbol(doc, fsName);
+            Wall wall = FindHostingWall(point, baseLevel);
+
+            var curve = wall.Location as LocationCurve;
+            XYZ p0 = curve.Curve.GetEndPoint(0);
+            XYZ p1 = curve.Curve.GetEndPoint(1);
+            XYZ wallVector = p1 - p0;
+            XYZ normal = new XYZ(-wallVector.Y, wallVector.X, 0).Normalize();
+
+            // Creates the element                   
+            instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, baseLevel, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
+
+            var location = instance.Location as LocationPoint;
+            var locationPoint = new XYZ(location.Point.X, location.Point.Y, 0);
+
+            if(locationPoint.GetLength() > UnitUtils.ConvertToInternalUnits(2*scale, UnitTypeId.Meters))
             {
-                FamilySymbol familySymbol = GetFamilySymbol(doc, fsName);
-                Wall wall = FindHostingWall(point, baseLevel);
-                if (wall == null)
-                {
-                    return null;
-                }
-
-                // Creates the element                   
-                instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, baseLevel, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
-
-                LocationPoint instanceLocation = instance.Location as LocationPoint;
-                if (instanceLocation.Point.DistanceTo(point) > UnitUtils.ConvertToInternalUnits(scale - 0.1, UnitTypeId.Meters))             
-                {
+                XYZ absoluteLocation = locationPoint + (instance.FacingOrientation * scale);
+                var distance = absoluteLocation.DistanceTo(point);
+                if (distance > UnitUtils.ConvertToInternalUnits(scale + 0.1, UnitTypeId.Meters))
                     instance.flipFacing();
-                }
-                
             }
-            catch (Exception e)
+            /*
+            else
             {
-                throw new Exception("Erro ao inserir elemento hospedeiro \"" + fsName + "\".", e);
+
+                XYZ absoluteLocation = point + (normal * scale);
+                var distance = absoluteLocation.DistanceTo(point);
+                if (distance > UnitUtils.ConvertToInternalUnits(0.1, UnitTypeId.Meters))
+                    instance.flipFacing();
             }
+            */
+                
             return instance;
         }
 
@@ -509,42 +513,12 @@ namespace CustomizacaoMoradias
             return level;
         }
 
-        /// <summary>
-        /// Get the the loops in a determined circuit, if there is not room located in that circuit, 
-        /// it will create a room with a genetic name. If the room is composed by more than 1 loop,
-        /// it will name the room "Exterior 0".
-        /// </summary>
-        /// <param name="circuit">
-        /// The PlanCircuit of the active document. See also GetDocPlanCircuitSet().
-        /// </param>
-        private IList<IList<BoundarySegment>> GetLoopsInCircuit(PlanCircuit circuit)
+        // 
+        private IList<IList<BoundarySegment>> GetRoomLoops(Room room)
         {
-            Room room;
-            IList<IList<BoundarySegment>> loops;
             SpatialElementBoundaryOptions opt = new SpatialElementBoundaryOptions
-            {
-                SpatialElementBoundaryLocation = SpatialElementBoundaryLocation.Center
-            };
-
-            if (circuit.IsRoomLocated)
-            {
-                UV point2D = circuit.GetPointInside();
-                XYZ point = new XYZ(point2D.U, point2D.V, 0);
-                room = doc.GetRoomAtPoint(point);
-                loops = room.GetBoundarySegments(opt);
-            }
-            else
-            {
-                room = doc.Create.NewRoom(null, circuit);
-                loops = room.GetBoundarySegments(opt);
-
-                if (loops.Count > 1)
-                {
-                    room.Name = "Exterior";
-                    room.Number = "0";
-                }
-            }
-            return loops;
+            { SpatialElementBoundaryLocation = SpatialElementBoundaryLocation.Center };
+            return  room.GetBoundarySegments(opt);
         }
 
         /// <summary>
@@ -563,11 +537,10 @@ namespace CustomizacaoMoradias
             collector.OfClass(typeof(FloorType));
             FloorType floorType = collector.First(y => y.Name == floorTypeName) as FloorType;
 
-            foreach (PlanCircuit circuit in Circuits)
+            foreach (Room room in Rooms)
             {
-                IList<IList<BoundarySegment>> loops = GetLoopsInCircuit(circuit);              
-                // creates a floor in a single room if there is only one loop
-                if ((loops != null) && loops.Count == 1)
+                var loops = GetRoomLoops(room);
+                if((loops != null) && (loops.Count == 1))
                 {
                     CurveArray curve = BoundarySegmentToCurveArray(loops.First());
                     doc.Create.NewFloor(curve, floorType, baseLevel, false);
@@ -944,32 +917,21 @@ namespace CustomizacaoMoradias
         /// Calculates a CurveArray that corresponds the perimeter of a building given all its internal loops. 
         /// The building MUST be surround by walls.
         /// </summary>
-        /// <param name="offset">
-        /// A real value that reprends the offset of the perimeter.
-        /// If this value is 0, the user may not pass an offsetVector.
-        /// </param>
-        /// <param name="offsetVector">
-        /// A vector that will defines the offset. The offset will be applied on the orthogonal lines to the offsetVector. 
-        /// The magnitude of the vector doesn't matter, just the direction will affect the offset.
-        /// If the vector is 0, the offset will be applied for all sides. 
-        /// </param>
         /// <returns>
         /// Returns a CurveArray that corresponds to the house perimeter.
         /// </returns>
         public CurveArray GetHousePerimeter()
         {
-            foreach (PlanCircuit circuit in Circuits)
+            foreach (Room room in Rooms)
             {
-                // get all the closed loops in the circuit
-                IList<IList<BoundarySegment>> loopsSegments = GetLoopsInCircuit(circuit);
-
                 // if there more than 1 loop, that means that this circuit represents the external area
-                if (loopsSegments.Count > 1)
+                var loops = GetRoomLoops(room);
+                if(loops.Count > 1)
                 {
                     // first of all we find the closed loop with the smaller area
                     double minArea = double.MaxValue;
                     IList<BoundarySegment> perimeterSegments = null;
-                    foreach (IList<BoundarySegment> singleLoop in loopsSegments)
+                    foreach (IList<BoundarySegment> singleLoop in loops)
                     {
                         double area = 0;
 
@@ -1181,6 +1143,7 @@ namespace CustomizacaoMoradias
         {
             Floor ceiling = null;
             CurveArray curve = GetHousePerimeter();
+            NormalizeCurveArray(ref curve);
 
             // create a floor type
             FilteredElementCollector collector = new FilteredElementCollector(doc);
@@ -1243,6 +1206,7 @@ namespace CustomizacaoMoradias
         {
             FootPrintRoof footPrintRoof = null;
             CurveArray footPrintCurve = GetHousePerimeter();
+            NormalizeCurveArray(ref footPrintCurve);
 
             switch (roofDesign)
             {
@@ -1592,10 +1556,14 @@ namespace CustomizacaoMoradias
         /// </summary>
         public void ClassifyRooms()
         {
-            List<Room> rooms = GetRoomsAtLevel(baseLevel).ToList();
-            foreach(Room room in rooms)
+            foreach(Room room in Rooms)
             {
-                if(room.Area > 0)
+                var roomLoops = GetRoomLoops(room).Count;
+                if (roomLoops == 2)
+                {
+                    room.Name = "Exterior";
+                }
+                else if (roomLoops == 1)
                 {
                     List<string> elements = GetFurniture(room);
                     scoreThread.Join();
@@ -1639,29 +1607,6 @@ namespace CustomizacaoMoradias
                 return null;
             else
                 return rooms[maxIndex-1].Name;
-        }
-
-        /// <summary>
-        /// Get all the rooms in a determined level.
-        /// </summary>
-        /// <param name="level"></param>
-        /// <returns>
-        /// Returns a IEnumarable list of the the rooms.
-        /// </returns>
-        private IEnumerable<Room> GetRoomsAtLevel(Level level)
-        {
-            ElementId levelId = level.Id;
-
-            FilteredElementCollector collector = new FilteredElementCollector(doc);
-
-            IEnumerable<Room> rooms = collector
-              .WhereElementIsNotElementType()
-              .OfClass(typeof(SpatialElement))
-              .Where(e => e.GetType() == typeof(Room))
-              .Where(e => e.LevelId.IntegerValue.Equals(
-               levelId.IntegerValue))
-              .Cast<Room>();
-            return rooms;
         }
 
         /// <summary>
@@ -1829,9 +1774,11 @@ namespace CustomizacaoMoradias
             return new XYZ(p2x, p2y, p2z);
         }    
         
-        public void DimensioningBuilding()
+        public void DimensioningBuilding(double offset, bool normalize)
         {
             var perimeter = GetHousePerimeter();
+            if (normalize)
+                NormalizeCurveArray(ref perimeter);
 
             foreach (Curve curve in perimeter)
             {
@@ -1846,7 +1793,7 @@ namespace CustomizacaoMoradias
                     curve.GetEndPoint(1).Z);
 
                 XYZ normal = new XYZ(-(p2 - p1).Y, (p2 - p1).X, 0).Normalize();
-                Transform transform = Transform.CreateTranslation(normal);               
+                Transform transform = Transform.CreateTranslation(normal* offset);               
 
                 Line line = Line.CreateBound(p1, p2);
                 line = line.CreateTransformed(transform) as Line;
@@ -1854,13 +1801,10 @@ namespace CustomizacaoMoradias
                 Plane plane = Plane.CreateByNormalAndOrigin(XYZ.BasisZ, XYZ.Zero);
                 ModelCurve modelCurve = doc.Create.NewModelCurve(line, SketchPlane.Create(doc, plane));
 
-                if (line != null)
-                {
-                    ReferenceArray references = new ReferenceArray();
-                    references.Append(modelCurve.GeometryCurve.GetEndPointReference(0));
-                    references.Append(modelCurve.GeometryCurve.GetEndPointReference(1));
-                    doc.Create.NewDimension(doc.ActiveView, line, references);                   
-                }
+                ReferenceArray references = new ReferenceArray();
+                references.Append(modelCurve.GeometryCurve.GetEndPointReference(0));
+                references.Append(modelCurve.GeometryCurve.GetEndPointReference(1));
+                doc.Create.NewDimension(doc.ActiveView, line, references);                   
             }
         }
     }

@@ -2,6 +2,7 @@
 using Autodesk.Revit.UI;
 using CustomizacaoMoradias.Forms;
 using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace CustomizacaoMoradias
@@ -27,33 +28,61 @@ namespace CustomizacaoMoradias
 
             elementPlacer.SetProperties(uidoc, levelName, topLevelName, scale);
 
-            try
+            string errorMessage = "";
+            using (Transaction transaction = new Transaction(doc, "Contruir JSON"))
             {
-                using (Transaction transaction = new Transaction(doc, "Contruir JSON"))
+                transaction.Start();
+                try
                 {
-                    transaction.Start();
                     elementPlacer.BuildJSON(path);
-                    elementPlacer.CreateFloor(Properties.Settings.Default.FloorName);
-                    elementPlacer.CreateCeiling(Properties.Settings.Default.CeilingName);
-                    elementPlacer.ClassifyRooms();
-                    transaction.Commit();
                 }
-                using (Transaction transaction = new Transaction(doc, "Contruir Telhado"))
+                catch (Exception e)
                 {
-                    transaction.Start();
-                    elementPlacer.CreateRoof(overhang, slope, roofVector, roofDesign);
-                    transaction.Commit();
+                    errorMessage += $"\nErro ao construir elementos do JSON: \"{e.Message}\"";
                 }
+                try
+                {
+                    elementPlacer.CreateFloor(Properties.Settings.Default.FloorName);
+                }
+                catch (Exception e)
+                {
+                    errorMessage += $"\nErro ao construir piso: \"{e.Message}\"";
+                }
+                try
+                {
+                    elementPlacer.CreateCeiling(Properties.Settings.Default.CeilingName);
+                }
+                catch (Exception e)
+                {
+                    errorMessage += $"\nErro ao construir laje: \"{e.Message}\"";
+                }
+                try
+                {
+                    elementPlacer.ClassifyRooms();
+                }
+                catch (Exception e)
+                {
+                    errorMessage += $"\nErro ao classificar ambientes: \"{e.Message}\"";
+                }      
+                transaction.Commit();
             }
-            catch (LevelNotFoundException lvlEx)
+            using (Transaction transaction = new Transaction(doc, "Contruir Telhado"))
             {
-                MessageBox.Show(lvlEx.Message, "Erro");
-                throw lvlEx;
+                transaction.Start();
+
+                try
+                {
+                    elementPlacer.CreateRoof(overhang, slope, roofVector, roofDesign);
+                }
+                catch (Exception e)
+                {
+                    errorMessage += $"\nErro ao construir telhado: \"{e.Message}\"";
+                }                
+                transaction.Commit();
             }
-            catch (Exception e)
-            {
-                MessageBox.Show(e.Message, "Erro");
-            }
+
+            if (errorMessage.Length > 1)
+                MessageBox.Show(errorMessage, "Erro");
 
             PlaceElementsForm.CloseForm();
         }

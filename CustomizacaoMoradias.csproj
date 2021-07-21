@@ -126,6 +126,9 @@
     <Compile Include="Forms\RoomConfigControl.Designer.cs">
       <DependentUpon>RoomConfigControl.cs</DependentUpon>
     </Compile>
+    <Compile Include="PropertiesDatabaseDataSet.cs">
+      <DependentUpon>PropertiesDatabaseDataSet.xsd</DependentUpon>
+    </Compile>
     <Compile Include="PropertiesDatabaseDataSet.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

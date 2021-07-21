@@ -36,8 +36,11 @@ namespace CustomizacaoMoradias.Source
 
         Coordinate IHosted.Coordinate => new Coordinate
         {
-            X = (Coordinate.ElementAt(0).X + Coordinate.ElementAt(1).X) / 2,
-            Y = (Coordinate.ElementAt(0).Y + Coordinate.ElementAt(1).Y) / 2
+            
+            /*X = (Coordinate.ElementAt(0).X + Coordinate.ElementAt(1).X) / 2,
+            Y = (Coordinate.ElementAt(0).Y + Coordinate.ElementAt(1).Y) / 2*/
+            X = (Coordinate.ElementAt(1).X),
+            Y = (Coordinate.ElementAt(1).Y)
         };
     }
 
@@ -49,8 +52,10 @@ namespace CustomizacaoMoradias.Source
 
         Coordinate IHosted.Coordinate => new Coordinate
         {
-            X = (Coordinate.ElementAt(0).X + Coordinate.ElementAt(1).X) / 2,
-            Y = (Coordinate.ElementAt(0).Y + Coordinate.ElementAt(1).Y) / 2
+            /*X = (Coordinate.ElementAt(0).X + Coordinate.ElementAt(1).X) / 2,
+            Y = (Coordinate.ElementAt(0).Y + Coordinate.ElementAt(1).Y) / 2*/
+            X = (Coordinate.ElementAt(1).X),
+            Y = (Coordinate.ElementAt(1).Y)
         };      
     }
 

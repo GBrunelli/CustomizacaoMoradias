@@ -402,6 +402,10 @@ namespace CustomizacaoMoradias {
             
             private global::System.Data.DataColumn columnName;
             
+            private global::System.Data.DataColumn columnOffsetX;
+            
+            private global::System.Data.DataColumn columnOffsetY;
+            
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "16.0.0.0")]
             public ElementDataTable() {
@@ -453,6 +457,22 @@ namespace CustomizacaoMoradias {
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "16.0.0.0")]
+            public global::System.Data.DataColumn OffsetXColumn {
+                get {
+                    return this.columnOffsetX;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "16.0.0.0")]
+            public global::System.Data.DataColumn OffsetYColumn {
+                get {
+                    return this.columnOffsetY;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "16.0.0.0")]
             [global::System.ComponentModel.Browsable(false)]
             public int Count {
                 get {
@@ -488,11 +508,13 @@ namespace CustomizacaoMoradias {
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "16.0.0.0")]
-            public ElementRow AddElementRow(string ElementID, string Name) {
+            public ElementRow AddElementRow(string ElementID, string Name, double OffsetX, double OffsetY) {
                 ElementRow rowElementRow = ((ElementRow)(this.NewRow()));
                 object[] columnValuesArray = new object[] {
                         ElementID,
-                        Name};
+                        Name,
+                        OffsetX,
+                        OffsetY};
                 rowElementRow.ItemArray = columnValuesArray;
                 this.Rows.Add(rowElementRow);
                 return rowElementRow;
@@ -524,6 +546,8 @@ namespace CustomizacaoMoradias {
             internal void InitVars() {
                 this.columnElementID = base.Columns["ElementID"];
                 this.columnName = base.Columns["Name"];
+                this.columnOffsetX = base.Columns["OffsetX"];
+                this.columnOffsetY = base.Columns["OffsetY"];
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -533,6 +557,10 @@ namespace CustomizacaoMoradias {
                 base.Columns.Add(this.columnElementID);
                 this.columnName = new global::System.Data.DataColumn("Name", typeof(string), null, global::System.Data.MappingType.Element);
                 base.Columns.Add(this.columnName);
+                this.columnOffsetX = new global::System.Data.DataColumn("OffsetX", typeof(double), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnOffsetX);
+                this.columnOffsetY = new global::System.Data.DataColumn("OffsetY", typeof(double), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnOffsetY);
                 this.Constraints.Add(new global::System.Data.UniqueConstraint("Constraint1", new global::System.Data.DataColumn[] {
                                 this.columnElementID}, true));
                 this.columnElementID.AllowDBNull = false;
@@ -1544,6 +1572,62 @@ namespace CustomizacaoMoradias {
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "16.0.0.0")]
+            public double OffsetX {
+                get {
+                    try {
+                        return ((double)(this[this.tableElement.OffsetXColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("O valor da coluna \'OffsetX\' na tabela \'Element\' é DBNull.", e);
+                    }
+                }
+                set {
+                    this[this.tableElement.OffsetXColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "16.0.0.0")]
+            public double OffsetY {
+                get {
+                    try {
+                        return ((double)(this[this.tableElement.OffsetYColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("O valor da coluna \'OffsetY\' na tabela \'Element\' é DBNull.", e);
+                    }
+                }
+                set {
+                    this[this.tableElement.OffsetYColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "16.0.0.0")]
+            public bool IsOffsetXNull() {
+                return this.IsNull(this.tableElement.OffsetXColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "16.0.0.0")]
+            public void SetOffsetXNull() {
+                this[this.tableElement.OffsetXColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "16.0.0.0")]
+            public bool IsOffsetYNull() {
+                return this.IsNull(this.tableElement.OffsetYColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "16.0.0.0")]
+            public void SetOffsetYNull() {
+                this[this.tableElement.OffsetYColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "16.0.0.0")]
             public Element_RoomRow[] GetElement_RoomRows() {
                 if ((this.Table.ChildRelations["FK__Element_R__Eleme__145C0A3F"] == null)) {
                     return new Element_RoomRow[0];
@@ -1989,31 +2073,44 @@ namespace CustomizacaoMoradias.PropertiesDatabaseDataSetTableAdapters {
             tableMapping.DataSetTable = "Element";
             tableMapping.ColumnMappings.Add("ElementID", "ElementID");
             tableMapping.ColumnMappings.Add("Name", "Name");
+            tableMapping.ColumnMappings.Add("offsetX", "OffsetX");
+            tableMapping.ColumnMappings.Add("OffsetY", "OffsetY");
             this._adapter.TableMappings.Add(tableMapping);
             this._adapter.DeleteCommand = new global::System.Data.SqlClient.SqlCommand();
             this._adapter.DeleteCommand.Connection = this.Connection;
-            this._adapter.DeleteCommand.CommandText = "DELETE FROM [dbo].[Element] WHERE (([ElementID] = @Original_ElementID) AND ([Name" +
-                "] = @Original_Name))";
+            this._adapter.DeleteCommand.CommandText = @"DELETE FROM [Element] WHERE (([ElementID] = @Original_ElementID) AND ([Name] = @Original_Name) AND ((@IsNull_OffsetY = 1 AND [OffsetY] IS NULL) OR ([OffsetY] = @Original_OffsetY)) AND ((@IsNull_offsetX = 1 AND [offsetX] IS NULL) OR ([offsetX] = @Original_offsetX)))";
             this._adapter.DeleteCommand.CommandType = global::System.Data.CommandType.Text;
             this._adapter.DeleteCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@Original_ElementID", global::System.Data.SqlDbType.Char, 0, global::System.Data.ParameterDirection.Input, 0, 0, "ElementID", global::System.Data.DataRowVersion.Original, false, null, "", "", ""));
             this._adapter.DeleteCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@Original_Name", global::System.Data.SqlDbType.NVarChar, 0, global::System.Data.ParameterDirection.Input, 0, 0, "Name", global::System.Data.DataRowVersion.Original, false, null, "", "", ""));
+            this._adapter.DeleteCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@IsNull_OffsetY", global::System.Data.SqlDbType.Int, 0, global::System.Data.ParameterDirection.Input, 0, 0, "OffsetY", global::System.Data.DataRowVersion.Original, true, null, "", "", ""));
+            this._adapter.DeleteCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@Original_OffsetY", global::System.Data.SqlDbType.Float, 0, global::System.Data.ParameterDirection.Input, 0, 0, "OffsetY", global::System.Data.DataRowVersion.Original, false, null, "", "", ""));
+            this._adapter.DeleteCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@IsNull_offsetX", global::System.Data.SqlDbType.Int, 0, global::System.Data.ParameterDirection.Input, 0, 0, "offsetX", global::System.Data.DataRowVersion.Original, true, null, "", "", ""));
+            this._adapter.DeleteCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@Original_offsetX", global::System.Data.SqlDbType.Float, 0, global::System.Data.ParameterDirection.Input, 0, 0, "offsetX", global::System.Data.DataRowVersion.Original, false, null, "", "", ""));
             this._adapter.InsertCommand = new global::System.Data.SqlClient.SqlCommand();
             this._adapter.InsertCommand.Connection = this.Connection;
-            this._adapter.InsertCommand.CommandText = "INSERT INTO [dbo].[Element] ([ElementID], [Name]) VALUES (@ElementID, @Name);\r\nSE" +
-                "LECT ElementID, Name FROM Element WHERE (ElementID = @ElementID)";
+            this._adapter.InsertCommand.CommandText = "INSERT INTO [Element] ([ElementID], [Name], [OffsetY], [offsetX]) VALUES (@Elemen" +
+                "tID, @Name, @OffsetY, @offsetX);\r\nSELECT ElementID, Name, OffsetY, offsetX FROM " +
+                "Element WHERE (ElementID = @ElementID)";
             this._adapter.InsertCommand.CommandType = global::System.Data.CommandType.Text;
             this._adapter.InsertCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@ElementID", global::System.Data.SqlDbType.Char, 0, global::System.Data.ParameterDirection.Input, 0, 0, "ElementID", global::System.Data.DataRowVersion.Current, false, null, "", "", ""));
             this._adapter.InsertCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@Name", global::System.Data.SqlDbType.NVarChar, 0, global::System.Data.ParameterDirection.Input, 0, 0, "Name", global::System.Data.DataRowVersion.Current, false, null, "", "", ""));
+            this._adapter.InsertCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@OffsetY", global::System.Data.SqlDbType.Float, 0, global::System.Data.ParameterDirection.Input, 0, 0, "OffsetY", global::System.Data.DataRowVersion.Current, false, null, "", "", ""));
+            this._adapter.InsertCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@offsetX", global::System.Data.SqlDbType.Float, 0, global::System.Data.ParameterDirection.Input, 0, 0, "offsetX", global::System.Data.DataRowVersion.Current, false, null, "", "", ""));
             this._adapter.UpdateCommand = new global::System.Data.SqlClient.SqlCommand();
             this._adapter.UpdateCommand.Connection = this.Connection;
-            this._adapter.UpdateCommand.CommandText = "UPDATE [dbo].[Element] SET [ElementID] = @ElementID, [Name] = @Name WHERE (([Elem" +
-                "entID] = @Original_ElementID) AND ([Name] = @Original_Name));\r\nSELECT ElementID," +
-                " Name FROM Element WHERE (ElementID = @ElementID)";
+            this._adapter.UpdateCommand.CommandText = @"UPDATE [Element] SET [ElementID] = @ElementID, [Name] = @Name, [OffsetY] = @OffsetY, [offsetX] = @offsetX WHERE (([ElementID] = @Original_ElementID) AND ([Name] = @Original_Name) AND ((@IsNull_OffsetY = 1 AND [OffsetY] IS NULL) OR ([OffsetY] = @Original_OffsetY)) AND ((@IsNull_offsetX = 1 AND [offsetX] IS NULL) OR ([offsetX] = @Original_offsetX)));
+SELECT ElementID, Name, OffsetY, offsetX FROM Element WHERE (ElementID = @ElementID)";
             this._adapter.UpdateCommand.CommandType = global::System.Data.CommandType.Text;
             this._adapter.UpdateCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@ElementID", global::System.Data.SqlDbType.Char, 0, global::System.Data.ParameterDirection.Input, 0, 0, "ElementID", global::System.Data.DataRowVersion.Current, false, null, "", "", ""));
             this._adapter.UpdateCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@Name", global::System.Data.SqlDbType.NVarChar, 0, global::System.Data.ParameterDirection.Input, 0, 0, "Name", global::System.Data.DataRowVersion.Current, false, null, "", "", ""));
+            this._adapter.UpdateCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@OffsetY", global::System.Data.SqlDbType.Float, 0, global::System.Data.ParameterDirection.Input, 0, 0, "OffsetY", global::System.Data.DataRowVersion.Current, false, null, "", "", ""));
+            this._adapter.UpdateCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@offsetX", global::System.Data.SqlDbType.Float, 0, global::System.Data.ParameterDirection.Input, 0, 0, "offsetX", global::System.Data.DataRowVersion.Current, false, null, "", "", ""));
             this._adapter.UpdateCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@Original_ElementID", global::System.Data.SqlDbType.Char, 0, global::System.Data.ParameterDirection.Input, 0, 0, "ElementID", global::System.Data.DataRowVersion.Original, false, null, "", "", ""));
             this._adapter.UpdateCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@Original_Name", global::System.Data.SqlDbType.NVarChar, 0, global::System.Data.ParameterDirection.Input, 0, 0, "Name", global::System.Data.DataRowVersion.Original, false, null, "", "", ""));
+            this._adapter.UpdateCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@IsNull_OffsetY", global::System.Data.SqlDbType.Int, 0, global::System.Data.ParameterDirection.Input, 0, 0, "OffsetY", global::System.Data.DataRowVersion.Original, true, null, "", "", ""));
+            this._adapter.UpdateCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@Original_OffsetY", global::System.Data.SqlDbType.Float, 0, global::System.Data.ParameterDirection.Input, 0, 0, "OffsetY", global::System.Data.DataRowVersion.Original, false, null, "", "", ""));
+            this._adapter.UpdateCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@IsNull_offsetX", global::System.Data.SqlDbType.Int, 0, global::System.Data.ParameterDirection.Input, 0, 0, "offsetX", global::System.Data.DataRowVersion.Original, true, null, "", "", ""));
+            this._adapter.UpdateCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@Original_offsetX", global::System.Data.SqlDbType.Float, 0, global::System.Data.ParameterDirection.Input, 0, 0, "offsetX", global::System.Data.DataRowVersion.Original, false, null, "", "", ""));
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -2029,7 +2126,7 @@ namespace CustomizacaoMoradias.PropertiesDatabaseDataSetTableAdapters {
             this._commandCollection = new global::System.Data.SqlClient.SqlCommand[1];
             this._commandCollection[0] = new global::System.Data.SqlClient.SqlCommand();
             this._commandCollection[0].Connection = this.Connection;
-            this._commandCollection[0].CommandText = "SELECT ElementID, Name FROM dbo.Element";
+            this._commandCollection[0].CommandText = "SELECT ElementID, Name, OffsetY, offsetX FROM Element";
             this._commandCollection[0].CommandType = global::System.Data.CommandType.Text;
         }
         
@@ -2090,7 +2187,7 @@ namespace CustomizacaoMoradias.PropertiesDatabaseDataSetTableAdapters {
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "16.0.0.0")]
         [global::System.ComponentModel.Design.HelpKeywordAttribute("vs.data.TableAdapter")]
         [global::System.ComponentModel.DataObjectMethodAttribute(global::System.ComponentModel.DataObjectMethodType.Delete, true)]
-        public virtual int Delete(string Original_ElementID, string Original_Name) {
+        public virtual int Delete(string Original_ElementID, string Original_Name, global::System.Nullable<double> Original_OffsetY, global::System.Nullable<double> Original_offsetX) {
             if ((Original_ElementID == null)) {
                 throw new global::System.ArgumentNullException("Original_ElementID");
             }
@@ -2102,6 +2199,22 @@ namespace CustomizacaoMoradias.PropertiesDatabaseDataSetTableAdapters {
             }
             else {
                 this.Adapter.DeleteCommand.Parameters[1].Value = ((string)(Original_Name));
+            }
+            if ((Original_OffsetY.HasValue == true)) {
+                this.Adapter.DeleteCommand.Parameters[2].Value = ((object)(0));
+                this.Adapter.DeleteCommand.Parameters[3].Value = ((double)(Original_OffsetY.Value));
+            }
+            else {
+                this.Adapter.DeleteCommand.Parameters[2].Value = ((object)(1));
+                this.Adapter.DeleteCommand.Parameters[3].Value = global::System.DBNull.Value;
+            }
+            if ((Original_offsetX.HasValue == true)) {
+                this.Adapter.DeleteCommand.Parameters[4].Value = ((object)(0));
+                this.Adapter.DeleteCommand.Parameters[5].Value = ((double)(Original_offsetX.Value));
+            }
+            else {
+                this.Adapter.DeleteCommand.Parameters[4].Value = ((object)(1));
+                this.Adapter.DeleteCommand.Parameters[5].Value = global::System.DBNull.Value;
             }
             global::System.Data.ConnectionState previousConnectionState = this.Adapter.DeleteCommand.Connection.State;
             if (((this.Adapter.DeleteCommand.Connection.State & global::System.Data.ConnectionState.Open) 
@@ -2123,7 +2236,7 @@ namespace CustomizacaoMoradias.PropertiesDatabaseDataSetTableAdapters {
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "16.0.0.0")]
         [global::System.ComponentModel.Design.HelpKeywordAttribute("vs.data.TableAdapter")]
         [global::System.ComponentModel.DataObjectMethodAttribute(global::System.ComponentModel.DataObjectMethodType.Insert, true)]
-        public virtual int Insert(string ElementID, string Name) {
+        public virtual int Insert(string ElementID, string Name, global::System.Nullable<double> OffsetY, global::System.Nullable<double> offsetX) {
             if ((ElementID == null)) {
                 throw new global::System.ArgumentNullException("ElementID");
             }
@@ -2135,6 +2248,18 @@ namespace CustomizacaoMoradias.PropertiesDatabaseDataSetTableAdapters {
             }
             else {
                 this.Adapter.InsertCommand.Parameters[1].Value = ((string)(Name));
+            }
+            if ((OffsetY.HasValue == true)) {
+                this.Adapter.InsertCommand.Parameters[2].Value = ((double)(OffsetY.Value));
+            }
+            else {
+                this.Adapter.InsertCommand.Parameters[2].Value = global::System.DBNull.Value;
+            }
+            if ((offsetX.HasValue == true)) {
+                this.Adapter.InsertCommand.Parameters[3].Value = ((double)(offsetX.Value));
+            }
+            else {
+                this.Adapter.InsertCommand.Parameters[3].Value = global::System.DBNull.Value;
             }
             global::System.Data.ConnectionState previousConnectionState = this.Adapter.InsertCommand.Connection.State;
             if (((this.Adapter.InsertCommand.Connection.State & global::System.Data.ConnectionState.Open) 
@@ -2156,7 +2281,7 @@ namespace CustomizacaoMoradias.PropertiesDatabaseDataSetTableAdapters {
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "16.0.0.0")]
         [global::System.ComponentModel.Design.HelpKeywordAttribute("vs.data.TableAdapter")]
         [global::System.ComponentModel.DataObjectMethodAttribute(global::System.ComponentModel.DataObjectMethodType.Update, true)]
-        public virtual int Update(string ElementID, string Name, string Original_ElementID, string Original_Name) {
+        public virtual int Update(string ElementID, string Name, global::System.Nullable<double> OffsetY, global::System.Nullable<double> offsetX, string Original_ElementID, string Original_Name, global::System.Nullable<double> Original_OffsetY, global::System.Nullable<double> Original_offsetX) {
             if ((ElementID == null)) {
                 throw new global::System.ArgumentNullException("ElementID");
             }
@@ -2169,17 +2294,45 @@ namespace CustomizacaoMoradias.PropertiesDatabaseDataSetTableAdapters {
             else {
                 this.Adapter.UpdateCommand.Parameters[1].Value = ((string)(Name));
             }
+            if ((OffsetY.HasValue == true)) {
+                this.Adapter.UpdateCommand.Parameters[2].Value = ((double)(OffsetY.Value));
+            }
+            else {
+                this.Adapter.UpdateCommand.Parameters[2].Value = global::System.DBNull.Value;
+            }
+            if ((offsetX.HasValue == true)) {
+                this.Adapter.UpdateCommand.Parameters[3].Value = ((double)(offsetX.Value));
+            }
+            else {
+                this.Adapter.UpdateCommand.Parameters[3].Value = global::System.DBNull.Value;
+            }
             if ((Original_ElementID == null)) {
                 throw new global::System.ArgumentNullException("Original_ElementID");
             }
             else {
-                this.Adapter.UpdateCommand.Parameters[2].Value = ((string)(Original_ElementID));
+                this.Adapter.UpdateCommand.Parameters[4].Value = ((string)(Original_ElementID));
             }
             if ((Original_Name == null)) {
                 throw new global::System.ArgumentNullException("Original_Name");
             }
             else {
-                this.Adapter.UpdateCommand.Parameters[3].Value = ((string)(Original_Name));
+                this.Adapter.UpdateCommand.Parameters[5].Value = ((string)(Original_Name));
+            }
+            if ((Original_OffsetY.HasValue == true)) {
+                this.Adapter.UpdateCommand.Parameters[6].Value = ((object)(0));
+                this.Adapter.UpdateCommand.Parameters[7].Value = ((double)(Original_OffsetY.Value));
+            }
+            else {
+                this.Adapter.UpdateCommand.Parameters[6].Value = ((object)(1));
+                this.Adapter.UpdateCommand.Parameters[7].Value = global::System.DBNull.Value;
+            }
+            if ((Original_offsetX.HasValue == true)) {
+                this.Adapter.UpdateCommand.Parameters[8].Value = ((object)(0));
+                this.Adapter.UpdateCommand.Parameters[9].Value = ((double)(Original_offsetX.Value));
+            }
+            else {
+                this.Adapter.UpdateCommand.Parameters[8].Value = ((object)(1));
+                this.Adapter.UpdateCommand.Parameters[9].Value = global::System.DBNull.Value;
             }
             global::System.Data.ConnectionState previousConnectionState = this.Adapter.UpdateCommand.Connection.State;
             if (((this.Adapter.UpdateCommand.Connection.State & global::System.Data.ConnectionState.Open) 
@@ -2201,8 +2354,8 @@ namespace CustomizacaoMoradias.PropertiesDatabaseDataSetTableAdapters {
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "16.0.0.0")]
         [global::System.ComponentModel.Design.HelpKeywordAttribute("vs.data.TableAdapter")]
         [global::System.ComponentModel.DataObjectMethodAttribute(global::System.ComponentModel.DataObjectMethodType.Update, true)]
-        public virtual int Update(string Name, string Original_ElementID, string Original_Name) {
-            return this.Update(Original_ElementID, Name, Original_ElementID, Original_Name);
+        public virtual int Update(string Name, global::System.Nullable<double> OffsetY, global::System.Nullable<double> offsetX, string Original_ElementID, string Original_Name, global::System.Nullable<double> Original_OffsetY, global::System.Nullable<double> Original_offsetX) {
+            return this.Update(Original_ElementID, Name, OffsetY, offsetX, Original_ElementID, Original_Name, Original_OffsetY, Original_offsetX);
         }
     }
     
