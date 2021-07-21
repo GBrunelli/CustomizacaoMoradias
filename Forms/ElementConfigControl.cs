@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Windows.Forms;
@@ -49,14 +50,26 @@ namespace CustomizacaoMoradias.Forms
             PopulateDataGridView();
         }
 
+        private float[] GetVectorComponents(string vector)
+        {
+            string[] tokens = vector.Replace('(', ' ').Replace(')', ' ').Split(',');
+            float[] components = new float[2];
+            components[0] = float.Parse(tokens[0]);
+            components[1] = float.Parse(tokens[1]);
+            return components;
+        }
+
         private void ChangeSelectedRow(DataGridViewRow dgvRow)
         {
             using (SqlConnection sqlCon = new SqlConnection(CONNECTION_STRING))
             {
                 sqlCon.Open();
                 SqlCommand sqlCmd = new SqlCommand("[dbo].[ElementAddOrEdit]", sqlCon) { CommandType = CommandType.StoredProcedure };
+                float[] components = GetVectorComponents(dgvRow.Cells["Offset"].Value.ToString());
                 sqlCmd.Parameters.AddWithValue("ElementID", dgvRow.Cells["elementIDDataGridViewTextBoxColumn"].Value);
                 sqlCmd.Parameters.AddWithValue("Name", dgvRow.Cells["nameDataGridViewTextBoxColumn"].Value.ToString());
+                sqlCmd.Parameters.AddWithValue("OffsetX", components[0]); 
+                sqlCmd.Parameters.AddWithValue("OffsetY", components[1]);
                 sqlCmd.ExecuteNonQuery();
             }
         }
@@ -83,6 +96,8 @@ namespace CustomizacaoMoradias.Forms
             }
         }
 
+        
+
         private void PopulateDataGridView()
         {
             try
@@ -93,6 +108,12 @@ namespace CustomizacaoMoradias.Forms
                     SqlDataAdapter sqlDa = new SqlDataAdapter("SELECT * FROM Element", sqlCon);
                     DataTable dtbl = new DataTable();
                     sqlDa.Fill(dtbl);
+                    dtbl.Columns.Add("Offset", typeof(string));
+
+                    foreach(DataRow row in dtbl.Rows)
+                    {
+                        row["Offset"] = $"({row["OffsetX"]}, {row["OffsetY"]})";
+                    }
                     inDataSource = true;
                     elementDataGridView.DataSource = dtbl;
                     inDataSource = false;

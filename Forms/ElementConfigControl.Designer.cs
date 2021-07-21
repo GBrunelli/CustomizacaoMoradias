@@ -33,10 +33,11 @@ namespace CustomizacaoMoradias.Forms
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.propertiesDatabaseDataSet = new CustomizacaoMoradias.PropertiesDatabaseDataSet();
             this.elementDataGridView = new System.Windows.Forms.DataGridView();
-            this.elementIDDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.nameDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.elementBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.elementTableAdapter = new CustomizacaoMoradias.PropertiesDatabaseDataSetTableAdapters.ElementTableAdapter();
+            this.elementIDDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.nameDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Offset = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.propertiesDatabaseDataSet)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.elementDataGridView)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.elementBindingSource)).BeginInit();
@@ -58,7 +59,8 @@ namespace CustomizacaoMoradias.Forms
             this.elementDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.elementDataGridView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.elementIDDataGridViewTextBoxColumn,
-            this.nameDataGridViewTextBoxColumn});
+            this.nameDataGridViewTextBoxColumn,
+            this.Offset});
             this.elementDataGridView.DataSource = this.elementBindingSource;
             dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
@@ -78,6 +80,15 @@ namespace CustomizacaoMoradias.Forms
             this.elementDataGridView.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.elementDataGridView_CellValueChanged);
             this.elementDataGridView.UserDeletedRow += new System.Windows.Forms.DataGridViewRowEventHandler(this.elementDataGridView_UserDeletedRow);
             // 
+            // elementBindingSource
+            // 
+            this.elementBindingSource.DataMember = "Element";
+            this.elementBindingSource.DataSource = this.propertiesDatabaseDataSet;
+            // 
+            // elementTableAdapter
+            // 
+            this.elementTableAdapter.ClearBeforeFill = true;
+            // 
             // elementIDDataGridViewTextBoxColumn
             // 
             this.elementIDDataGridViewTextBoxColumn.DataPropertyName = "ElementID";
@@ -89,16 +100,14 @@ namespace CustomizacaoMoradias.Forms
             this.nameDataGridViewTextBoxColumn.DataPropertyName = "Name";
             this.nameDataGridViewTextBoxColumn.HeaderText = "Name";
             this.nameDataGridViewTextBoxColumn.Name = "nameDataGridViewTextBoxColumn";
-            this.nameDataGridViewTextBoxColumn.Width = 320;
+            this.nameDataGridViewTextBoxColumn.Width = 250;
             // 
-            // elementBindingSource
+            // Offset
             // 
-            this.elementBindingSource.DataMember = "Element";
-            this.elementBindingSource.DataSource = this.propertiesDatabaseDataSet;
-            // 
-            // elementTableAdapter
-            // 
-            this.elementTableAdapter.ClearBeforeFill = true;
+            this.Offset.DataPropertyName = "Offset";
+            this.Offset.HeaderText = "Offset";
+            this.Offset.Name = "Offset";
+            this.Offset.Width = 70;
             // 
             // ElementConfigControl
             // 
@@ -121,5 +130,6 @@ namespace CustomizacaoMoradias.Forms
         private PropertiesDatabaseDataSetTableAdapters.ElementTableAdapter elementTableAdapter;
         private System.Windows.Forms.DataGridViewTextBoxColumn elementIDDataGridViewTextBoxColumn;
         private System.Windows.Forms.DataGridViewTextBoxColumn nameDataGridViewTextBoxColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Offset;
     }
 }
