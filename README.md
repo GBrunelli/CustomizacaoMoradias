@@ -29,3 +29,4 @@ Uma janela irá aparecer e você deve fornecer o caminho para o arquivo `.json` 
 
 <sub>Desenvolvido por Gustavo H. Brunelli, sob condição de bolsista PUB da Univerdade de São Paulo.</sub>
 
+[comment]: <> (voce eh foda)
