@@ -26,19 +26,26 @@ namespace CustomizacaoMoradias.Forms
 
             if (elementDataGridView.CurrentRow != null)
             {
-                DataGridViewRow dgvRow = elementDataGridView.CurrentRow;
-                bool id = dgvRow.Cells["elementIDDataGridViewTextBoxColumn"].Value != DBNull.Value;
-                bool name = dgvRow.Cells["nameDataGridViewTextBoxColumn"].Value != DBNull.Value;              
-             
-                if (!(id || name))
+                try
                 {
-                    DeleteSelectecRow(dgvRow);
-                    PopulateDataGridView();
+                    DataGridViewRow dgvRow = elementDataGridView.CurrentRow;
+                    bool id = dgvRow.Cells["elementIDDataGridViewTextBoxColumn"].Value != DBNull.Value;
+                    bool name = dgvRow.Cells["nameDataGridViewTextBoxColumn"].Value != DBNull.Value;
+
+                    if (!(id || name))
+                    {
+                        DeleteSelectecRow(dgvRow);
+                        PopulateDataGridView();
+                    }
+                    else if (id && name)
+                    {
+                        ChangeSelectedRow(dgvRow);
+                        PopulateDataGridView();
+                    }
                 }
-                else if(id && name)
+                catch(Exception ex)
                 {
-                    ChangeSelectedRow(dgvRow);
-                    PopulateDataGridView();
+                    MessageBox.Show(ex.Message, "Erro!");
                 }
             }
         }
