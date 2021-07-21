@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using CustomizacaoMoradias.DataModel;
 
 namespace CustomizacaoMoradias.Source
@@ -12,6 +8,10 @@ namespace CustomizacaoMoradias.Source
         public string ElementID { get; set; }
 
         public string Name { get; set; }
+
+        public float OffsetX { get; set; }
+
+        public float OffsetY { get; set; }
 
         public List<Element_RoomDM> Rooms;
     }

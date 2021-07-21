@@ -313,6 +313,7 @@ namespace CustomizacaoMoradias
             XYZ p1 = GetXYZFromProperties(properties.Coordinate.ElementAt(1));
             XYZ point = p0.Add(p1).Divide(2);
             string fsFamilyName = GetFamilySymbolName(properties.Type);
+            XYZ offset = GetFamilyOffset(properties.Type);
 
             // Creates a point above the furniture to serve as a rotation axis
             XYZ axisPoint = new XYZ(point.X, point.Y, baseLevel.Elevation + 1);
@@ -325,12 +326,24 @@ namespace CustomizacaoMoradias
                 Autodesk.Revit.DB.Structure.StructuralType structuralType = Autodesk.Revit.DB.Structure.StructuralType.NonStructural;
                 furniture = doc.Create.NewFamilyInstance(point, familySymbol, structuralType);
                 ElementTransformUtils.RotateElement(doc, furniture.Id, axis, rotation);
+                ElementTransformUtils.MoveElement(doc, furniture.Id, offset);
             }
             catch (Exception e)
             {
                 throw new Exception("Erro ao inserir mobiliario \"" + fsFamilyName + "\".", e);
             }
             return furniture;
+        }
+
+        private XYZ GetFamilyOffset(string type)
+        {
+            elementThread.Join();
+            foreach (ElementDM e in elements)
+            {
+                if (e.ElementID.Trim().Equals(type))
+                    return new XYZ(e.OffsetX, e.OffsetY, 0);
+            }
+            return null;
         }
 
         /// <summary>
