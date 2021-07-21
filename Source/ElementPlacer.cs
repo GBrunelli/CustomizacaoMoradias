@@ -296,6 +296,13 @@ namespace CustomizacaoMoradias
             }
         }
 
+        private UV RotateVector(UV vector, double rotation)
+        {
+            double u2 = Math.Cos(rotation) * vector.U - Math.Sin(rotation) * vector.V;
+            double v2 = Math.Sin(rotation) * vector.U + Math.Cos(rotation) * vector.V;
+            return new UV(u2, v2);
+        }
+      
         /// <summary>
         /// Creates a piece of furniture.
         /// </summary>
@@ -313,7 +320,8 @@ namespace CustomizacaoMoradias
             XYZ p1 = GetXYZFromProperties(properties.Coordinate.ElementAt(1));
             XYZ point = p0.Add(p1).Divide(2);
             string fsFamilyName = GetFamilySymbolName(properties.Type);
-            XYZ offset = GetFamilyOffset(properties.Type);
+            UV offset = GetFamilyOffset(properties.Type);
+            offset = RotateVector(offset, rotation);
 
             // Creates a point above the furniture to serve as a rotation axis
             XYZ axisPoint = new XYZ(point.X, point.Y, baseLevel.Elevation + 1);
@@ -325,8 +333,8 @@ namespace CustomizacaoMoradias
 
                 Autodesk.Revit.DB.Structure.StructuralType structuralType = Autodesk.Revit.DB.Structure.StructuralType.NonStructural;
                 furniture = doc.Create.NewFamilyInstance(point, familySymbol, structuralType);
-                ElementTransformUtils.RotateElement(doc, furniture.Id, axis, rotation);
-                ElementTransformUtils.MoveElement(doc, furniture.Id, offset);
+                ElementTransformUtils.RotateElement(doc, furniture.Id, axis, rotation);            
+                ElementTransformUtils.MoveElement(doc, furniture.Id, TransformUVinXYZ(offset));
             }
             catch (Exception e)
             {
@@ -335,13 +343,13 @@ namespace CustomizacaoMoradias
             return furniture;
         }
 
-        private XYZ GetFamilyOffset(string type)
+        private UV GetFamilyOffset(string type)
         {
             elementThread.Join();
             foreach (ElementDM e in elements)
             {
                 if (e.ElementID.Trim().Equals(type))
-                    return new XYZ(e.OffsetX, e.OffsetY, 0);
+                    return new UV(e.OffsetX, e.OffsetY);
             }
             return null;
         }
@@ -394,41 +402,19 @@ namespace CustomizacaoMoradias
             XYZ point = GetXYZFromProperties(properties.Coordinate);
             string fsName = GetFamilySymbolName(properties.Type);
             double rotation = properties.Rotation;
+            UV offset = GetFamilyOffset(properties.Type);
+            offset = RotateVector(offset, rotation);
+            point += TransformUVinXYZ(offset);
 
             FamilyInstance instance;
 
             FamilySymbol familySymbol = GetFamilySymbol(doc, fsName);
-            Wall wall = FindHostingWall(point, baseLevel);
-
-            var curve = wall.Location as LocationCurve;
-            XYZ p0 = curve.Curve.GetEndPoint(0);
-            XYZ p1 = curve.Curve.GetEndPoint(1);
-            XYZ wallVector = p1 - p0;
-            XYZ normal = new XYZ(-wallVector.Y, wallVector.X, 0).Normalize();
+            Wall wall = FindHostingWall(point, baseLevel);            
 
             // Creates the element                   
             instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, baseLevel, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
 
-            var location = instance.Location as LocationPoint;
-            var locationPoint = new XYZ(location.Point.X, location.Point.Y, 0);
-
-            if(locationPoint.GetLength() > UnitUtils.ConvertToInternalUnits(2*scale, UnitTypeId.Meters))
-            {
-                XYZ absoluteLocation = locationPoint + (instance.FacingOrientation * scale);
-                var distance = absoluteLocation.DistanceTo(point);
-                if (distance > UnitUtils.ConvertToInternalUnits(scale + 0.1, UnitTypeId.Meters))
-                    instance.flipFacing();
-            }
-            /*
-            else
-            {
-
-                XYZ absoluteLocation = point + (normal * scale);
-                var distance = absoluteLocation.DistanceTo(point);
-                if (distance > UnitUtils.ConvertToInternalUnits(0.1, UnitTypeId.Meters))
-                    instance.flipFacing();
-            }
-            */
+            // TODO: flip
                 
             return instance;
         }
@@ -726,7 +712,7 @@ namespace CustomizacaoMoradias
         /// </returns>
         private List<CurveArray> EliminateNotch(UV notch, CurveArray curveArray, CircularLinkedList<UV> points, XYZ preferredOrientation, out Line cutLine)
         {
-            XYZ notche3D = TranformIn3D(notch);
+            XYZ notche3D = TransformUVinXYZ(notch);
             Line line1 = Line.CreateUnbound(notche3D, preferredOrientation);
 
             XYZ otherOrientation = new XYZ(preferredOrientation.Y, preferredOrientation.X, 0);
@@ -767,7 +753,7 @@ namespace CustomizacaoMoradias
             };
 
             // returns the cutLine
-            cutLine = Line.CreateBound(notche3D, TranformIn3D(newNode.Value));
+            cutLine = Line.CreateBound(notche3D, TransformUVinXYZ(newNode.Value));
 
             return list;
         }
@@ -862,7 +848,7 @@ namespace CustomizacaoMoradias
                 // for the cases that the 2 lines are colinear
                 if (!node.Value.IsAlmostEqualTo(node.Next.Value))
                 {
-                    line = Line.CreateBound(TranformIn3D(node.Value), TranformIn3D(node.Next.Value));
+                    line = Line.CreateBound(TransformUVinXYZ(node.Value), TransformUVinXYZ(node.Next.Value));
                     curveArray.Append(line);
                 }
                 node = node.Next;
@@ -921,7 +907,7 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Transforms a 2D point in a 3D point, with the Z component set to 0.
         /// </summary>
-        private static XYZ TranformIn3D(UV uv)
+        private static XYZ TransformUVinXYZ(UV uv)
         {
             return new XYZ(uv.U, uv.V, 0);
         }
@@ -1070,14 +1056,14 @@ namespace CustomizacaoMoradias
                 UV n1 = new UV(-v1.V, v1.U);
                 UV pij1 = vertexI + n1;
                 UV pij2 = vertexJ + n1;
-                Line line1 = Line.CreateBound(TranformIn3D(pij1), TranformIn3D(pij2));
+                Line line1 = Line.CreateBound(TransformUVinXYZ(pij1), TransformUVinXYZ(pij2));
                 line1.MakeUnbound();
 
                 // creates a shifted line that is parallel to the vector v2
                 UV n2 = new UV(-v2.V, v2.U);
                 UV pjk1 = vertexJ + n2;
                 UV pjk2 = vertexK + n2;
-                Line line2 = Line.CreateBound(TranformIn3D(pjk1), TranformIn3D(pjk2));
+                Line line2 = Line.CreateBound(TransformUVinXYZ(pjk1), TransformUVinXYZ(pjk2));
                 line2.MakeUnbound();
 
                 //see where the shifted lines 1 and 2 intersect
@@ -1342,7 +1328,7 @@ namespace CustomizacaoMoradias
                 CreateCurveArrayFromPoints(newPolygon1)
             };
 
-            cutLine = Line.CreateBound(TranformIn3D(newPoints[0].Value), TranformIn3D(newPoints[1].Value));
+            cutLine = Line.CreateBound(TransformUVinXYZ(newPoints[0].Value), TransformUVinXYZ(newPoints[1].Value));
             return dividedCurveArrays;
         }
 
