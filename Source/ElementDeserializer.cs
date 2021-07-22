@@ -30,33 +30,18 @@ namespace CustomizacaoMoradias.Source
 
     public class WindowProperty : IHosted
     {
-        public List<Coordinate> Coordinate { get; set; }
+        public Coordinate Coordinate { get; set; }
         public string Type { get; set; }
         public int Rotation { get; set; }
 
-        Coordinate IHosted.Coordinate => new Coordinate
-        {
-            
-            /*X = (Coordinate.ElementAt(0).X + Coordinate.ElementAt(1).X) / 2,
-            Y = (Coordinate.ElementAt(0).Y + Coordinate.ElementAt(1).Y) / 2*/
-            X = (Coordinate.ElementAt(1).X),
-            Y = (Coordinate.ElementAt(1).Y)
-        };
     }
 
     public class DoorProperty : IHosted
     {
-        public List<Coordinate> Coordinate { get; set; }
+        public Coordinate Coordinate { get; set; }
         public string Type { get; set; }
         public int Rotation { get; set; }
-
-        Coordinate IHosted.Coordinate => new Coordinate
-        {
-            /*X = (Coordinate.ElementAt(0).X + Coordinate.ElementAt(1).X) / 2,
-            Y = (Coordinate.ElementAt(0).Y + Coordinate.ElementAt(1).Y) / 2*/
-            X = (Coordinate.ElementAt(1).X),
-            Y = (Coordinate.ElementAt(1).Y)
-        };      
+    
     }
 
     public class HostedProperty : IHosted
@@ -76,15 +61,6 @@ namespace CustomizacaoMoradias.Source
 
     public class ElementDeserializer
     {
-        public ElementDeserializer()
-        {
-            WallProperties = new List<WallProperty>();
-            WindowProperties = new List<WindowProperty>();
-            DoorProperties = new List<DoorProperty>();
-            HostedProperties = new List<HostedProperty>();
-            FurnitureProperties = new List<FurnitureProperty>();
-        }
-
         public List<WallProperty> WallProperties { get; set; }
         public List<WindowProperty> WindowProperties { get; set; }
         public List<DoorProperty> DoorProperties { get; set; }

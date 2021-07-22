@@ -262,32 +262,50 @@ namespace CustomizacaoMoradias
             string jsonText = File.ReadAllText(path);
             ElementDeserializer ed = JsonConvert.DeserializeObject<ElementDeserializer>(jsonText);
             string errorMessage = "";
-            foreach (WallProperty wall in ed.WallProperties)
+            if (ed.WallProperties != null)
             {
-                try { CreateWall(wall, Properties.Settings.Default.WallTypeName); }
-                catch { errorMessage += $"Parede {wall}, "; }      
+                foreach (WallProperty wall in ed.WallProperties)
+                {
+                    try { CreateWall(wall, Properties.Settings.Default.WallTypeName); }
+                    catch { errorMessage += $"Parede {wall}, "; }
+                }
             }
-            foreach (WindowProperty window in ed.WindowProperties)
+            if(ed.WindowProperties != null)
             {
-                try { CreateWindow(window); }
-                catch { errorMessage += $"{window.Type}, "; }
+                foreach (WindowProperty window in ed.WindowProperties)
+                {
+                    try { CreateWindow(window); }
+                    catch { errorMessage += $"{window.Type}, "; }
+                }
             }
-            foreach (DoorProperty door in ed.DoorProperties)
+            if(ed.DoorProperties != null)
             {
-                try { CreateDoor(door); }
-                catch { errorMessage += $"{door.Type}, "; }                    
+                foreach (DoorProperty door in ed.DoorProperties)
+                {
+                    try { CreateDoor(door); }
+                    catch { errorMessage += $"{door.Type}, "; }
+                }
             }
-            foreach (HostedProperty element in ed.HostedProperties)
+            
+            if(ed.HostedProperties != null)
             {
-                try { CreateHostedElement(element); }
-                catch { errorMessage += $"{element.Type}, "; }
-                
+                foreach (HostedProperty element in ed.HostedProperties)
+                {
+                    try { CreateHostedElement(element); }
+                    catch { errorMessage += $"{element.Type}, "; }
+
+                }
             }
-            foreach (FurnitureProperty element in ed.FurnitureProperties)
+            
+            if(ed.FurnitureProperties != null)
             {
-                try { CreateFurniture(element); }
-                catch { errorMessage += $"{element.Type}, "; }
+                foreach (FurnitureProperty element in ed.FurnitureProperties)
+                {
+                    try { CreateFurniture(element); }
+                    catch { errorMessage += $"{element.Type}, "; }
+                }
             }
+            
 
             if (errorMessage.EndsWith(", "))
             {
