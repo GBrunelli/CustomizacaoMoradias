@@ -82,7 +82,7 @@ namespace CustomizacaoMoradias
             }
 
             if (errorMessage.Length > 1)
-                MessageBox.Show(errorMessage, "Erro");
+                MessageBox.Show(errorMessage, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
             PlaceElementsForm.CloseForm();
         }

@@ -27,7 +27,7 @@ namespace CustomizacaoMoradias.Forms
             }
             catch (Exception error)
             {
-                MessageBox.Show(error.Message, "Erro!", MessageBoxButtons.OK);
+                MessageBox.Show(error.Message, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             ResetTextBoxes();
         }

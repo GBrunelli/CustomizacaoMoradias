@@ -45,7 +45,8 @@ namespace CustomizacaoMoradias.Forms
                 }
                 catch(Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Erro!");
+                    MessageBox.Show(ex.Message, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    PopulateDataGridView();
                 }
             }
         }
@@ -85,7 +86,7 @@ namespace CustomizacaoMoradias.Forms
         {
             try
             {
-                if (MessageBox.Show("Tem certeza que deseja deletar esse elemento?", "Atenção!", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                if (MessageBox.Show("Tem certeza que deseja deletar esse elemento?", "Atenção!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
                 {
                     using (SqlConnection sqlCon = new SqlConnection(CONNECTION_STRING))
                     {
@@ -99,7 +100,7 @@ namespace CustomizacaoMoradias.Forms
             catch (SqlException)
             {
                 MessageBox.Show("Você está tentando deletar um elemento que está sendo usado na classificação de ambientes, " +
-                    "delete todas as referências desse elemento primeiro.", "Erro", MessageBoxButtons.OK);
+                    "delete todas as referências desse elemento primeiro.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
@@ -127,7 +128,7 @@ namespace CustomizacaoMoradias.Forms
                 }
             }
             catch (Exception e) {
-                MessageBox.Show(e.Message, "Erro", MessageBoxButtons.OK);
+                MessageBox.Show(e.Message, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

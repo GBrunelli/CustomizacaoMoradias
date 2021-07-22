@@ -70,7 +70,7 @@ namespace CustomizacaoMoradias.Forms
             {
                 if (dgvRow.Cells["roomIDDataGridViewTextBoxColumn"].Value != DBNull.Value)
                 {
-                    if (MessageBox.Show("Tem certeza que deseja deletar esse ambiente?", "Atenção!", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    if (MessageBox.Show("Tem certeza que deseja deletar esse ambiente?", "Atenção!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
                     {
                         using (SqlConnection sqlCon = new SqlConnection(connectionString))
                         {
@@ -86,7 +86,7 @@ namespace CustomizacaoMoradias.Forms
             catch (SqlException)
             {
                 MessageBox.Show("Você está tentando deletar um ambiente que está sendo usado na classificação de ambientes, " +
-                    "delete todas as referências desse ambiente primeiro.", "Erro", MessageBoxButtons.OK);
+                    "delete todas as referências desse ambiente primeiro.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
         private void PopulateDataGridView()

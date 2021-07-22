@@ -310,7 +310,7 @@ namespace CustomizacaoMoradias
             if (errorMessage.EndsWith(", "))
             {
                 errorMessage = errorMessage.Remove(errorMessage.Length - 2, 2);
-                MessageBox.Show($"Erro ao inserir elementos: \n{errorMessage}.", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Erro ao inserir elementos: \n{errorMessage}.", "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

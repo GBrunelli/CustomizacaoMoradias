@@ -83,7 +83,7 @@ namespace CustomizacaoMoradias.Forms
 
         public void DeleteSelectedRow(DataGridViewRow dgvRow)
         {
-            if (MessageBox.Show("Tem certeza que deseja deletar essa relação?", "Atenção!", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            if (MessageBox.Show("Tem certeza que deseja deletar essa relação?", "Atenção!", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
             {
                 using (SqlConnection sqlCon = new SqlConnection(CONNECTION_STRING))
                 {
