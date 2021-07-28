@@ -1598,7 +1598,7 @@ namespace CustomizacaoMoradias
 
         private string GetRoomFromScore(List<string> elements, List<ScoreDM> sdm, List<RoomDM> rooms)
         {
-            int[] score = new int[rooms.Count()];
+            Dictionary<int, int> scoreDict = new Dictionary<int, int>(rooms.Count);
 
             for (int i = 0; i < elements.Count; i++)
             {
@@ -1606,26 +1606,33 @@ namespace CustomizacaoMoradias
                 {
                     if (elements[i].Equals(s.ElementName))
                     {
-                        score[s.RoomID] += s.Score;
+                        if(scoreDict.TryGetValue(s.RoomID, out int currentScore))
+                            scoreDict[s.RoomID] += s.Score;
+                        else
+                            scoreDict.Add(s.RoomID, s.Score);
                     }
                 }
             }
 
-            int maxIndex = 0;
-            int max = 0;
-            for (int i = 0; i < score.Count(); i++)
+            int roomId = 0, max = 0;
+            foreach (var pair in scoreDict)
             {
-                if (score[i] > max)
+                if(pair.Value > max)
                 {
-                    max = score[i];
-                    maxIndex = i;
+                    max = pair.Value;
+                    roomId = pair.Key;
                 }
             }
 
-            if (max == 0)
-                return null;
-            else
-                return rooms[maxIndex-1].Name;
+            if (max != 0)
+            {
+                foreach (RoomDM room in rooms)
+                {
+                    if (room.RoomID == roomId)
+                        return room.Name;
+                }
+            }
+            return null;
         }
 
         /// <summary>
