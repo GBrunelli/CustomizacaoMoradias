@@ -41,6 +41,8 @@ namespace CustomizacaoMoradias
 
         private double scale;
 
+        private double baseRotation = Math.PI / 2;
+
         private PlanCircuitSet Circuits
         {
             get { return doc.get_PlanTopology(baseLevel).Circuits; }
@@ -339,7 +341,7 @@ namespace CustomizacaoMoradias
             XYZ point = p0.Add(p1).Divide(2);
             string fsFamilyName = GetFamilySymbolName(properties.Type);
             UV offset = GetFamilyOffset(properties.Type);
-            offset = RotateVector(offset, rotation);
+            offset = RotateVector(offset, rotation + baseRotation);
 
             // Creates a point above the furniture to serve as a rotation axis
             XYZ axisPoint = new XYZ(point.X, point.Y, baseLevel.Elevation + 1);
@@ -351,7 +353,7 @@ namespace CustomizacaoMoradias
 
                 Autodesk.Revit.DB.Structure.StructuralType structuralType = Autodesk.Revit.DB.Structure.StructuralType.NonStructural;
                 furniture = doc.Create.NewFamilyInstance(point, familySymbol, structuralType);
-                ElementTransformUtils.RotateElement(doc, furniture.Id, axis, rotation);            
+                ElementTransformUtils.RotateElement(doc, furniture.Id, axis, rotation + baseRotation);            
                 ElementTransformUtils.MoveElement(doc, furniture.Id, TransformUVinXYZ(offset));
             }
             catch (Exception e)

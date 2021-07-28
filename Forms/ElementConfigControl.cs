@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Windows.Forms;
+using System.Globalization;
 
 namespace CustomizacaoMoradias.Forms
 {
@@ -60,10 +61,12 @@ namespace CustomizacaoMoradias.Forms
 
         private float[] GetVectorComponents(string vector)
         {
+            CultureInfo provider = new CultureInfo("en-US");
             string[] tokens = vector.Replace('(', ' ').Replace(')', ' ').Split(',');
+            if (tokens.Length != 2) throw new FormatException("Vetor formatato incorretamente");
             float[] components = new float[2];
-            components[0] = float.Parse(tokens[0]);
-            components[1] = float.Parse(tokens[1]);
+            components[0] = float.Parse(tokens[0], provider);
+            components[1] = float.Parse(tokens[1], provider);
             return components;
         }
 
@@ -120,7 +123,9 @@ namespace CustomizacaoMoradias.Forms
 
                     foreach(DataRow row in dtbl.Rows)
                     {
-                        row["Offset"] = $"({row["OffsetX"]}, {row["OffsetY"]})";
+                        double x = Math.Round((double)row["OffsetX"], 2); 
+                        double y = Math.Round((double)row["OffsetY"], 2);
+                        row["Offset"] = $"({Convert.ToString(x, new CultureInfo("en-US"))}, {Convert.ToString(y, new CultureInfo("en-US"))})";
                     }
                     inDataSource = true;
                     elementDataGridView.DataSource = dtbl;
