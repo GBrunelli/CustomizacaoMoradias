@@ -341,6 +341,8 @@ namespace CustomizacaoMoradias
             XYZ point = p0.Add(p1).Divide(2);
             string fsFamilyName = GetFamilySymbolName(properties.Type);
             UV offset = GetFamilyOffset(properties.Type);
+            offset = new UV(UnitUtils.ConvertToInternalUnits(offset.U, UnitTypeId.Meters),
+                UnitUtils.ConvertToInternalUnits(offset.V, UnitTypeId.Meters));
             offset = RotateVector(offset, rotation + baseRotation);
 
             // Creates a point above the furniture to serve as a rotation axis
@@ -419,23 +421,47 @@ namespace CustomizacaoMoradias
                 throw new ArgumentNullException(nameof(properties));
             }
 
+            // get the parameters from properties
             XYZ point = GetXYZFromProperties(properties.Coordinate);
             string fsName = GetFamilySymbolName(properties.Type);
             double rotation = properties.Rotation;
             UV offset = GetFamilyOffset(properties.Type);
+
             offset = RotateVector(offset, rotation);
             point += TransformUVinXYZ(offset);
-
-            FamilyInstance instance;
-
             FamilySymbol familySymbol = GetFamilySymbol(doc, fsName);
-            Wall wall = FindHostingWall(point, baseLevel);            
+
+            Wall wall = FindHostingWall(point, baseLevel);
+            LocationCurve wallCurve = wall.Location as LocationCurve;
+            Line wallLine = wallCurve.Curve as Line;
+
+            XYZ wallStartPoint = wallLine.GetEndPoint(0);
+            XYZ wallEndPoint = wallLine.GetEndPoint(1);
+            XYZ wallNormal = (wallStartPoint - wallEndPoint).CrossProduct(XYZ.BasisZ).Normalize();
+            double angle = Math.Atan2(wallNormal.Y, wallNormal.X);
 
             // Creates the element                   
-            instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, baseLevel, Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
+            FamilyInstance instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, baseLevel, 
+                Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
 
-            // TODO: flip
+            if (properties.Type.StartsWith("H"))
+            {
+                // get the initial orientation of the new family instance
+                var p = (instance.Location as LocationPoint).Point;
                 
+                XYZ insertedDirection = TransformUVinXYZ(RotateVector(ProjectInPlaneXY(p), angle)).Normalize();
+
+                // get the supposed orientation of the instance
+                XYZ insertionPoint = wallStartPoint + (wallLine.Direction * instance.HostParameter);
+                XYZ correctDirection = (point - insertionPoint).Normalize();
+
+                // if the initial orientation and the correct orientation are not equal, flip the instance
+                if (!insertedDirection.IsAlmostEqualTo(correctDirection))
+                {
+                    instance.flipFacing();
+                }
+            }
+
             return instance;
         }
 
