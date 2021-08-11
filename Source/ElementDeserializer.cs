@@ -41,7 +41,7 @@ namespace CustomizacaoMoradias.Source
         public Coordinate Coordinate { get; set; }
         public string Type { get; set; }
         public int Rotation { get; set; }
-    
+        public bool OpenLeft { get; set; }
     }
 
     public class HostedProperty : IHosted

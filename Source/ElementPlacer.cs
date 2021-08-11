@@ -281,7 +281,7 @@ namespace CustomizacaoMoradias
             {
                 foreach (HostedProperty element in ed.HostedProperties)
                 {
-                    try { CreateHostedElement(element); }
+                    try { CreateHostedElement(element, true); }
                     catch { errorMessage += $"{element.Type}, "; }
 
                 }
@@ -403,7 +403,7 @@ namespace CustomizacaoMoradias
         /// Create a hosted element on a wall.
         /// </summary>
         /// <param name="properties"> Properties of the object.</param>
-        private FamilyInstance CreateHostedElement(HostedProperty properties)
+        private FamilyInstance CreateHostedElement(HostedProperty properties, bool correctPosition)
         {
             if (properties is null)
             {
@@ -421,6 +421,19 @@ namespace CustomizacaoMoradias
             FamilySymbol familySymbol = GetFamilySymbol(doc, fsName);
 
             Wall wall = FindHostingWall(point, baseLevel);
+            
+            // Creates the element                   
+            FamilyInstance instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, baseLevel, 
+                Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
+
+            if(correctPosition)
+                CorrectHostedPosition(point, wall, instance);
+
+            return instance;
+        }
+
+        private void CorrectHostedPosition(XYZ point, Wall wall, FamilyInstance instance)
+        {
             LocationCurve wallCurve = wall.Location as LocationCurve;
             Line wallLine = wallCurve.Curve as Line;
 
@@ -429,29 +442,20 @@ namespace CustomizacaoMoradias
             XYZ wallNormal = (wallStartPoint - wallEndPoint).CrossProduct(XYZ.BasisZ).Normalize();
             double angle = Math.Atan2(wallNormal.Y, wallNormal.X);
 
-            // Creates the element                   
-            FamilyInstance instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, baseLevel, 
-                Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
+            // get the initial orientation of the new family instance
+            var p = (instance.Location as LocationPoint).Point;
 
-            if (properties.Type.StartsWith("H"))
+            XYZ insertedDirection = TransformUVinXYZ(RotateVector(ProjectInPlaneXY(p), angle)).Normalize();
+
+            // get the supposed orientation of the instance
+            XYZ insertionPoint = wallStartPoint + (wallLine.Direction * instance.HostParameter);
+            XYZ correctDirection = (point - insertionPoint).Normalize();
+
+            // if the initial orientation and the correct orientation are not equal, flip the instance
+            if (!insertedDirection.IsAlmostEqualTo(correctDirection))
             {
-                // get the initial orientation of the new family instance
-                var p = (instance.Location as LocationPoint).Point;
-                
-                XYZ insertedDirection = TransformUVinXYZ(RotateVector(ProjectInPlaneXY(p), angle)).Normalize();
-
-                // get the supposed orientation of the instance
-                XYZ insertionPoint = wallStartPoint + (wallLine.Direction * instance.HostParameter);
-                XYZ correctDirection = (point - insertionPoint).Normalize();
-
-                // if the initial orientation and the correct orientation are not equal, flip the instance
-                if (!insertedDirection.IsAlmostEqualTo(correctDirection))
-                {
-                    instance.flipFacing();
-                }
+                instance.flipFacing();
             }
-
-            return instance;
         }
 
         /// <summary>
@@ -481,7 +485,17 @@ namespace CustomizacaoMoradias
             }
 
             HostedProperty hp = ConvertToHosted(properties);
-            return CreateHostedElement(hp);
+            FamilyInstance door = CreateHostedElement(hp, false);
+
+            XYZ facing = door.FacingOrientation;
+            double angle = Math.Atan2(facing.Y, facing.X);
+            if (Math.Abs(angle - DeegreToRadians(properties.Rotation)) < 0.001)
+                door.flipFacing();
+
+            if(properties.OpenLeft)
+                door.flipHand();
+            
+            return door;
         }
 
         /// <summary>
@@ -496,7 +510,7 @@ namespace CustomizacaoMoradias
             }
 
             HostedProperty hp = ConvertToHosted(properties);
-            FamilyInstance window = CreateHostedElement(hp);
+            FamilyInstance window = CreateHostedElement(hp, false);
 
             if (window != null)
             {
