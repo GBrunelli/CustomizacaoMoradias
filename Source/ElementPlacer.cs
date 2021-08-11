@@ -78,6 +78,7 @@ namespace CustomizacaoMoradias
             }
         }
 
+        private List<Wall> Walls = new List<Wall>();
 
         public enum RoofDesign
         {
@@ -223,11 +224,9 @@ namespace CustomizacaoMoradias
             //xyz = xyz.Subtract(new XYZ(0, 0, xyz.Z));
             xyz = new XYZ(xyz.X, xyz.Y, level.Elevation);
 
-            List<Wall> walls = GetWalls(level);
-
             Wall wall = null;
             double distance = double.MaxValue;
-            foreach (Wall w in walls)
+            foreach (Wall w in Walls)
             {
                 double proximity = (w.Location as LocationCurve).Curve.Distance(xyz);
                 if (proximity < distance)
@@ -241,17 +240,6 @@ namespace CustomizacaoMoradias
                 return wall;
             }
             return null;
-        }
-
-        /// <summary>
-        /// Get all walls in the document.
-        /// </summary>
-        private List<Wall> GetWalls(Level level)
-        {
-            FilteredElementCollector collector = new FilteredElementCollector(doc);
-            collector.OfClass(typeof(Wall));
-            List<Wall> walls = collector.Cast<Wall>().Where(wl => wl.LevelId == baseLevel.Id).ToList();
-            return walls;
         }
 
         /// <summary>
@@ -313,7 +301,7 @@ namespace CustomizacaoMoradias
             {
                 errorMessage = errorMessage.Remove(errorMessage.Length - 2, 2);
                 MessageBox.Show($"Erro ao inserir elementos: \n{errorMessage}.", "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            }  
         }
 
         private UV RotateVector(UV vector, double rotation)
@@ -389,7 +377,7 @@ namespace CustomizacaoMoradias
 
             XYZ p0 = GetXYZFromProperties(properties.Coordinate.ElementAt(0));
             XYZ p1 = GetXYZFromProperties(properties.Coordinate.ElementAt(1));
-            Wall wall = null;
+            Wall wall;
             try
             {
                 Curve curve = Line.CreateBound(p0, p1);
@@ -407,6 +395,7 @@ namespace CustomizacaoMoradias
             {
                 throw new Exception($"Erro ao inserir parede {properties}.", e);
             }
+            Walls.Add(wall);
             return wall;
         }
 
@@ -558,7 +547,6 @@ namespace CustomizacaoMoradias
             return level;
         }
 
-        // 
         private IList<IList<BoundarySegment>> GetRoomLoops(Room room)
         {
             SpatialElementBoundaryOptions opt = new SpatialElementBoundaryOptions
@@ -1136,7 +1124,7 @@ namespace CustomizacaoMoradias
         private void DrawCurveArray(CurveArray curveArray)
         {
             if (curveArray is null) return;
-            Autodesk.Revit.DB.View currentView = doc.ActiveView;
+            View currentView = doc.ActiveView;
             foreach (Curve curve in curveArray)
             {
                 XYZ startPoint = curve.GetEndPoint(0);
@@ -1144,6 +1132,14 @@ namespace CustomizacaoMoradias
                 Line L1 = Line.CreateBound(startPoint, endPoint);
                 doc.Create.NewDetailCurve(currentView, L1);
             }
+        }
+
+        private void DrawCurveArray(Line line)
+        {
+            if (line is null) return;
+            CurveArray curveArray = new CurveArray();
+            curveArray.Append(line);
+            DrawCurveArray(curveArray);
         }
 
         /// <summary>
@@ -1618,6 +1614,10 @@ namespace CustomizacaoMoradias
                     {
                         room.Name = roomName;
                     }
+                    else
+                    {
+                        room.Name = "Varanda de serviço";
+                    }
                 }
             }
         }
@@ -1858,6 +1858,195 @@ namespace CustomizacaoMoradias
                 references.Append(modelCurve.GeometryCurve.GetEndPointReference(1));
                 doc.Create.NewDimension(doc.ActiveView, line, references);                   
             }
+        }
+
+        public List<(Wall, bool[])> GetOpenWalls(List<Wall> walls)
+        {
+            List<(Wall, bool[])> openWalls = new List<(Wall, bool[])>();
+
+            foreach (Wall wall in walls)
+            {
+                Line wallLine = (wall.Location as LocationCurve).Curve as Line;
+                bool connectedAt0 = false;
+                bool connectedAt1 = false;
+
+                XYZ p0 = wallLine.GetEndPoint(0);
+                XYZ p1 = wallLine.GetEndPoint(1);
+
+                foreach (Wall w in walls)
+                {
+                    
+                    Line wLine = (w.Location as LocationCurve).Curve as Line;
+                    var result = wallLine.Intersect(wLine, out var resultArray);
+
+                    if ((result != SetComparisonResult.Disjoint) && (result != SetComparisonResult.Equal))
+                    {
+                        IntersectionResultArrayIterator iterator = resultArray.ForwardIterator();
+                        IntersectionResult intersection = resultArray.get_Item(0);
+                        XYZ intersectionPoint = intersection.XYZPoint;
+
+                        if (intersectionPoint.IsAlmostEqualTo(p0))
+                            connectedAt0 = true;
+                        else if (intersectionPoint.IsAlmostEqualTo(p1))
+                            connectedAt1 = true;
+                    }
+                }
+                if(!(connectedAt0 && connectedAt1))
+                {
+                    bool[] openSide = { connectedAt0, connectedAt1 };
+                    (Wall, bool[]) openWall = (wall, openSide);
+                    openWalls.Add(openWall);
+                }
+            }
+            return openWalls;
+        }
+
+        private static Line GetWallLine(Wall wall)
+        {
+            if (wall is null) 
+                return null;
+            return (wall.Location as LocationCurve).Curve as Line;
+        }
+
+        public void PlaceRoomSeparatorsInOpenWalls()
+        {
+            List<(Wall, bool[])> openWalls = GetOpenWalls(Walls);
+
+            foreach (var openWall in openWalls)
+            {
+                // inital filtering
+                (Wall wall, bool[] connected) = openWall;
+                Line wallLine = GetWallLine(wall);
+                List<Wall> candidates = new List<Wall>();
+                foreach (Wall w in Walls)
+                {
+                    Line wLine = GetWallLine(w);
+                    var result = wallLine.Intersect(wLine);
+                    if (result == SetComparisonResult.Disjoint)
+                    {
+                        candidates.Add(w);
+                    }
+                }
+
+                // criar o vetor e a linha
+                XYZ p0, p1;  
+                if (!connected[0])
+                {
+                    p0 = wallLine.GetEndPoint(1);
+                    p1 = wallLine.GetEndPoint(0);
+                    PlaceRoomSeparatorInOpenWall(wallLine, candidates, p0, p1);
+                }
+                if (!connected[1])
+                {
+                    p0 = wallLine.GetEndPoint(0);
+                    p1 = wallLine.GetEndPoint(1);
+                    PlaceRoomSeparatorInOpenWall(wallLine, candidates, p0, p1);
+                }
+            }
+        }
+
+        private void PlaceRoomSeparatorInOpenWall(Line wallLine, List<Wall> candidates, XYZ p0, XYZ p1)
+        {
+            XYZ wallVector = (p1 - p0).Normalize();
+            if (!CalculateRoomBoundary(wallLine, candidates, p0, p1, wallVector))
+            {
+                wallVector = new XYZ(-wallVector.Y, wallVector.X, wallVector.Z);
+                if(!CalculateRoomBoundary(wallLine, candidates, p0, p1, wallVector))
+                {
+                    CalculateRoomBoundary(wallLine, candidates, p0, p1, -wallVector);
+                }
+            }
+        }
+
+        private bool CalculateRoomBoundary(Line wallLine, List<Wall> candidates, XYZ p0, XYZ p1, XYZ wallVector)
+        {
+            Line unbound = Line.CreateUnbound(p1, wallVector);
+            List<Wall> candidates2 = FilterWalls(candidates, unbound, p0, p1);
+            Line closestWallLine = GetClosestLine(p0, candidates2);
+            if (closestWallLine != null)
+                return CreateRoomBoundary(wallLine, p1, closestWallLine);
+            return false;
+        }
+
+        private bool CreateRoomBoundary(Line wallLine, XYZ p1, Line closestWallLine)
+        {
+            // cria o separador de ambientes
+            XYZ p;
+            try
+            {
+                IList<ClosestPointsPairBetweenTwoCurves> resultList = new List<ClosestPointsPairBetweenTwoCurves>();
+                closestWallLine.ComputeClosestPoints(wallLine, true, true, false, out resultList);
+                p = resultList[0].XYZPointOnFirstCurve;
+            }
+            catch (Autodesk.Revit.Exceptions.InvalidOperationException)
+            {
+                XYZ start = closestWallLine.GetEndPoint(0);
+                XYZ end = closestWallLine.GetEndPoint(1);
+                if (start.DistanceTo(p1) < end.DistanceTo(p1))
+                    p = start;
+                else
+                    p = end;
+            }
+            
+            Line l = Line.CreateBound(p1, p);
+            CurveArray array = new CurveArray();
+
+            array.Append(l);
+            View view = GetBaseLevelView();
+
+            WallType wallType = GetWallType(Properties.Settings.Default.WallTypeName);
+            double height = UnitUtils.ConvertToInternalUnits(2.8, UnitTypeId.Meters);
+            Wall wall = Wall.Create(doc, l, wallType.Id, baseLevel.Id, height, 0, false, false);
+            wall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(topLevel.Id);
+            wall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET).Set(UnitUtils.ConvertToInternalUnits(2.5, UnitTypeId.Meters));
+
+            return (doc.Create.NewRoomBoundaryLines(view.SketchPlane, array, view) != null);
+        }
+
+        private static Line GetClosestLine(XYZ p0, List<Wall> candidates2)
+        {
+            // calcula a menor distancia entre as paredes
+            double minDist = double.MaxValue;
+            Wall closestWall = null;
+            foreach (Wall candidate in candidates2)
+            {
+                Line candidateLine = GetWallLine(candidate);
+                double dist = candidateLine.Distance(p0);
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    closestWall = candidate;
+                }
+            }
+            if (closestWall is null) 
+                return null;
+            Line closestWallLine = GetWallLine(closestWall);
+            return closestWallLine;
+        }
+
+        private static List<Wall> FilterWalls(List<Wall> candidates, Line unbounded, XYZ p0, XYZ p1)
+        {
+            // filtra as possiveis parades
+            List<Wall> candidates2 = new List<Wall>();
+            foreach (Wall candidate in candidates)
+            {
+                Line candidateLine = GetWallLine(candidate);
+                var result = unbounded.Intersect(candidateLine, out var resultArray);
+                if ((result == SetComparisonResult.Overlap) && (resultArray.get_Item(0).UVPoint.U > 0))
+                {
+                    candidates2.Add(candidate);
+                }
+                else if (result == SetComparisonResult.Superset)
+                {
+                    if (p0.DistanceTo(candidateLine.GetEndPoint(0)) >
+                        p1.DistanceTo(candidateLine.GetEndPoint(0)))
+                    {
+                        candidates2.Add(candidate);
+                    }
+                }
+
+            }
+            return candidates2;
         }
     }
 }

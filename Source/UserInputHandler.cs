@@ -35,6 +35,7 @@ namespace CustomizacaoMoradias
                 try
                 {
                     elementPlacer.BuildJSON(path);
+                    elementPlacer.PlaceRoomSeparatorsInOpenWalls();
                 }
                 catch (Exception e)
                 {
