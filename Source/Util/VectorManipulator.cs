@@ -7,9 +7,9 @@ using Autodesk.Revit.DB;
 
 namespace CustomizacaoMoradias.Source.Util
 {
-    class VectorManipulator
+    static class VectorManipulator
     {
-        private static UV RotateVector(UV vector, double rotation)
+        public static UV RotateVector(UV vector, double rotation)
         {
             double u2 = Math.Cos(rotation) * vector.U - Math.Sin(rotation) * vector.V;
             double v2 = Math.Sin(rotation) * vector.U + Math.Cos(rotation) * vector.V;
@@ -22,11 +22,54 @@ namespace CustomizacaoMoradias.Source.Util
         /// <returns>
         /// Returns the angle in radians.
         /// </returns>
-        private double CalculatesAngle(UV p0, UV p1, UV p2)
+        public static double CalculatesAngle(UV p0, UV p1, UV p2)
         {
             UV vector1 = p1.Subtract(p0);
             UV vector2 = p2.Subtract(p1);
             return Math.PI + Math.Atan2(vector1.CrossProduct(vector2), vector1.DotProduct(vector2));
+        }
+
+        /// <summary>
+        /// Project the point XYZ in the plane XY.
+        /// </summary>
+        public static UV ProjectInPlaneXY(XYZ xyz)
+        {
+            return new UV(xyz.X, xyz.Y);
+        }
+
+        /// <summary>
+        /// Transforms a 2D point in a 3D point, with the Z component set to 0.
+        /// </summary>
+        public static XYZ TransformUVinXYZ(UV uv)
+        {
+            return new XYZ(uv.U, uv.V, 0);
+        }
+
+        /// <summary>
+        /// Calculates the vector that is formed by the start point and the end point of the curve.
+        /// </summary>
+        /// <param name="curve"></param>
+        /// <returns>
+        /// Returns the vector.
+        /// </returns>
+        public static XYZ GetCurveDirection(Curve curve)
+        {
+            XYZ startPoint = curve.GetEndPoint(0);
+            XYZ endPoint = curve.GetEndPoint(1);
+            XYZ curveDirection = new XYZ(startPoint.X - endPoint.X, startPoint.Y - endPoint.Y, 0);
+            return curveDirection;
+        }
+
+        /// <summary>
+        /// Calculate the third point to form a triangle that obein the expression: tan(slope) = 2 * height / base.
+        /// </summary>
+        public static XYZ FormTriangle(double slope, XYZ p0, XYZ p1)
+        {
+            double p2x = (p0.X + p1.X) / 2;
+            double p2y = (p0.Y + p1.Y) / 2;
+            XYZ baseVector = p1.Subtract(p0);
+            double p2z = (slope * baseVector.GetLength()) / 2;
+            return new XYZ(p2x, p2y, p2z);
         }
     }
 }

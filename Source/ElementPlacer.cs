@@ -324,7 +324,7 @@ namespace CustomizacaoMoradias
             UV offset = GetFamilyOffset(properties.Type);
             offset = new UV(UnitUtils.ConvertToInternalUnits(offset.U, UnitTypeId.Meters),
                 UnitUtils.ConvertToInternalUnits(offset.V, UnitTypeId.Meters));
-            offset = RotateVector(offset, rotation + baseRotation);
+            offset = VectorManipulator.RotateVector(offset, rotation + baseRotation);
 
             // Creates a point above the furniture to serve as a rotation axis
             XYZ axisPoint = new XYZ(point.X, point.Y, baseLevel.Elevation + 1);
@@ -337,7 +337,7 @@ namespace CustomizacaoMoradias
                 Autodesk.Revit.DB.Structure.StructuralType structuralType = Autodesk.Revit.DB.Structure.StructuralType.NonStructural;
                 furniture = doc.Create.NewFamilyInstance(point, familySymbol, structuralType);
                 ElementTransformUtils.RotateElement(doc, furniture.Id, axis, rotation + baseRotation);            
-                ElementTransformUtils.MoveElement(doc, furniture.Id, TransformUVinXYZ(offset));
+                ElementTransformUtils.MoveElement(doc, furniture.Id, VectorManipulator.TransformUVinXYZ(offset));
             }
             catch (Exception e)
             {
@@ -409,8 +409,8 @@ namespace CustomizacaoMoradias
             double rotation = properties.Rotation;
             UV offset = GetFamilyOffset(properties.Type);
 
-            offset = RotateVector(offset, rotation);
-            point += TransformUVinXYZ(offset);
+            offset = VectorManipulator.RotateVector(offset, rotation);
+            point += VectorManipulator.TransformUVinXYZ(offset);
             FamilySymbol familySymbol = GetFamilySymbol(doc, fsName);
 
             Wall wall = FindHostingWall(point, baseLevel);
@@ -438,7 +438,7 @@ namespace CustomizacaoMoradias
             // get the initial orientation of the new family instance
             var p = (instance.Location as LocationPoint).Point;
 
-            XYZ insertedDirection = TransformUVinXYZ(RotateVector(ProjectInPlaneXY(p), angle)).Normalize();
+            XYZ insertedDirection = VectorManipulator.TransformUVinXYZ(VectorManipulator.RotateVector(VectorManipulator.ProjectInPlaneXY(p), angle)).Normalize();
 
             // get the supposed orientation of the instance
             XYZ insertionPoint = wallStartPoint + (wallLine.Direction * instance.HostParameter);
@@ -602,7 +602,7 @@ namespace CustomizacaoMoradias
             CircularLinkedList<UV> points = new CircularLinkedList<UV>();
             foreach (Curve curve in curveArray)
             {
-                UV point2D = ProjectInPlaneXY(curve.GetEndPoint(0));
+                UV point2D = VectorManipulator.ProjectInPlaneXY(curve.GetEndPoint(0));
                 points.AddLast(point2D);
             }
             return points;
@@ -629,7 +629,7 @@ namespace CustomizacaoMoradias
                 UV p0 = node.Value;
                 UV p1 = node.Next.Value;
                 UV p2 = node.Next.Next.Value;
-                double angle = CalculatesAngle(p0, p1, p2);
+                double angle = VectorManipulator.CalculatesAngle(p0, p1, p2);
                 if (angle > Math.PI)           
                     notches.Add(p1);
                 node = node.Next;
@@ -720,8 +720,8 @@ namespace CustomizacaoMoradias
                 pointNode.Next.Value,
                 pointNode.Next.Next.Value
             };
-            UV p0 = ProjectInPlaneXY(curve.GetEndPoint(0));
-            UV p1 = ProjectInPlaneXY(curve.GetEndPoint(1));
+            UV p0 = VectorManipulator.ProjectInPlaneXY(curve.GetEndPoint(0));
+            UV p1 = VectorManipulator.ProjectInPlaneXY(curve.GetEndPoint(1));
             
 
             return !(SearchForUVInList(forbiddenPoints, p0) && SearchForUVInList(forbiddenPoints, p1));         
@@ -740,7 +740,7 @@ namespace CustomizacaoMoradias
         /// </returns>
         private List<CurveArray> EliminateNotch(UV notch, CurveArray curveArray, CircularLinkedList<UV> points, XYZ preferredOrientation, out Line cutLine)
         {
-            XYZ notche3D = TransformUVinXYZ(notch);
+            XYZ notche3D = VectorManipulator.TransformUVinXYZ(notch);
             Line line1 = Line.CreateUnbound(notche3D, preferredOrientation);
 
             XYZ otherOrientation = new XYZ(preferredOrientation.Y, preferredOrientation.X, 0);
@@ -781,7 +781,7 @@ namespace CustomizacaoMoradias
             };
 
             // returns the cutLine
-            cutLine = Line.CreateBound(notche3D, TransformUVinXYZ(newNode.Value));
+            cutLine = Line.CreateBound(notche3D, VectorManipulator.TransformUVinXYZ(newNode.Value));
 
             return list;
         }
@@ -813,13 +813,13 @@ namespace CustomizacaoMoradias
                     while (iterator.MoveNext())
                     {
                         IntersectionResult result = iterator.Current as IntersectionResult;
-                        UV point = ProjectInPlaneXY(result.XYZPoint);
+                        UV point = VectorManipulator.ProjectInPlaneXY(result.XYZPoint);
                         double distance = point.DistanceTo(notch);
                         if (distance < minDistance)
                         {
                             minDistance = distance;
                             newPoint = point;
-                            previousPoint = ProjectInPlaneXY(curve.GetEndPoint(0));
+                            previousPoint = VectorManipulator.ProjectInPlaneXY(curve.GetEndPoint(0));
                         }
                     }
                 }
@@ -844,7 +844,7 @@ namespace CustomizacaoMoradias
         /// <param name="curve"></param>
         private static CircularLinkedListNode<UV> AddPointsInList(CircularLinkedList<UV> points, IntersectionResultArray resultArray, Curve curve)
         {
-            UV p0 = ProjectInPlaneXY(curve.GetEndPoint(0));
+            UV p0 = VectorManipulator.ProjectInPlaneXY(curve.GetEndPoint(0));
             CircularLinkedListNode<UV> newNode = null;
             CircularLinkedListNode<UV> node = FindPoint(points, p0);
 
@@ -853,7 +853,7 @@ namespace CustomizacaoMoradias
             while (iterator.MoveNext())
             {
                 IntersectionResult result = iterator.Current as IntersectionResult;
-                UV intersectionPoint = ProjectInPlaneXY(result.XYZPoint);
+                UV intersectionPoint = VectorManipulator.ProjectInPlaneXY(result.XYZPoint);
                 newNode = points.AddAfter(node, intersectionPoint);
             }
             if (newNode.Next.Value.IsAlmostEqualTo(newNode.Value))
@@ -876,7 +876,7 @@ namespace CustomizacaoMoradias
                 // for the cases that the 2 lines are colinear
                 if (!node.Value.IsAlmostEqualTo(node.Next.Value))
                 {
-                    line = Line.CreateBound(TransformUVinXYZ(node.Value), TransformUVinXYZ(node.Next.Value));
+                    line = Line.CreateBound(VectorManipulator.TransformUVinXYZ(node.Value), VectorManipulator.TransformUVinXYZ(node.Next.Value));
                     curveArray.Append(line);
                 }
                 node = node.Next;
@@ -922,22 +922,6 @@ namespace CustomizacaoMoradias
                 node = node.Next;
             } while (node != points.Head);
             return null;
-        }
-
-        /// <summary>
-        /// Project the point XYZ in the plane XY.
-        /// </summary>
-        private static UV ProjectInPlaneXY(XYZ xyz)
-        {
-            return new UV(xyz.X, xyz.Y);
-        }
-
-        /// <summary>
-        /// Transforms a 2D point in a 3D point, with the Z component set to 0.
-        /// </summary>
-        private static XYZ TransformUVinXYZ(UV uv)
-        {
-            return new XYZ(uv.U, uv.V, 0);
         }
 
         /// <summary>
@@ -1059,8 +1043,8 @@ namespace CustomizacaoMoradias
                 {
                     foreach(Line l in unchangedLines)
                     {
-                        UV p0 = ProjectInPlaneXY(l.GetEndPoint(0));
-                        UV p1 = ProjectInPlaneXY(l.GetEndPoint(1));
+                        UV p0 = VectorManipulator.ProjectInPlaneXY(l.GetEndPoint(0));
+                        UV p1 = VectorManipulator.ProjectInPlaneXY(l.GetEndPoint(1));
 
                         if ((vertexI.IsAlmostEqualTo(p0) && vertexJ.IsAlmostEqualTo(p1)) ||
                             (vertexJ.IsAlmostEqualTo(p0) && vertexI.IsAlmostEqualTo(p1)))
@@ -1084,14 +1068,14 @@ namespace CustomizacaoMoradias
                 UV n1 = new UV(-v1.V, v1.U);
                 UV pij1 = vertexI + n1;
                 UV pij2 = vertexJ + n1;
-                Line line1 = Line.CreateBound(TransformUVinXYZ(pij1), TransformUVinXYZ(pij2));
+                Line line1 = Line.CreateBound(VectorManipulator.TransformUVinXYZ(pij1), VectorManipulator.TransformUVinXYZ(pij2));
                 line1.MakeUnbound();
 
                 // creates a shifted line that is parallel to the vector v2
                 UV n2 = new UV(-v2.V, v2.U);
                 UV pjk1 = vertexJ + n2;
                 UV pjk2 = vertexK + n2;
-                Line line2 = Line.CreateBound(TransformUVinXYZ(pjk1), TransformUVinXYZ(pjk2));
+                Line line2 = Line.CreateBound(VectorManipulator.TransformUVinXYZ(pjk1), VectorManipulator.TransformUVinXYZ(pjk2));
                 line2.MakeUnbound();
 
                 //see where the shifted lines 1 and 2 intersect
@@ -1100,7 +1084,7 @@ namespace CustomizacaoMoradias
                 if (comparisonResult == SetComparisonResult.Overlap)
                 {
                     IntersectionResult result = intersection.get_Item(0);
-                    UV intersection_point = ProjectInPlaneXY(result.XYZPoint);
+                    UV intersection_point = VectorManipulator.ProjectInPlaneXY(result.XYZPoint);
 
                     //add the intersection as our adjusted vert point
                     adjusted_points.AddLast(new UV(intersection_point.U, intersection_point.V));
@@ -1342,39 +1326,19 @@ namespace CustomizacaoMoradias
             List<CircularLinkedListNode<UV>> newPoints = new List<CircularLinkedListNode<UV>>();
 
             UV centroid = CalculatePolygonCentroid(points);
-            cutLine = Line.CreateUnbound(TransformUVinXYZ(centroid), divisionDirection);
+            cutLine = Line.CreateUnbound(VectorManipulator.TransformUVinXYZ(centroid), divisionDirection);
 
             foreach(Curve curve in curveArray)
             {
                 var result = cutLine.Intersect(curve, out var resultArray);
                 if (result == SetComparisonResult.Overlap)
                 {
-                    UV newPoint = ProjectInPlaneXY(resultArray.get_Item(0).XYZPoint);
+                    UV newPoint = VectorManipulator.ProjectInPlaneXY(resultArray.get_Item(0).XYZPoint);
                     XYZ p0 = curve.GetEndPoint(0);
                     XYZ p1 = curve.GetEndPoint(1);
-                    newPoints.Add(AddPointBetween(points, ProjectInPlaneXY(p0), ProjectInPlaneXY(p1), newPoint));
+                    newPoints.Add(AddPointBetween(points, VectorManipulator.ProjectInPlaneXY(p0), VectorManipulator.ProjectInPlaneXY(p1), newPoint));
                 }
-            }
-       
-            /*
-            foreach (Curve curve in curveArray)
-            {
-                // if they are parralel
-                if (GetCurveDirection(curve).CrossProduct(divisionDirection).IsZeroLength())
-                {
-                    XYZ p0 = curve.GetEndPoint(0);
-                    XYZ p1 = curve.GetEndPoint(1);
-                    UV newPoint = ProjectInPlaneXY((p0 + p1) / 2);
-                    newPoints.Add(AddPointBetween(points, ProjectInPlaneXY(p0), ProjectInPlaneXY(p1), newPoint));
-                }
-            }
-
-            if (newPoints.Count != 2)
-            {
-                cutLine = null;
-                return null;
-            }
-            */              
+            }           
 
             CircularLinkedList<UV> newPolygon0 = CreatePolygonBetweenVertices(newPoints[0], newPoints[1]);
             CircularLinkedList<UV> newPolygon1 = CreatePolygonBetweenVertices(newPoints[1], newPoints[0]);
@@ -1385,7 +1349,7 @@ namespace CustomizacaoMoradias
                 CreateCurveArrayFromPoints(newPolygon1)
             };
 
-            cutLine = Line.CreateBound(TransformUVinXYZ(newPoints[0].Value), TransformUVinXYZ(newPoints[1].Value));
+            cutLine = Line.CreateBound(VectorManipulator.TransformUVinXYZ(newPoints[0].Value), VectorManipulator.TransformUVinXYZ(newPoints[1].Value));
             return dividedCurveArrays;
         }
 
@@ -1417,7 +1381,7 @@ namespace CustomizacaoMoradias
                 UV p1 = node.Value;
                 UV p2 = node.Next.Value;
 
-                double angle = CalculatesAngle(p0, p1, p2);
+                double angle = VectorManipulator.CalculatesAngle(p0, p1, p2);
                 if (AlmostEqual(angle, Math.PI, 0.01) || AlmostEqual(angle, 0, 0.01))
                 {
                     points.Remove(p1);
@@ -1526,7 +1490,7 @@ namespace CustomizacaoMoradias
                     return true;
                 }
                 // verify if the line intersects and is parallel
-                if (result == SetComparisonResult.Overlap && (line.Direction.CrossProduct(GetCurveDirection(curve)).IsZeroLength()))
+                if (result == SetComparisonResult.Overlap && (line.Direction.CrossProduct(VectorManipulator.GetCurveDirection(curve)).IsZeroLength()))
                 {
                     return true;
                 }
@@ -1579,7 +1543,7 @@ namespace CustomizacaoMoradias
             {
                 ModelCurve modelCurve = iterator.Current as ModelCurve;
                 Curve curve = modelCurve.GeometryCurve;
-                XYZ curveDirection = GetCurveDirection(curve);
+                XYZ curveDirection = VectorManipulator.GetCurveDirection(curve);
 
                 if (curveDirection.DotProduct(slopeDirection) == 0)
                 {
@@ -1590,21 +1554,6 @@ namespace CustomizacaoMoradias
                 double elevation = -(overhang - UnitUtils.ConvertToInternalUnits(0.1, UnitTypeId.Meters)) / 3;
                 footPrintRoof.set_Offset(modelCurve, elevation);
             }
-        }
-
-        /// <summary>
-        /// Calculates the vector that is formed by the start point and the end point of the curve.
-        /// </summary>
-        /// <param name="curve"></param>
-        /// <returns>
-        /// Returns the vector.
-        /// </returns>
-        private static XYZ GetCurveDirection(Curve curve)
-        {
-            XYZ startPoint = curve.GetEndPoint(0);
-            XYZ endPoint = curve.GetEndPoint(1);
-            XYZ curveDirection = new XYZ(startPoint.X - endPoint.X, startPoint.Y - endPoint.Y, 0);
-            return curveDirection;
         }
 
         /// <summary>
@@ -1749,7 +1698,7 @@ namespace CustomizacaoMoradias
             NormalizeCurveArray(ref perimeter);
             foreach (Curve line in perimeter)
             {
-                XYZ lineDirection = GetCurveDirection(line);
+                XYZ lineDirection = VectorManipulator.GetCurveDirection(line);
                 if (lineDirection.CrossProduct(vectorDirection).IsZeroLength())
                 {
                     Wall newGableWall = CreateGableWall(line, slope);
@@ -1814,7 +1763,7 @@ namespace CustomizacaoMoradias
             // create the gable wall profile
             XYZ p0 = line.GetEndPoint(0);
             XYZ p1 = line.GetEndPoint(1);
-            XYZ p2 = FormTriangle(slope, p0, p1);
+            XYZ p2 = VectorManipulator.FormTriangle(slope, p0, p1);
             IList<Curve> profile = new List<Curve>(3)
             {
                 Line.CreateBound(p0, p1),
@@ -1827,19 +1776,7 @@ namespace CustomizacaoMoradias
 
             // create the gable wall
             return Wall.Create(doc, profile, type.Id, topLevel.Id, false);
-        }
-
-        /// <summary>
-        /// Calculate the third point to form a triangle that obein the expression: tan(slope) = 2 * height / base.
-        /// </summary>
-        private static XYZ FormTriangle(double slope, XYZ p0, XYZ p1)
-        {
-            double p2x = (p0.X + p1.X) / 2;
-            double p2y = (p0.Y + p1.Y) / 2;
-            XYZ baseVector = p1.Subtract(p0);
-            double p2z = (slope * baseVector.GetLength()) / 2;
-            return new XYZ(p2x, p2y, p2z);
-        }    
+        }  
         
         public void DimensioningBuilding(double offset, bool normalize)
         {
