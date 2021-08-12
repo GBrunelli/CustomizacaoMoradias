@@ -16,7 +16,7 @@ namespace CustomizacaoMoradias
             var baseLevel = Properties.Settings.Default.BaseLevelName;
             var topLevel = Properties.Settings.Default.TopLevelName;
             var scale = Properties.Settings.Default.Scale;
-            ElementPlacer elementPlacer = new ElementPlacer(uidoc, baseLevel, topLevel, scale);
+            HouseBuilder elementPlacer = new HouseBuilder(uidoc, baseLevel, topLevel, scale);
             try
             {
                 using (Transaction transaction = new Transaction(uidoc.Document, "Build Floor"))

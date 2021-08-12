@@ -82,6 +82,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\Element_RoomDM.cs" />
+    <Compile Include="Data\RevitDataAccess.cs" />
     <Compile Include="Data\RoomDM.cs" />
     <Compile Include="Data\ScoreDM.cs" />
     <Compile Include="Data\StyleDM.cs" />
@@ -168,10 +169,11 @@
     <Compile Include="Forms\PlaceElementsForm.Designer.cs">
       <DependentUpon>PlaceElementsForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Source\Builder\ElementPlacer.cs" />
+    <Compile Include="Source\Builder\HouseBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Source\UserInputHandler.cs" />
     <Compile Include="Source\Util\CircularLinkedList.cs" />
+    <Compile Include="Source\Util\Polygon.cs" />
     <Compile Include="Source\Util\VectorManipulator.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -9,6 +9,7 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Architecture;
 using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.UI;
+using CustomizacaoMoradias.Data;
 using CustomizacaoMoradias.DataModel;
 using CustomizacaoMoradias.Source;
 using CustomizacaoMoradias.Source.Util;
@@ -20,9 +21,10 @@ namespace CustomizacaoMoradias
     [Transaction(TransactionMode.Manual)]
     [Regeneration(RegenerationOption.Manual)]
     [Journaling(JournalingMode.NoCommandData)]
-    public class ElementPlacer
+    public class HouseBuilder
     {
         private readonly DataAccess db = new DataAccess();
+        private RevitDataAccess revitDB;
 
         private Document doc;
         private UIDocument uidoc;
@@ -67,7 +69,7 @@ namespace CustomizacaoMoradias
                     {
                         Room newRoom = doc.Create.NewRoom(baseLevel, point);
                         rooms.Add(newRoom);
-                        doc.Create.NewRoomTag(new LinkElementId(newRoom.Id), point, GetBaseLevelView().Id);
+                        doc.Create.NewRoomTag(new LinkElementId(newRoom.Id), point, revitDB.GetLevel(baseLevel.Name).Id); ;
                     }
                     else
                     {
@@ -83,13 +85,13 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Default contructor.
         /// </summary>
-        public ElementPlacer(UIDocument uidoc, string baseLevel, string topLevel, double scale)
+        public HouseBuilder(UIDocument uidoc, string baseLevel, string topLevel, double scale)
         {
             SetProperties(uidoc, baseLevel, topLevel, scale);
             ThreadInit();
         }
 
-        public ElementPlacer()
+        public HouseBuilder()
         {
             ThreadInit();
         }
@@ -97,9 +99,11 @@ namespace CustomizacaoMoradias
         public void SetProperties(UIDocument uidoc, string baseLevel, string topLevel, double scale)
         {
             this.uidoc = uidoc;
-            this.doc = uidoc.Document;
-            this.baseLevel = GetLevelFromName(baseLevel);
-            this.topLevel = GetLevelFromName(topLevel);
+            doc = uidoc.Document;
+            revitDB = new RevitDataAccess(doc);
+            
+            this.baseLevel = revitDB.GetLevel(baseLevel);
+            this.topLevel = revitDB.GetLevel(topLevel);
             this.scale = scale;
         }
 
@@ -150,25 +154,6 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Get the FamilySymbol given its name.
-        /// </summary>
-        private static FamilySymbol GetFamilySymbol(Document doc, string fsFamilyName)
-        {
-            // Retrieve the familySymbol of the piece of furniture
-            FamilySymbol symbol = (from familySymbol in new FilteredElementCollector(doc).OfClass(typeof(FamilySymbol)).
-                 Cast<FamilySymbol>() where (familySymbol.Name == fsFamilyName) select familySymbol).First();
-            return symbol;
-        }
-
-
-        private View GetBaseLevelView()
-        {
-            View view = (from v in new FilteredElementCollector(doc).OfClass(typeof(View))
-                         .Cast<View>() where (v.Name == baseLevel.Name) select v).First();
-            return view;
-        }
-
-        /// <summary>
         /// Convert a Coordinate to an XYZ object.
         /// </summary>
         private XYZ GetXYZFromProperties(Coordinate coords)
@@ -184,19 +169,7 @@ namespace CustomizacaoMoradias
             return new XYZ(x0, y0, baseLevel.Elevation);
         }
 
-        /// <summary>
-        /// Searches in the document data base for a Wall Type.
-        /// </summary>
-        /// <returns>
-        /// Returns the Wall Type corresponding to the string.
-        /// </returns>
-        private WallType GetWallType(string wallTypeName)
-        {
-            FilteredElementCollector collector = new FilteredElementCollector(doc);
-            collector.OfClass(typeof(WallType));
-            WallType wallType = collector.First(y => y.Name == wallTypeName) as WallType;
-            return wallType;
-        }
+
 
         /// <summary>
         /// Get the wall in an specific coordinate.
@@ -207,7 +180,7 @@ namespace CustomizacaoMoradias
         /// <returns>
         /// Returns the Wall in the XYZ coords. Returns null if no wall was found.
         /// </returns>
-        private Wall FindHostingWall(XYZ xyz, Level level)
+        public Wall FindWall(XYZ xyz, Level level)
         {         
             if (xyz is null)
             {
@@ -325,8 +298,7 @@ namespace CustomizacaoMoradias
             FamilyInstance furniture;
             try
             {
-                FamilySymbol familySymbol = GetFamilySymbol(doc, fsFamilyName);
-
+                FamilySymbol familySymbol = revitDB.GetFamilySymbol(fsFamilyName);
                 Autodesk.Revit.DB.Structure.StructuralType structuralType = Autodesk.Revit.DB.Structure.StructuralType.NonStructural;
                 furniture = doc.Create.NewFamilyInstance(point, familySymbol, structuralType);
                 ElementTransformUtils.RotateElement(doc, furniture.Id, axis, rotation + baseRotation);            
@@ -368,7 +340,7 @@ namespace CustomizacaoMoradias
             {
                 Curve curve = Line.CreateBound(p0, p1);
                 // sellect wall type
-                WallType wallType = GetWallType(wallTypeName);
+                WallType wallType = revitDB.GetWallType(wallTypeName);
 
                 // Creating the wall
                 double height = UnitUtils.ConvertToInternalUnits(2.8, UnitTypeId.Meters);
@@ -404,9 +376,9 @@ namespace CustomizacaoMoradias
 
             offset = VectorManipulator.RotateVector(offset, rotation);
             point += VectorManipulator.TransformUVinXYZ(offset);
-            FamilySymbol familySymbol = GetFamilySymbol(doc, fsName);
+            FamilySymbol familySymbol = revitDB.GetFamilySymbol(fsName);
 
-            Wall wall = FindHostingWall(point, baseLevel);
+            Wall wall = FindWall(point, baseLevel);
             
             // Creates the element                   
             FamilyInstance instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, baseLevel, 
@@ -520,33 +492,6 @@ namespace CustomizacaoMoradias
             return hp;
         }
 
-        /// <summary>
-        /// Finds a level from its name
-        /// </summary>
-        /// <param name="levelName">
-        /// The name as it is on Revit.
-        /// </param>
-        /// <returns>
-        /// Returns the Level.
-        /// </returns>
-        public Level GetLevelFromName(string levelName)
-        {
-            Level level;
-            try
-            {
-                level = new FilteredElementCollector(doc)
-                    .OfCategory(BuiltInCategory.OST_Levels)
-                    .WhereElementIsNotElementType()
-                    .Cast<Level>()
-                    .First(x => x.Name == levelName);
-            }
-            catch (Exception e)
-            {
-                throw new LevelNotFoundException("Nível \"" + levelName + "\" não encontrado.", e);
-            }
-            return level;
-        }
-
         private IList<IList<BoundarySegment>> GetRoomLoops(Room room)
         {
             SpatialElementBoundaryOptions opt = new SpatialElementBoundaryOptions
@@ -579,342 +524,6 @@ namespace CustomizacaoMoradias
                     doc.Create.NewFloor(curve, floorType, baseLevel, false);
                 }
             }
-        }
-
-        /// <summary>
-        /// Get the vertices of the CurveArray
-        /// </summary>
-        /// <param name="curveArray">
-        /// The CurveArray must be closed.
-        /// </param>
-        /// <returns>
-        /// Returns a Linked List of UV points ordered in clock wise order.
-        /// </returns>
-        private CircularLinkedList<UV> GetPoints(CurveArray curveArray)
-        {
-            CircularLinkedList<UV> points = new CircularLinkedList<UV>();
-            foreach (Curve curve in curveArray)
-            {
-                UV point2D = VectorManipulator.ProjectInPlaneXY(curve.GetEndPoint(0));
-                points.AddLast(point2D);
-            }
-            return points;
-        }
-
-        /// <summary>
-        /// Get all notches in a list of ordered points that represent the vertices of
-        /// a polygon. A notch is a point that the reflex angle in internal.
-        /// </summary>
-        /// <param name="points">
-        /// The poitns in the LinkedList must be ordered in clockwise order.
-        /// </param>
-        /// <returns>
-        /// Returns a List with the notches.
-        /// </returns>
-        private List<UV> GetNotches(CircularLinkedList<UV> points)
-        {
-            List<UV> notches = new List<UV>();
-            if(points.Count < 5) return notches;
-
-            CircularLinkedListNode<UV> node = points.Head;
-            do
-            {
-                UV p0 = node.Value;
-                UV p1 = node.Next.Value;
-                UV p2 = node.Next.Next.Value;
-                double angle = VectorManipulator.CalculatesAngle(p0, p1, p2);
-                if (angle > Math.PI)           
-                    notches.Add(p1);
-                node = node.Next;
-            } while (node != points.Head);
-
-            return notches;
-        }
-
-        /// <summary>
-        /// Decompose a non convex perimiter into its convex components. There is no 
-        /// garantee that it will be the mininum number of convex polygons. All the
-        /// angles of the perimeter must be a multiple of PI/2 radians.
-        /// </summary>
-        /// <returns>
-        /// Returns a List of CurveArrays that represents the convex compenents.
-        /// </returns>
-        public List<CurveArray> GetConvexPerimeters(CurveArray curveArray, XYZ preferredOrientation, List<Line> cutLines)
-        {
-            CircularLinkedList<UV> points = GetPoints(curveArray);
-            List<UV> notches = GetNotches(points);
-            List<CurveArray> perimeters = new List<CurveArray>();
-            if (notches.Count == 0)
-            {
-                perimeters.Add(curveArray);
-                return perimeters;
-            }
-
-            List<CurveArray> result = EliminateNotch(notches[0], curveArray, points, preferredOrientation, out Line line);
-            cutLines.Add(line);
-            foreach (CurveArray array in result)
-            {
-                perimeters.AddRange(GetConvexPerimeters(array, preferredOrientation, cutLines));
-            }
-
-            perimeters.Sort(new SortingDescendingArea());
-            return perimeters;
-        }
-
-        /// <summary>
-        /// Class to sort CurveArray by the area determinated by the curves of the array.
-        /// </summary>
-        private class SortingDescendingArea : IComparer<CurveArray>
-        {
-            public int Compare(CurveArray x, CurveArray y)
-            {
-                IList<CurveLoop> curveLoopX = new List<CurveLoop> { CurveArrayToCurveLoop(x) };
-                double areaX = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoopX);
-
-                IList<CurveLoop> curveLoopY = new List<CurveLoop> { CurveArrayToCurveLoop(y) };
-                double areaY = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoopY);
-
-                if (areaX < areaY)
-                {
-                    return 1;
-                }
-
-                if (areaX > areaY)
-                {
-                    return -1;
-                }
-                else
-                {
-                    return 0;
-                }
-            }
-        }
-
-        private bool SearchForUVInList(List<UV> list, UV key)
-        {
-            foreach(UV uv in list)
-            {
-                if(uv.IsAlmostEqualTo(key))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-       
-        private bool PosibleCurve(Curve curve, CircularLinkedListNode<UV> pointNode)
-        {
-            // the curve cannot contain the 2 points after or before or the pointNode itself
-            List<UV> forbiddenPoints = new List<UV>
-            {
-                pointNode.Value,
-                pointNode.Previous.Value,
-                pointNode.Previous.Previous.Value,
-                pointNode.Next.Value,
-                pointNode.Next.Next.Value
-            };
-            UV p0 = VectorManipulator.ProjectInPlaneXY(curve.GetEndPoint(0));
-            UV p1 = VectorManipulator.ProjectInPlaneXY(curve.GetEndPoint(1));
-            
-
-            return !(SearchForUVInList(forbiddenPoints, p0) && SearchForUVInList(forbiddenPoints, p1));         
-        }
-
-        /// <summary>
-        /// Eliminates a notch by creating a new line between the notch and an edge of the polygon.
-        /// </summary>
-        /// <param name="notch">Coordinates of the notch.</param>
-        /// <param name="curveArray">The polygon.</param>
-        /// <param name="points">The vertices of the polygon.</param>
-        /// <param name="preferredOrientation">The method will try to make a cut that is parallel to this vector.</param>
-        /// <param name="cutLine">The line that cut the polygon.</param>
-        /// <returns>
-        /// Returns the list of the CurveArrays.
-        /// </returns>
-        private List<CurveArray> EliminateNotch(UV notch, CurveArray curveArray, CircularLinkedList<UV> points, XYZ preferredOrientation, out Line cutLine)
-        {
-            XYZ notche3D = VectorManipulator.TransformUVinXYZ(notch);
-            Line line1 = Line.CreateUnbound(notche3D, preferredOrientation);
-
-            XYZ otherOrientation = new XYZ(preferredOrientation.Y, preferredOrientation.X, 0);
-            Line line2 = Line.CreateUnbound(notche3D, otherOrientation);
-
-            CircularLinkedListNode<UV> notchNode = FindPoint(points, notch);
-
-            // get the posible curves for the new point
-            CurveArray posibleCurves = new CurveArray();
-            foreach (Curve curve in curveArray)
-            {
-                if (PosibleCurve(curve, notchNode))
-                {
-                    posibleCurves.Append(curve);
-                }
-            }
-
-            // iterate for each possible curve, and if
-            // a intersection is found, the point will 
-            // added in the linked list
-            CircularLinkedListNode<UV> newNode;
-            newNode = FindNewNode(ref points, line1, posibleCurves, notch);
-
-            if (newNode == null)
-            {
-                newNode = FindNewNode(ref points, line2, posibleCurves, notch);
-            }
-
-            // generates the 2 new polygons    
-            CircularLinkedList<UV> polygonA = CreatePolygonBetweenVertices(newNode, notchNode);
-            CircularLinkedList<UV> polygonB = CreatePolygonBetweenVertices(notchNode, newNode);
-
-            // creates the curves
-            List<CurveArray> list = new List<CurveArray>
-            {
-                CreateCurveArrayFromPoints(polygonA),
-                CreateCurveArrayFromPoints(polygonB)
-            };
-
-            // returns the cutLine
-            cutLine = Line.CreateBound(notche3D, VectorManipulator.TransformUVinXYZ(newNode.Value));
-
-            return list;
-        }
-
-        /// <summary>
-        /// Finds a point that
-        /// </summary>
-        /// <param name="points"></param>
-        /// <param name="line1"></param>
-        /// <param name="posibleCurves"></param>
-        /// <returns></returns>
-        private static CircularLinkedListNode<UV> FindNewNode(ref CircularLinkedList<UV> points, Line line, CurveArray posibleCurves, UV notch)
-        {
-            // iterate for each possible curve, and if
-            // a intersection is found, the point will 
-            // be added in the linked list
-            CircularLinkedListNode<UV> newNode = null;
-
-            // get the closest point
-            UV newPoint = null, previousPoint = null;
-            double minDistance = double.MaxValue;
-            foreach (Curve curve in posibleCurves)
-            {
-                SetComparisonResult intersection = curve.Intersect(line, out IntersectionResultArray resultArray);
-                if (intersection == SetComparisonResult.Overlap)
-                {
-                    IntersectionResultArrayIterator iterator = resultArray.ForwardIterator();
-                    iterator.Reset();
-                    while (iterator.MoveNext())
-                    {
-                        IntersectionResult result = iterator.Current as IntersectionResult;
-                        UV point = VectorManipulator.ProjectInPlaneXY(result.XYZPoint);
-                        double distance = point.DistanceTo(notch);
-                        if (distance < minDistance)
-                        {
-                            minDistance = distance;
-                            newPoint = point;
-                            previousPoint = VectorManipulator.ProjectInPlaneXY(curve.GetEndPoint(0));
-                        }
-                    }
-                }
-            }
-
-            // insert the new point in the list
-            var node = FindPoint(points, previousPoint);
-            newNode = points.AddAfter(node, newPoint);
-            if (newNode.Next.Value.IsAlmostEqualTo(newNode.Value))
-                points.Remove(newNode.Next.Value);
-            else if (newNode.Previous.Value.IsAlmostEqualTo(newNode.Value))
-                points.Remove(newNode.Previous.Value);
-
-            return newNode;
-        }
-
-        /// <summary>
-        /// Add a new vertice in order in the list of vertices of the polygon given the IntersectionResultArray.
-        /// </summary>
-        /// <param name="points"></param>
-        /// <param name="resultArray"></param>
-        /// <param name="curve"></param>
-        private static CircularLinkedListNode<UV> AddPointsInList(CircularLinkedList<UV> points, IntersectionResultArray resultArray, Curve curve)
-        {
-            UV p0 = VectorManipulator.ProjectInPlaneXY(curve.GetEndPoint(0));
-            CircularLinkedListNode<UV> newNode = null;
-            CircularLinkedListNode<UV> node = FindPoint(points, p0);
-
-            IntersectionResultArrayIterator iterator = resultArray.ForwardIterator();
-            iterator.Reset();
-            while (iterator.MoveNext())
-            {
-                IntersectionResult result = iterator.Current as IntersectionResult;
-                UV intersectionPoint = VectorManipulator.ProjectInPlaneXY(result.XYZPoint);
-                newNode = points.AddAfter(node, intersectionPoint);
-            }
-            if (newNode.Next.Value.IsAlmostEqualTo(newNode.Value))
-                points.Remove(newNode.Next.Value);
-            else if (newNode.Previous.Value.IsAlmostEqualTo(newNode.Value))
-                points.Remove(newNode.Previous.Value);
-
-            return newNode;
-        }
-
-        /// <summary>
-        /// Create a CurveArray given its vertices.
-        /// </summary>
-        private CurveArray CreateCurveArrayFromPoints(CircularLinkedList<UV> points)
-        {
-            CurveArray curveArray = new CurveArray();
-            CircularLinkedListNode<UV> node = points.Head;
-            Line line;
-            do {
-                // for the cases that the 2 lines are colinear
-                if (!node.Value.IsAlmostEqualTo(node.Next.Value))
-                {
-                    line = Line.CreateBound(VectorManipulator.TransformUVinXYZ(node.Value), VectorManipulator.TransformUVinXYZ(node.Next.Value));
-                    curveArray.Append(line);
-                }
-                node = node.Next;
-            } while (node != points.Head);
-            return curveArray;
-        }
-
-        /// <summary>
-        /// Create a sub group of the linkedList that starts with node 'first' and ends with node 'last'.
-        /// </summary>
-        /// <param name="first"></param>
-        /// <param name="last"></param>
-        /// <returns>
-        /// Returns the vertives of the new polygon.
-        /// </returns>
-        private CircularLinkedList<UV> CreatePolygonBetweenVertices(CircularLinkedListNode<UV> first, CircularLinkedListNode<UV> last)
-        {
-            CircularLinkedList<UV> polygon = new CircularLinkedList<UV>();
-            CircularLinkedListNode<UV> node = first;
-            do
-            {
-                polygon.AddLast(node.Value);
-                node = node.Next;
-            } while (node != last);
-            polygon.AddLast(node.Value);
-            return polygon;
-        }      
-
-        /// <summary>
-        /// Searches for a point in the LinkedList
-        /// </summary>
-        /// <returns>
-        /// Returns the node.
-        /// </returns>
-        private static CircularLinkedListNode<UV> FindPoint(CircularLinkedList<UV> points, UV key)
-        {
-            CircularLinkedListNode<UV> node = points.Head;
-            do
-            {
-                UV point = node.Value;
-                if(point.IsAlmostEqualTo(key, 0.01))
-                    return node;
-                node = node.Next;
-            } while (node != points.Head);
-            return null;
         }
 
         /// <summary>
@@ -977,116 +586,7 @@ namespace CustomizacaoMoradias
             return curveArray;
         }
 
-        /// <summary>
-        /// Creates a Curve Array given the Boundary Segments. 
-        /// </summary>
-        /// <param name="offset">
-        /// A positive value that represents the offset that the curve array will have in a direction. 
-        /// If this value is 0, the user may not pass an offsetVector.
-        /// <param name="curveArray">
-        /// The reference Curve Array.
-        /// </param>
-        /// <returns>
-        /// Returns the offseted Curve Array.
-        /// </returns>
-        public CurveArray CreateOffsetedCurveArray(double offset, CurveArray curveArray, List<Line> unchangedLines)
-        {
-            if (offset < 0 || curveArray.Size < 3)
-            {
-                return null;
-            }
-
-            NormalizeCurveArray(ref curveArray);
-            CircularLinkedList<UV> points = GetPoints(curveArray);
-            CircularLinkedList<UV> offsetedPoints = OffsetPolygon(points, offset, unchangedLines);
-
-            CircularLinkedList<UV> linkedOffsetedPoints = new CircularLinkedList<UV>(offsetedPoints);
-            CurveArray offsetedCurveArray = CreateCurveArrayFromPoints(linkedOffsetedPoints);
-
-            return offsetedCurveArray;
-        }
-
-        /// <summary>
-        /// Offset a polygon in all directions, except the edge of this polygon that is equal to the unchangedLine parameter.
-        /// </summary>
-        /// <param name="vertices">A list of 2D coordinates that represents the vertices of the polygon. The list must be ordered counter-clockwise</param>
-        /// <param name="offset">The offset value.</param>
-        /// <param name="unchangedLine">If an edge of the polygon is collinear to this line, that edge will remain unchanged.</param>
-        /// <returns>Returns a List of 2D coordinates that represents the offseted polygon.</returns>
-        private static CircularLinkedList<UV> OffsetPolygon(CircularLinkedList<UV> vertices, double offset, List<Line> unchangedLines)
-        {
-            if (offset == 0) return vertices;
-
-            CircularLinkedList<UV> adjusted_points = new CircularLinkedList<UV>();
-            CircularLinkedListNode<UV> node = vertices.Head;
-            do
-            {
-                //find the points before and after our target point.
-                var vertexI = node.Previous.Value;
-                var vertexJ = node.Value;
-                var vertexK = node.Next.Value;
-
-                //the next step is to push out each point based on the position of its surrounding points and then
-                //figure out the intersections of the pushed out points             
-                UV v1 = vertexJ - vertexI;
-                UV v2 = vertexK - vertexJ;
-
-                // verifies if one of the segments ij, ji, jk or kj is the unchangedLine
-                if(unchangedLines != null)
-                {
-                    foreach(Line l in unchangedLines)
-                    {
-                        UV p0 = VectorManipulator.ProjectInPlaneXY(l.GetEndPoint(0));
-                        UV p1 = VectorManipulator.ProjectInPlaneXY(l.GetEndPoint(1));
-
-                        if ((vertexI.IsAlmostEqualTo(p0) && vertexJ.IsAlmostEqualTo(p1)) ||
-                            (vertexJ.IsAlmostEqualTo(p0) && vertexI.IsAlmostEqualTo(p1)))
-                        {
-                            v1 = UV.Zero;
-                            break;
-                        }
-                        if ((vertexJ.IsAlmostEqualTo(p0) && vertexK.IsAlmostEqualTo(p1)) || 
-                            (vertexK.IsAlmostEqualTo(p0) && vertexJ.IsAlmostEqualTo(p1)))
-                        {
-                            v2 = UV.Zero;
-                            break;
-                        }
-                    }
-                }
-
-                v1 = v1.Normalize() * offset;
-                v2 = v2.Normalize() * offset;
-
-                // creates a shifted line that is parallel to the vector v1 
-                UV n1 = new UV(-v1.V, v1.U);
-                UV pij1 = vertexI + n1;
-                UV pij2 = vertexJ + n1;
-                Line line1 = Line.CreateBound(VectorManipulator.TransformUVinXYZ(pij1), VectorManipulator.TransformUVinXYZ(pij2));
-                line1.MakeUnbound();
-
-                // creates a shifted line that is parallel to the vector v2
-                UV n2 = new UV(-v2.V, v2.U);
-                UV pjk1 = vertexJ + n2;
-                UV pjk2 = vertexK + n2;
-                Line line2 = Line.CreateBound(VectorManipulator.TransformUVinXYZ(pjk1), VectorManipulator.TransformUVinXYZ(pjk2));
-                line2.MakeUnbound();
-
-                //see where the shifted lines 1 and 2 intersect
-                SetComparisonResult comparisonResult = line1.Intersect(line2, out IntersectionResultArray intersection);
-
-                if (comparisonResult == SetComparisonResult.Overlap)
-                {
-                    IntersectionResult result = intersection.get_Item(0);
-                    UV intersection_point = VectorManipulator.ProjectInPlaneXY(result.XYZPoint);
-
-                    //add the intersection as our adjusted vert point
-                    adjusted_points.AddLast(new UV(intersection_point.U, intersection_point.V));
-                }
-
-                node = node.Next;
-            } while (node != vertices.Head);
-            return adjusted_points;
-        }
+        
 
         /// <summary>
         /// Draw lines in the current view that matches the given curve array.
@@ -1114,38 +614,6 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Converts a CurveLoop to CurveArray.
-        /// </summary>
-        /// <returns>
-        /// Returns a CurveArray with the same curves of the CurveLoop.
-        /// </returns>
-        private static CurveArray CurveLoopToCurveArray(CurveLoop loop)
-        {
-            CurveArray array = new CurveArray();
-            foreach (Curve curve in loop)
-            {
-                array.Append(curve);
-            }
-            return array;
-        }
-
-        /// <summary>
-        /// Converts a CurveArray to a CurveLoop.
-        /// </summary>
-        /// <returns> 
-        /// Returns a CurveLoop with the same curves of the CurveArray.
-        /// </returns>
-        private static CurveLoop CurveArrayToCurveLoop(CurveArray array)
-        {
-            CurveLoop loop = new CurveLoop();
-            foreach (Curve curve in array)
-            {
-                loop.Append(curve);
-            }
-            return loop;
-        }
-
-        /// <summary>
         /// Create the ceiling of a building given the loops of the active document. The buildding must be surrounded by walls.
         /// </summary>
         /// <returns>
@@ -1154,8 +622,8 @@ namespace CustomizacaoMoradias
         public Floor CreateCeiling(string floorTypeName)
         {
             Floor ceiling = null;
-            CurveArray curve = GetHousePerimeter();
-            NormalizeCurveArray(ref curve);
+            Polygon ceilingPolygon = new Polygon(GetHousePerimeter());
+            ceilingPolygon.Normalize();
 
             // create a floor type
             FilteredElementCollector collector = new FilteredElementCollector(doc);
@@ -1163,36 +631,13 @@ namespace CustomizacaoMoradias
             FloorType floorType = collector.First(y => y.Name == floorTypeName) as FloorType;
 
             // create the ceiling
-            ceiling = doc.Create.NewFloor(curve, floorType, topLevel, false);
+            ceiling = doc.Create.NewFloor(ceilingPolygon.CurveArray, floorType, topLevel, false);
             ElementTransformUtils.MoveElement(doc, ceiling.Id, new XYZ(0, 0, topLevel.Elevation));
 
             return ceiling;
         }
 
-        /// <summary>
-        /// Calculates the middle point of a Curve.
-        /// </summary>
-        /// <returns>
-        /// Returns the XYZ coords.
-        /// </returns>
-        private static XYZ GetCurveMiddlePoint(Curve curve)
-        {
-            if (curve is null)
-            {
-                throw new ArgumentNullException(nameof(curve));
-            }
 
-            XYZ curveStartPoint = curve.GetEndPoint(0);
-            XYZ curveEndPoint = curve.GetEndPoint(1);
-
-            double cordX, cordY, cordZ;
-
-            cordX = (curveStartPoint.X + curveEndPoint.X) / 2;
-            cordY = (curveStartPoint.Y + curveEndPoint.Y) / 2;
-            cordZ = (curveStartPoint.Z + curveEndPoint.Z) / 2;
-
-            return new XYZ(cordX, cordY, cordZ);
-        }
 
         /// <summary>
         /// Classify the rooms of a project based on the elements inside it.
@@ -1320,53 +765,14 @@ namespace CustomizacaoMoradias
 
             Viewport.Create(doc, viewSheet.Id, doc.ActiveView.Id, new XYZ(0, 2, 0));
         }
-        private bool NormalizeCurveArray(ref CurveArray curveArray)
-        {
-            bool normalized = true;
-            var points = GetPoints(curveArray);
-            var node = points.Head;
-
-            do
-            {
-                UV p0 = node.Previous.Value;
-                UV p1 = node.Value;
-                UV p2 = node.Next.Value;
-
-                double angle = VectorManipulator.CalculatesAngle(p0, p1, p2);
-                if (AlmostEqual(angle, Math.PI, 0.01) || AlmostEqual(angle, 0, 0.01))
-                {
-                    points.Remove(p1);
-                    normalized = false;
-                }
-                node = node.Next;
-            } while (node != points.Head);
-
-            curveArray = CreateCurveArrayFromPoints(points);
-
-            if (!normalized)
-                NormalizeCurveArray(ref curveArray);
-
-            return normalized;
-        }
-
-        bool AlmostEqual(double a, double b, double delta)
-        {
-            return Math.Abs(a - b) < delta;
-        }
-
-        
-
-        
-
-
         
         public void DimensioningBuilding(double offset, bool normalize)
         {
-            var perimeter = GetHousePerimeter();
+            Polygon housePerimiter = new Polygon(GetHousePerimeter());
             if (normalize)
-                NormalizeCurveArray(ref perimeter);
+                housePerimiter.Normalize();
 
-            foreach (Curve curve in perimeter)
+            foreach (Curve curve in housePerimiter.CurveArray)
             {
                 XYZ p1 = new XYZ(
                     curve.GetEndPoint(0).X,
@@ -1526,9 +932,9 @@ namespace CustomizacaoMoradias
             CurveArray array = new CurveArray();
 
             array.Append(l);
-            View view = GetBaseLevelView();
+            View view = revitDB.GetLevelView(baseLevel.Name);
 
-            WallType wallType = GetWallType(Properties.Settings.Default.WallTypeName);
+            WallType wallType = revitDB.GetWallType(Properties.Settings.Default.WallTypeName);
             double height = UnitUtils.ConvertToInternalUnits(2.8, UnitTypeId.Meters);
             Wall wall = Wall.Create(doc, l, wallType.Id, baseLevel.Id, height, 0, false, false);
             wall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(topLevel.Id);

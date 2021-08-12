@@ -41,7 +41,7 @@ namespace CustomizacaoMoradias
 
         private void openButton_Click(object sender, EventArgs e)
         {
-            fileTextBox.Text = ElementPlacer.SelectFile();
+            fileTextBox.Text = HouseBuilder.SelectFile();
             filePath = fileTextBox.Text;
         }
 

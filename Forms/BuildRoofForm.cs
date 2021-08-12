@@ -20,7 +20,7 @@ namespace CustomizacaoMoradias.Forms
             }
         }
 
-        public static ElementPlacer.RoofDesign RoofDesign
+        public static HouseBuilder.RoofDesign RoofDesign
         {
             get
             {

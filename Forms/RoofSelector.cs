@@ -93,15 +93,15 @@ namespace CustomizacaoMoradias.Forms
             }
         }
 
-        public static double GetSlopeByType(ElementPlacer.RoofDesign roofDesign)
+        public static double GetSlopeByType(HouseBuilder.RoofDesign roofDesign)
         {
             switch (roofDesign)
             {
-                case ElementPlacer.RoofDesign.Gable:
+                case HouseBuilder.RoofDesign.Gable:
                     return 0.3;
-                case ElementPlacer.RoofDesign.Hip:
+                case HouseBuilder.RoofDesign.Hip:
                     return 0.3;
-                case ElementPlacer.RoofDesign.HiddenButterfly:
+                case HouseBuilder.RoofDesign.HiddenButterfly:
                     return 0.05;
             }
             return 0.3;
@@ -128,24 +128,24 @@ namespace CustomizacaoMoradias.Forms
             }
         }
 
-        public ElementPlacer.RoofDesign RoofStyle
+        public HouseBuilder.RoofDesign RoofStyle
         {
             get 
             {
                 switch (State)
                 {
                     case EdgeState.EdgeVertical:
-                        return ElementPlacer.RoofDesign.Gable;
+                        return HouseBuilder.RoofDesign.Gable;
                     case EdgeState.EdgeHorizontal:
-                        return ElementPlacer.RoofDesign.Gable;
+                        return HouseBuilder.RoofDesign.Gable;
                     case EdgeState.MidHorizontal:
-                        return ElementPlacer.RoofDesign.HiddenButterfly;
+                        return HouseBuilder.RoofDesign.HiddenButterfly;
                     case EdgeState.MidVertical:
-                        return ElementPlacer.RoofDesign.HiddenButterfly;
+                        return HouseBuilder.RoofDesign.HiddenButterfly;
                     case EdgeState.AllEdges:
-                        return ElementPlacer.RoofDesign.Hip;
+                        return HouseBuilder.RoofDesign.Hip;
                 }
-                return ElementPlacer.RoofDesign.Hip;
+                return HouseBuilder.RoofDesign.Hip;
             }  
         }
 

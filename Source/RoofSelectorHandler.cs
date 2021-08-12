@@ -6,7 +6,7 @@ namespace CustomizacaoMoradias.Source
 {
     class RoofSelectorHandler : IExternalEventHandler
     {
-        public ElementPlacer elementPlacer = new ElementPlacer();
+        public HouseBuilder elementPlacer = new HouseBuilder();
 
         public void Execute(UIApplication app)
         {

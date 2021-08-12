@@ -9,7 +9,7 @@ namespace CustomizacaoMoradias
 {
     public class UserInputHandler : IExternalEventHandler
     {
-        public ElementPlacer elementPlacer = new ElementPlacer();
+        public HouseBuilder elementPlacer = new HouseBuilder();
 
         public void Execute(UIApplication app)
         {

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Autodesk.Revit.DB;
+using CustomizacaoMoradias.Data;
 using CustomizacaoMoradias.Source.Util;
 
 namespace CustomizacaoMoradias.Source.Builder
@@ -20,12 +21,16 @@ namespace CustomizacaoMoradias.Source.Builder
         private Document document;
         private Level baseLevel;
         private Level roofLevel;
+        private HouseBuilder hb;
+        private RevitDataAccess revitDB;
 
-        public RoofCreator(Document document, Level baseLevel, Level roofLevel)
+        public RoofCreator(Document document, Level baseLevel, Level roofLevel, HouseBuilder hb, RevitDataAccess revitDB)
         {
             this.document = document;
             this.baseLevel = baseLevel;
             this.roofLevel = roofLevel;
+            this.hb = hb;
+            this.revitDB = revitDB;
         }
 
         /// <summary>
@@ -51,8 +56,11 @@ namespace CustomizacaoMoradias.Source.Builder
         public FootPrintRoof CreateRoof(double overhang, double slope, XYZ slopeDirection, RoofDesign roofDesign)
         {
             FootPrintRoof footPrintRoof = null;
-            CurveArray footPrintCurve = GetHousePerimeter();
-            NormalizeCurveArray(ref footPrintCurve);
+            CurveArray footPrintCurve = hb.GetHousePerimeter();
+
+            Polygon polygon = new Polygon(footPrintCurve);
+            polygon.Normalize();
+            footPrintCurve = polygon.CurveArray;
 
             switch (roofDesign)
             {
@@ -94,11 +102,12 @@ namespace CustomizacaoMoradias.Source.Builder
 
         private void CreateHiddenButterflyRoof(CurveArray footPrint, double slope, XYZ slopeDirection)
         {
+            Polygon roofPolygon = new Polygon(footPrint);
             List<Line> cutLines = new List<Line>();
-            // List<CurveArray> convexFootPrint = GetConvexPerimeters(footPrint, slopeDirection, cutLines);
-
+            
             XYZ divisionDirection = new XYZ(-slopeDirection.Y, slopeDirection.X, 0);
-            List<CurveArray> convexFootPrint = DivideCurveArrayInHalf(footPrint, divisionDirection, out Line cutLine);
+
+            List<CurveArray> convexFootPrint = roofPolygon.DividePolygonInHalf(divisionDirection, out Line cutLine);
             cutLines.Add(cutLine);
 
             foreach (CurveArray curveArray in convexFootPrint)
@@ -129,67 +138,6 @@ namespace CustomizacaoMoradias.Source.Builder
             }
             CreateParapetWall(footPrint);
         }
-
-        private UV CalculatePolygonCentroid(CircularLinkedList<UV> vertices)
-        {
-            var node = vertices.Head;
-            UV sum = UV.Zero;
-            do
-            {
-                UV vertex = node.Value;
-                sum += vertex;
-                node = node.Next;
-            } while (node != vertices.Head);
-            sum /= vertices.Count;
-            return sum;
-        }
-
-        private List<CurveArray> DivideCurveArrayInHalf(CurveArray curveArray, XYZ divisionDirection, out Line cutLine)
-        {
-            NormalizeCurveArray(ref curveArray);
-
-            CircularLinkedList<UV> points = GetPoints(curveArray);
-            List<CircularLinkedListNode<UV>> newPoints = new List<CircularLinkedListNode<UV>>();
-
-            UV centroid = CalculatePolygonCentroid(points);
-            cutLine = Line.CreateUnbound(VectorManipulator.TransformUVinXYZ(centroid), divisionDirection);
-
-            foreach (Curve curve in curveArray)
-            {
-                var result = cutLine.Intersect(curve, out var resultArray);
-                if (result == SetComparisonResult.Overlap)
-                {
-                    UV newPoint = VectorManipulator.ProjectInPlaneXY(resultArray.get_Item(0).XYZPoint);
-                    XYZ p0 = curve.GetEndPoint(0);
-                    XYZ p1 = curve.GetEndPoint(1);
-                    newPoints.Add(AddPointBetween(points, VectorManipulator.ProjectInPlaneXY(p0), VectorManipulator.ProjectInPlaneXY(p1), newPoint));
-                }
-            }
-
-            CircularLinkedList<UV> newPolygon0 = CreatePolygonBetweenVertices(newPoints[0], newPoints[1]);
-            CircularLinkedList<UV> newPolygon1 = CreatePolygonBetweenVertices(newPoints[1], newPoints[0]);
-
-            List<CurveArray> dividedCurveArrays = new List<CurveArray>
-            {
-                CreateCurveArrayFromPoints(newPolygon0),
-                CreateCurveArrayFromPoints(newPolygon1)
-            };
-
-            cutLine = Line.CreateBound(VectorManipulator.TransformUVinXYZ(newPoints[0].Value), VectorManipulator.TransformUVinXYZ(newPoints[1].Value));
-            return dividedCurveArrays;
-        }
-
-        private static CircularLinkedListNode<UV> AddPointBetween(CircularLinkedList<UV> points, UV p0, UV p1, UV newPoint)
-        {
-            CircularLinkedListNode<UV> p0Node = FindPoint(points, p0);
-            CircularLinkedListNode<UV> p1Node = FindPoint(points, p1);
-            if (p0Node.Next.Equals(p1Node))
-                return points.AddAfter(p0Node, newPoint);
-            if (p1Node.Next.Equals(p0Node))
-                return points.AddAfter(p1Node, newPoint);
-            throw new ArgumentException("The points are not sequential.");
-        }
-
        
 
         private void CreateParapetWall(CurveArray curveArray)
@@ -197,10 +145,10 @@ namespace CustomizacaoMoradias.Source.Builder
             foreach (Curve curve in curveArray)
             {
                 XYZ curveMiddlePoint = GetCurveMiddlePoint(curve);
-                WallType wallType = GetWallType(Properties.Settings.Default.WallTypeName);
+                WallType wallType = revitDB.GetWallType(Properties.Settings.Default.WallTypeName);
                 Wall parapetWall = Wall.Create(document, curve, wallType.Id, roofLevel.Id, UnitUtils.ConvertToInternalUnits(0.8, UnitTypeId.Meters), 0, false, false);
 
-                Wall wall = FindHostingWall(curveMiddlePoint, baseLevel);
+                Wall wall = hb.FindWall(curveMiddlePoint, baseLevel);
                 if (wall != null)
                 {
                     try { JoinGeometryUtils.JoinGeometry(document, wall, parapetWall); }
@@ -209,7 +157,30 @@ namespace CustomizacaoMoradias.Source.Builder
             }
         }
 
+        /// <summary>
+        /// Calculates the middle point of a Curve.
+        /// </summary>
+        /// <returns>
+        /// Returns the XYZ coords.
+        /// </returns>
+        private static XYZ GetCurveMiddlePoint(Curve curve)
+        {
+            if (curve is null)
+            {
+                throw new ArgumentNullException(nameof(curve));
+            }
 
+            XYZ curveStartPoint = curve.GetEndPoint(0);
+            XYZ curveEndPoint = curve.GetEndPoint(1);
+
+            double cordX, cordY, cordZ;
+
+            cordX = (curveStartPoint.X + curveEndPoint.X) / 2;
+            cordY = (curveStartPoint.Y + curveEndPoint.Y) / 2;
+            cordZ = (curveStartPoint.Z + curveEndPoint.Z) / 2;
+
+            return new XYZ(cordX, cordY, cordZ);
+        }
 
 
         /// <summary>
@@ -221,7 +192,8 @@ namespace CustomizacaoMoradias.Source.Builder
         /// <param name="slopeDirection"></param>
         private void CreateHipRoof(CurveArray footPrint, double overhang, double slope, XYZ slopeDirection)
         {
-            CurveArray offsetedFootPrint = CreateOffsetedCurveArray(overhang, footPrint, null);
+            Polygon roofPolygon = new Polygon(footPrint);
+            CurveArray offsetedFootPrint = roofPolygon.CreateOffsetedCurveArray(overhang);
             CreateFootPrintRoof(overhang, slope, slopeDirection, offsetedFootPrint);
         }
 
@@ -236,15 +208,18 @@ namespace CustomizacaoMoradias.Source.Builder
         {
             List<FootPrintRoof> roofs = new List<FootPrintRoof>();
             List<Line> cutLines = new List<Line>();
-            List<CurveArray> convexFootPrint = GetConvexPerimeters(footPrint, slopeDirection, cutLines);
             List<Wall> gableWalls = new List<Wall>();
+
+            Polygon roofPolygon = new Polygon(footPrint);
+            List<CurveArray> convexFootPrint = roofPolygon.GetConvexPerimeters(slopeDirection, cutLines);
 
             int n = convexFootPrint.Count();
 
             // create the n convex compenents of the roof
             for (int i = 0; i < n; i++)
             {
-                CurveArray offsetedFootPrint = CreateOffsetedCurveArray(overhang, convexFootPrint[i], cutLines);
+                Polygon p = new Polygon(convexFootPrint[i]);
+                CurveArray offsetedFootPrint = p.CreateOffsetedCurveArray(overhang, cutLines);
                 if (offsetedFootPrint != null)
                 {
                     FootPrintRoof footPrintRoof = CreateFootPrintRoof(overhang, slope, slopeDirection, offsetedFootPrint);
@@ -365,7 +340,9 @@ namespace CustomizacaoMoradias.Source.Builder
         /// </param>
         public void CreateAllGableWalls(XYZ vectorDirection, double slope, CurveArray perimeter, List<Wall> gableWalls)
         {
-            NormalizeCurveArray(ref perimeter);
+            Polygon perimiterPolygon = new Polygon(perimeter);
+            perimiterPolygon.Normalize();
+            perimeter = perimiterPolygon.CurveArray;
             foreach (Curve line in perimeter)
             {
                 XYZ lineDirection = VectorManipulator.GetCurveDirection(line);
@@ -422,7 +399,7 @@ namespace CustomizacaoMoradias.Source.Builder
             };
 
             // get the wall type
-            WallType type = GetWallType(Properties.Settings.Default.WallTypeName);
+            WallType type = revitDB.GetWallType(Properties.Settings.Default.WallTypeName);
 
             // create the gable wall
             return Wall.Create(document, profile, type.Id, roofLevel.Id, false);
