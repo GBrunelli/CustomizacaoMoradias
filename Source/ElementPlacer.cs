@@ -1305,14 +1305,11 @@ namespace CustomizacaoMoradias
         private void CreateHiddenButterflyRoof(CurveArray footPrint, double slope, XYZ slopeDirection)
         {
             List<Line> cutLines = new List<Line>();
-            List<CurveArray> convexFootPrint = GetConvexPerimeters(footPrint, slopeDirection, cutLines);
+            // List<CurveArray> convexFootPrint = GetConvexPerimeters(footPrint, slopeDirection, cutLines);
 
-            if (convexFootPrint.Count == 1)
-            {
-                XYZ divisionDirection = new XYZ(-slopeDirection.Y, slopeDirection.X, 0);
-                convexFootPrint = DivideCurveArrayInHalf(convexFootPrint[0], divisionDirection, out Line cutLine);
-                cutLines.Add(cutLine);
-            }
+            XYZ divisionDirection = new XYZ(-slopeDirection.Y, slopeDirection.X, 0);
+            List<CurveArray> convexFootPrint = DivideCurveArrayInHalf(footPrint, divisionDirection, out Line cutLine);
+            cutLines.Add(cutLine);
 
             foreach (CurveArray curveArray in convexFootPrint)
             {
@@ -1343,19 +1340,43 @@ namespace CustomizacaoMoradias
             CreateParapetWall(footPrint);
         }
 
+        private UV CalculatePolygonCentroid(CircularLinkedList<UV> vertices)
+        {
+            var node = vertices.Head;
+            UV sum = UV.Zero;
+            do
+            {
+                UV vertex = node.Value;
+                sum += vertex;
+                node = node.Next;
+            } while (node != vertices.Head);
+            sum /= vertices.Count;
+            return sum;
+        }
+
         private List<CurveArray> DivideCurveArrayInHalf(CurveArray curveArray, XYZ divisionDirection, out Line cutLine)
         {
             NormalizeCurveArray(ref curveArray);
-            if (curveArray.Size != 4)
-            {
-                cutLine = null;
-                return null;
-            }
-                
 
             CircularLinkedList<UV> points = GetPoints(curveArray);
             List<CircularLinkedListNode<UV>> newPoints = new List<CircularLinkedListNode<UV>>();
 
+            UV centroid = CalculatePolygonCentroid(points);
+            cutLine = Line.CreateUnbound(TransformUVinXYZ(centroid), divisionDirection);
+
+            foreach(Curve curve in curveArray)
+            {
+                var result = cutLine.Intersect(curve, out var resultArray);
+                if (result == SetComparisonResult.Overlap)
+                {
+                    UV newPoint = ProjectInPlaneXY(resultArray.get_Item(0).XYZPoint);
+                    XYZ p0 = curve.GetEndPoint(0);
+                    XYZ p1 = curve.GetEndPoint(1);
+                    newPoints.Add(AddPointBetween(points, ProjectInPlaneXY(p0), ProjectInPlaneXY(p1), newPoint));
+                }
+            }
+       
+            /*
             foreach (Curve curve in curveArray)
             {
                 // if they are parralel
@@ -1373,7 +1394,7 @@ namespace CustomizacaoMoradias
                 cutLine = null;
                 return null;
             }
-                     
+            */              
 
             CircularLinkedList<UV> newPolygon0 = CreatePolygonBetweenVertices(newPoints[0], newPoints[1]);
             CircularLinkedList<UV> newPolygon1 = CreatePolygonBetweenVertices(newPoints[1], newPoints[0]);
