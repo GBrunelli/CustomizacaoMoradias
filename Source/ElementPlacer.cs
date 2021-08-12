@@ -303,13 +303,6 @@ namespace CustomizacaoMoradias
                 MessageBox.Show($"Erro ao inserir elementos: \n{errorMessage}.", "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }  
         }
-
-        private UV RotateVector(UV vector, double rotation)
-        {
-            double u2 = Math.Cos(rotation) * vector.U - Math.Sin(rotation) * vector.V;
-            double v2 = Math.Sin(rotation) * vector.U + Math.Cos(rotation) * vector.V;
-            return new UV(u2, v2);
-        }
       
         /// <summary>
         /// Creates a piece of furniture.
