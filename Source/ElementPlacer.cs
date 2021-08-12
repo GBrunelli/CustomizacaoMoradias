@@ -609,19 +609,6 @@ namespace CustomizacaoMoradias
         }
 
         /// <summary>
-        /// Calculates de angle between the vectors (p0, p1) and (p1, p2)
-        /// </summary>
-        /// <returns>
-        /// Returns the angle in radians.
-        /// </returns>
-        private double CalculatesAngle(UV p0, UV p1, UV p2)
-        {
-            UV vector1 = p1.Subtract(p0);
-            UV vector2 = p2.Subtract(p1);
-            return Math.PI + Math.Atan2(vector1.CrossProduct(vector2), vector1.DotProduct(vector2));
-        }
-
-        /// <summary>
         /// Get all notches in a list of ordered points that represent the vertices of
         /// a polygon. A notch is a point that the reflex angle in internal.
         /// </summary>

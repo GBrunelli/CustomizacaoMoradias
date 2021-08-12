@@ -16,6 +16,17 @@ namespace CustomizacaoMoradias.Source.Util
             return new UV(u2, v2);
         }
 
-
+        /// <summary>
+        /// Calculates de angle between the vectors (p0, p1) and (p1, p2)
+        /// </summary>
+        /// <returns>
+        /// Returns the angle in radians.
+        /// </returns>
+        private double CalculatesAngle(UV p0, UV p1, UV p2)
+        {
+            UV vector1 = p1.Subtract(p0);
+            UV vector2 = p2.Subtract(p1);
+            return Math.PI + Math.Atan2(vector1.CrossProduct(vector2), vector1.DotProduct(vector2));
+        }
     }
 }
