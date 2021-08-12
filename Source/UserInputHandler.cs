@@ -9,8 +9,6 @@ namespace CustomizacaoMoradias
 {
     public class UserInputHandler : IExternalEventHandler
     {
-        public HouseBuilder elementPlacer = new HouseBuilder();
-
         public void Execute(UIApplication app)
         {
             UIDocument uidoc    = app.ActiveUIDocument;
@@ -26,7 +24,7 @@ namespace CustomizacaoMoradias
             var roofDesign      = PlaceElementsForm.roofSelector.RoofStyle;
             double slope        = RoofSelector.GetSlopeByType(roofDesign);
 
-            elementPlacer.SetProperties(uidoc, levelName, topLevelName, scale);
+            HouseBuilder builder = new HouseBuilder(doc, levelName, topLevelName, scale);
 
             string errorMessage = "";
             using (Transaction transaction = new Transaction(doc, "Contruir JSON"))
@@ -34,8 +32,8 @@ namespace CustomizacaoMoradias
                 transaction.Start();
                 try
                 {
-                    elementPlacer.BuildJSON(path);
-                    elementPlacer.PlaceRoomSeparatorsInOpenWalls();
+                    builder.BuildJSON(path);
+                    builder.PlaceRoomSeparatorsInOpenWalls();
                 }
                 catch (Exception e)
                 {
@@ -43,7 +41,7 @@ namespace CustomizacaoMoradias
                 }
                 try
                 {
-                    elementPlacer.CreateFloor(Properties.Settings.Default.FloorName);
+                    builder.CreateFloor(Properties.Settings.Default.FloorName);
                 }
                 catch (Exception e)
                 {
@@ -51,7 +49,7 @@ namespace CustomizacaoMoradias
                 }
                 try
                 {
-                    elementPlacer.CreateCeiling(Properties.Settings.Default.CeilingName);
+                    builder.CreateCeiling(Properties.Settings.Default.CeilingName);
                 }
                 catch (Exception e)
                 {
@@ -59,7 +57,7 @@ namespace CustomizacaoMoradias
                 }
                 try
                 {
-                    elementPlacer.ClassifyRooms();
+                    builder.ClassifyRooms();
                 }
                 catch (Exception e)
                 {
@@ -73,7 +71,7 @@ namespace CustomizacaoMoradias
 
                 try
                 {
-                    elementPlacer.CreateRoof(overhang, slope, roofVector, roofDesign);
+                    builder.CreateRoof(overhang, slope, roofVector, roofDesign);
                 }
                 catch (Exception e)
                 {

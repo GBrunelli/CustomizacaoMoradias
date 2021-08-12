@@ -93,15 +93,15 @@ namespace CustomizacaoMoradias.Forms
             }
         }
 
-        public static double GetSlopeByType(HouseBuilder.RoofDesign roofDesign)
+        public static double GetSlopeByType(RoofDesign roofDesign)
         {
             switch (roofDesign)
             {
-                case HouseBuilder.RoofDesign.Gable:
+                case RoofDesign.Gable:
                     return 0.3;
-                case HouseBuilder.RoofDesign.Hip:
+                case RoofDesign.Hip:
                     return 0.3;
-                case HouseBuilder.RoofDesign.HiddenButterfly:
+                case RoofDesign.HiddenButterfly:
                     return 0.05;
             }
             return 0.3;
@@ -128,24 +128,24 @@ namespace CustomizacaoMoradias.Forms
             }
         }
 
-        public HouseBuilder.RoofDesign RoofStyle
+        public RoofDesign RoofStyle
         {
             get 
             {
                 switch (State)
                 {
                     case EdgeState.EdgeVertical:
-                        return HouseBuilder.RoofDesign.Gable;
+                        return RoofDesign.Gable;
                     case EdgeState.EdgeHorizontal:
-                        return HouseBuilder.RoofDesign.Gable;
+                        return RoofDesign.Gable;
                     case EdgeState.MidHorizontal:
-                        return HouseBuilder.RoofDesign.HiddenButterfly;
+                        return RoofDesign.HiddenButterfly;
                     case EdgeState.MidVertical:
-                        return HouseBuilder.RoofDesign.HiddenButterfly;
+                        return RoofDesign.HiddenButterfly;
                     case EdgeState.AllEdges:
-                        return HouseBuilder.RoofDesign.Hip;
+                        return RoofDesign.Hip;
                 }
-                return HouseBuilder.RoofDesign.Hip;
+                return RoofDesign.Hip;
             }  
         }
 

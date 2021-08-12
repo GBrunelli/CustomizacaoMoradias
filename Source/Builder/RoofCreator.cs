@@ -1,22 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Autodesk.Revit.DB;
 using CustomizacaoMoradias.Data;
 using CustomizacaoMoradias.Source.Util;
+
+public enum RoofDesign
+{
+    HiddenButterfly,
+    Hip,
+    Gable
+}
 
 namespace CustomizacaoMoradias.Source.Builder
 {
     class RoofCreator
     {
-        public enum RoofDesign
-        {
-            HiddenButterfly,
-            Hip,
-            Gable
-        }
+
 
         private Document document;
         private Level baseLevel;

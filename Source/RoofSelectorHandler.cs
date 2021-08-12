@@ -6,8 +6,6 @@ namespace CustomizacaoMoradias.Source
 {
     class RoofSelectorHandler : IExternalEventHandler
     {
-        public HouseBuilder elementPlacer = new HouseBuilder();
-
         public void Execute(UIApplication app)
         {
             UIDocument uidoc = app.ActiveUIDocument;
@@ -22,7 +20,7 @@ namespace CustomizacaoMoradias.Source
             var roofDesign   = BuildRoofForm.RoofDesign;
             double slope     = RoofSelector.GetSlopeByType(roofDesign);
 
-            elementPlacer.SetProperties(uidoc, baseLevel, topLevel, scale);
+            HouseBuilder elementPlacer = new HouseBuilder(doc, baseLevel, topLevel, scale);
             try
             {
                 using (Transaction transaction = new Transaction(doc, "Roof Command"))

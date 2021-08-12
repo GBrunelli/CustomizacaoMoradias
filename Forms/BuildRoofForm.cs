@@ -2,7 +2,6 @@
 using System.Windows.Forms;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using CustomizacaoMoradias.Source;
 using Form = System.Windows.Forms.Form;
 
 namespace CustomizacaoMoradias.Forms
@@ -20,7 +19,7 @@ namespace CustomizacaoMoradias.Forms
             }
         }
 
-        public static HouseBuilder.RoofDesign RoofDesign
+        public static RoofDesign RoofDesign
         {
             get
             {

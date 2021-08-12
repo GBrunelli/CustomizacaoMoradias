@@ -12,6 +12,7 @@ using Autodesk.Revit.UI;
 using CustomizacaoMoradias.Data;
 using CustomizacaoMoradias.DataModel;
 using CustomizacaoMoradias.Source;
+using CustomizacaoMoradias.Source.Builder;
 using CustomizacaoMoradias.Source.Util;
 using Newtonsoft.Json;
 using View = Autodesk.Revit.DB.View;
@@ -27,7 +28,6 @@ namespace CustomizacaoMoradias
         private RevitDataAccess revitDB;
 
         private Document doc;
-        private UIDocument uidoc;
 
         private Level baseLevel;
         private Level topLevel;
@@ -85,21 +85,15 @@ namespace CustomizacaoMoradias
         /// <summary>
         /// Default contructor.
         /// </summary>
-        public HouseBuilder(UIDocument uidoc, string baseLevel, string topLevel, double scale)
+        public HouseBuilder(Document doc, string baseLevel, string topLevel, double scale)
         {
-            SetProperties(uidoc, baseLevel, topLevel, scale);
+            SetProperties(doc, baseLevel, topLevel, scale);
             ThreadInit();
         }
 
-        public HouseBuilder()
+        public void SetProperties(Document doc, string baseLevel, string topLevel, double scale)
         {
-            ThreadInit();
-        }
-
-        public void SetProperties(UIDocument uidoc, string baseLevel, string topLevel, double scale)
-        {
-            this.uidoc = uidoc;
-            doc = uidoc.Document;
+            this.doc = doc;
             revitDB = new RevitDataAccess(doc);
             
             this.baseLevel = revitDB.GetLevel(baseLevel);
@@ -987,6 +981,18 @@ namespace CustomizacaoMoradias
 
             }
             return candidates2;
+        }
+
+        public void CreateRoof(double overhang, double slope, XYZ slopeDirection, RoofDesign roofDesign)
+        {
+            RoofCreator rc = new RoofCreator(doc, baseLevel, topLevel, this, revitDB);
+            rc.CreateRoof(overhang, slope, slopeDirection, roofDesign);
+        }
+
+        public void CreateRoof(double slope, XYZ slopeDirection, RoofDesign roofDesign)
+        {
+            RoofCreator rc = new RoofCreator(doc, baseLevel, topLevel, this, revitDB);
+            rc.CreateRoof(slope, slopeDirection, roofDesign);
         }
     }
 }
