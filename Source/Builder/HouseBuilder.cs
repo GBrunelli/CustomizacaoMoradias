@@ -69,7 +69,7 @@ namespace CustomizacaoMoradias
                     {
                         Room newRoom = doc.Create.NewRoom(baseLevel, point);
                         rooms.Add(newRoom);
-                        doc.Create.NewRoomTag(new LinkElementId(newRoom.Id), point, revitDB.GetLevel(baseLevel.Name).Id); ;
+                        doc.Create.NewRoomTag(new LinkElementId(newRoom.Id), point, revitDB.GetLevelView(baseLevel.Name).Id); ;
                     }
                     else
                     {
