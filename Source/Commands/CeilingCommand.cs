@@ -2,8 +2,9 @@
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
+using CustomizacaoMoradias.Source.Builder;
 
-namespace CustomizacaoMoradias
+namespace CustomizacaoMoradias.Source.Commands
 {
     [Transaction(TransactionMode.Manual)]
     [Regeneration(RegenerationOption.Manual)]

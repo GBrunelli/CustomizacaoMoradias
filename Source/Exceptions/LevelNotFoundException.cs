@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace CustomizacaoMoradias
+namespace CustomizacaoMoradias.Source.Exceptions
 {
     class LevelNotFoundException : Exception
     {

@@ -9,8 +9,9 @@ using System.Windows.Interop;
 using System.Windows;
 using CustomizacaoMoradias.Forms;
 using CustomizacaoMoradias.Source;
+using CustomizacaoMoradias.Source.Handlers;
 
-namespace CustomizacaoMoradias
+namespace CustomizacaoMoradias.Source
 {
     public class PlaceElementsApplication : IExternalApplication
     {
@@ -31,7 +32,7 @@ namespace CustomizacaoMoradias
             RibbonPanel elementPlacerRibbonPanel = application.CreateRibbonPanel("Customização de Moradias", "Geração Completa");
 
             // Main button
-            PushButtonData elementPlacerButtonData = new PushButtonData("ElementPlacerButton", "Contruir JSON", path, "CustomizacaoMoradias.ElementPlacerCommand");
+            PushButtonData elementPlacerButtonData = new PushButtonData("ElementPlacerButton", "Contruir JSON", path, "CustomizacaoMoradias.Source.Commands.ElementPlacerCommand");
             PushButton elementPlacerButton = elementPlacerRibbonPanel.AddItem(elementPlacerButtonData) as PushButton;
             elementPlacerButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.floor_plan_32px);
 
@@ -39,27 +40,27 @@ namespace CustomizacaoMoradias
             RibbonPanel standaloneRibbonPanel = application.CreateRibbonPanel("Customização de Moradias", "Funções");
             
             // Floor button
-            PushButtonData floorButtonData = new PushButtonData("floorButton", "Criar Piso", path, "CustomizacaoMoradias.FloorCommand");
+            PushButtonData floorButtonData = new PushButtonData("floorButton", "Criar Piso", path, "CustomizacaoMoradias.Source.Commands.FloorCommand");
             PushButton floorButton = standaloneRibbonPanel.AddItem(floorButtonData) as PushButton;
             floorButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.parquet);
 
             // Ceiling button
-            PushButtonData ceilingButtonData = new PushButtonData("ceilingButton", "Criar Laje", path, "CustomizacaoMoradias.CeilingCommand");
+            PushButtonData ceilingButtonData = new PushButtonData("ceilingButton", "Criar Laje", path, "CustomizacaoMoradias.Source.Commands.CeilingCommand");
             PushButton ceilingButton = standaloneRibbonPanel.AddItem(ceilingButtonData) as PushButton;
             ceilingButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.ceiling);
 
             // Roof button
-            PushButtonData roofButtonData = new PushButtonData("roofButton", "Criar Telhado", path, "CustomizacaoMoradias.RoofCommand");
+            PushButtonData roofButtonData = new PushButtonData("roofButton", "Criar Telhado", path, "CustomizacaoMoradias.Source.Commands.RoofCommand");
             PushButton roofButton = standaloneRibbonPanel.AddItem(roofButtonData) as PushButton;
             roofButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.roof);
 
             // Rooms classification button
-            PushButtonData roomButtonData = new PushButtonData("roomButton", "Classificar Ambientes", path, "CustomizacaoMoradias.ClassifyRoomsCommand");
+            PushButtonData roomButtonData = new PushButtonData("roomButton", "Classificar Ambientes", path, "CustomizacaoMoradias.Source.Commands.ClassifyRoomsCommand");
             PushButton roomButton = standaloneRibbonPanel.AddItem(roomButtonData) as PushButton;
             roomButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.blueprint);
 
             // Dimensioning button
-            PushButtonData dimensionButtonData = new PushButtonData("dimensionButton", "Cotar", path, "CustomizacaoMoradias.DimensionCommand");
+            PushButtonData dimensionButtonData = new PushButtonData("dimensionButton", "Cotar", path, "CustomizacaoMoradias.Source.Commands.DimensionCommand");
             PushButton dimensionButton = standaloneRibbonPanel.AddItem(dimensionButtonData) as PushButton;
             dimensionButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.dimension);
 
@@ -67,7 +68,7 @@ namespace CustomizacaoMoradias
             RibbonPanel generalRibbonPanel = application.CreateRibbonPanel("Customização de Moradias", "Geral");
 
             // Config button
-            PushButtonData configButtonData = new PushButtonData("configButton", "Opções", path, "CustomizacaoMoradias.ConfigCommand");
+            PushButtonData configButtonData = new PushButtonData("configButton", "Opções", path, "CustomizacaoMoradias.Source.Commands.ConfigCommand");
             PushButton configButton = generalRibbonPanel.AddItem(configButtonData) as PushButton;
             configButton.LargeImage = ImageSourceFromBitmap(Properties.Resources.config);
 

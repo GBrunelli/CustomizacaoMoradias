@@ -1,10 +1,9 @@
 ﻿using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.Attributes;
-using CustomizacaoMoradias.Forms;
 using System;
 
-namespace CustomizacaoMoradias
+namespace CustomizacaoMoradias.Source.Commands
 {
     [Transaction(TransactionMode.Manual)]
     [Regeneration(RegenerationOption.Manual)]

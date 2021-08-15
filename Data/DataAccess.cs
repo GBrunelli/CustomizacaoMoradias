@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using CustomizacaoMoradias.DataModel;
 using Dapper;
 
-namespace CustomizacaoMoradias.Source
+namespace CustomizacaoMoradias.Data
 {
     class DataAccess
     {

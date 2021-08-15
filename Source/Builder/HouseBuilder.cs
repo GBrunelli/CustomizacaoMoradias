@@ -1,23 +1,31 @@
-﻿using System;
-using System.Collections.Generic;
+﻿
+#region System imports
+using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
-using Autodesk.Revit.Attributes;
-using Autodesk.Revit.DB;
-using Autodesk.Revit.DB.Architecture;
-using Autodesk.Revit.DB.IFC;
-using Autodesk.Revit.UI;
-using CustomizacaoMoradias.Data;
-using CustomizacaoMoradias.DataModel;
-using CustomizacaoMoradias.Source;
-using CustomizacaoMoradias.Source.Builder;
-using CustomizacaoMoradias.Source.Util;
-using Newtonsoft.Json;
-using View = Autodesk.Revit.DB.View;
+using System.Collections.Generic;
+#endregion
 
-namespace CustomizacaoMoradias
+#region Revit imports
+using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.IFC;
+using Autodesk.Revit.Attributes;
+using View = Autodesk.Revit.DB.View;
+using Autodesk.Revit.DB.Architecture;
+#endregion
+
+#region Local imports
+using CustomizacaoMoradias.Data;
+using CustomizacaoMoradias.Source.Util;
+#endregion
+
+#region Additional Packages
+using Newtonsoft.Json;
+#endregion
+
+namespace CustomizacaoMoradias.Source.Builder
 {
     [Transaction(TransactionMode.Manual)]
     [Regeneration(RegenerationOption.Manual)]
@@ -40,6 +48,8 @@ namespace CustomizacaoMoradias
 
         private Thread elementThread;
         private List<ElementDM> elements;
+
+        private List<Wall> Walls = new List<Wall>();
 
         private double scale;
 
@@ -79,8 +89,6 @@ namespace CustomizacaoMoradias
                 return rooms;
             }
         }
-
-        private List<Wall> Walls = new List<Wall>();
 
         /// <summary>
         /// Default contructor.

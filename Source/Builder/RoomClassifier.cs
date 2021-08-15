@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace CustomizacaoMoradias
+namespace CustomizacaoMoradias.Source.Builder
 {
     public class RoomElement
     {

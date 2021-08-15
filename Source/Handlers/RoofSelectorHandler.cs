@@ -1,8 +1,9 @@
 ﻿using Autodesk.Revit.UI;
 using Autodesk.Revit.DB;
 using CustomizacaoMoradias.Forms;
+using CustomizacaoMoradias.Source.Builder;
 
-namespace CustomizacaoMoradias.Source
+namespace CustomizacaoMoradias.Source.Handlers
 {
     class RoofSelectorHandler : IExternalEventHandler
     {

@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
-using CustomizacaoMoradias.DataModel;
 
-namespace CustomizacaoMoradias.Source
+namespace CustomizacaoMoradias.Data
 {
     class ElementDM
     {

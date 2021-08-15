@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Autodesk.Revit.DB;
+using CustomizacaoMoradias.Source.Exceptions;
 
 namespace CustomizacaoMoradias.Data
 {

@@ -124,7 +124,8 @@ namespace CustomizacaoMoradias.Source.Util
             cutLines.Add(line);
             foreach (CurveArray array in result)
             {
-                perimeters.AddRange(GetConvexPerimeters(preferredOrientation, cutLines));
+                Polygon p = new Polygon(array);
+                perimeters.AddRange(p.GetConvexPerimeters(preferredOrientation, cutLines));
             }
 
             perimeters.Sort(new SortingDescendingArea());

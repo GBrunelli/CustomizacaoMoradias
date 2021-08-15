@@ -6,7 +6,7 @@
 		<AddInId>
 			6658EE91-B4EA-47E1-AEBB-E1F0800737CC
 		</AddInId>
-		<FullClassName>CustomizacaoMoradias.PlaceElementsApplication</FullClassName>
+		<FullClassName>CustomizacaoMoradias.Source.PlaceElementsApplication</FullClassName>
 		<VendorId>GustavoHenriqueBrunelli</VendorId>
 	</AddIn>
 </RevitAddIns>
