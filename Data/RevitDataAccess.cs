@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
 using CustomizacaoMoradias.Source.Exceptions;
@@ -20,8 +21,9 @@ namespace CustomizacaoMoradias.Data
         public FamilySymbol GetFamilySymbol(string fsFamilyName)
         {
             // Retrieve the familySymbol of the piece of furniture
-            FamilySymbol symbol = (from familySymbol in new FilteredElementCollector(doc).OfClass(typeof(FamilySymbol)).
-                 Cast<FamilySymbol>()
+            FamilySymbol symbol = (from familySymbol in new FilteredElementCollector(doc)
+                                   .OfClass(typeof(FamilySymbol))
+                                   .Cast<FamilySymbol>()
                                    where (familySymbol.Name == fsFamilyName)
                                    select familySymbol).First();
             return symbol;
@@ -75,6 +77,13 @@ namespace CustomizacaoMoradias.Data
                 throw new LevelNotFoundException("Nível \"" + levelName + "\" não encontrado.", e);
             }
             return level;
+        }
+
+        public List<Element> GetDoors()
+        {
+            FilteredElementCollector collector = new FilteredElementCollector(doc);
+            return collector.OfClass(typeof(FamilyInstance))
+                .OfCategory(BuiltInCategory.OST_Doors).ToList();
         }
     }
 }

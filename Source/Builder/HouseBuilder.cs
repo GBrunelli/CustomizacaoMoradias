@@ -264,7 +264,6 @@ namespace CustomizacaoMoradias.Source.Builder
                 }
             }
 
-
             if (errorMessage.EndsWith(", "))
             {
                 errorMessage = errorMessage.Remove(errorMessage.Length - 2, 2);
@@ -287,11 +286,14 @@ namespace CustomizacaoMoradias.Source.Builder
             double rotation = DeegreToRadians(properties.Rotation);
             XYZ p0 = GetXYZFromProperties(properties.Coordinate.ElementAt(0));
             XYZ p1 = GetXYZFromProperties(properties.Coordinate.ElementAt(1));
-            XYZ point = p0.Add(p1).Divide(2);
+            XYZ point = (p0 + p1) / 2;
+
             string fsFamilyName = GetFamilySymbolName(properties.Type);
+
             UV offset = GetFamilyOffset(properties.Type);
             offset = new UV(UnitUtils.ConvertToInternalUnits(offset.U, UnitTypeId.Meters),
                 UnitUtils.ConvertToInternalUnits(offset.V, UnitTypeId.Meters));
+
             offset = VectorManipulator.RotateVector(offset, rotation + baseRotation);
 
             // Creates a point above the furniture to serve as a rotation axis
@@ -335,8 +337,8 @@ namespace CustomizacaoMoradias.Source.Builder
                 throw new ArgumentNullException(nameof(properties));
             }
 
-            XYZ p0 = GetXYZFromProperties(properties.Coordinate.ElementAt(0));
-            XYZ p1 = GetXYZFromProperties(properties.Coordinate.ElementAt(1));
+            XYZ p0 = GetXYZFromProperties(properties.Coordinate[0]);
+            XYZ p1 = GetXYZFromProperties(properties.Coordinate[1]);
             Wall wall;
             try
             {
@@ -373,44 +375,42 @@ namespace CustomizacaoMoradias.Source.Builder
             // get the parameters from properties
             XYZ point = GetXYZFromProperties(properties.Coordinate);
             string fsName = GetFamilySymbolName(properties.Type);
-            double rotation = properties.Rotation;
-            UV offset = GetFamilyOffset(properties.Type);
 
-            offset = VectorManipulator.RotateVector(offset, rotation);
-            point += VectorManipulator.TransformUVinXYZ(offset);
+            UV offset = GetFamilyOffset(properties.Type);
+            offset = new UV(UnitUtils.ConvertToInternalUnits(offset.U, UnitTypeId.Meters),
+                UnitUtils.ConvertToInternalUnits(offset.V, UnitTypeId.Meters));
+
             FamilySymbol familySymbol = revitDB.GetFamilySymbol(fsName);
 
             Wall wall = FindWall(point, baseLevel);
+
+            // get the normal wall vector
+            LocationCurve wallCurve = wall.Location as LocationCurve;
+            Line wallLine = wallCurve.Curve as Line;
+            XYZ wallStartPoint = wallLine.GetEndPoint(0);
+            XYZ wallEndPoint = wallLine.GetEndPoint(1);
+            XYZ wallNormal = VectorManipulator.CalculateNormal(wallStartPoint - wallEndPoint);
+
+            // calculates the correct direction of the instance
+            XYZ insertionPoint = VectorManipulator.GetClosesetPointInLine(point, wallLine);
+            XYZ correctDirection = (point - insertionPoint).Normalize();
+
+            // calculates instance offset
+            double angle = Math.Atan2(correctDirection.Y, correctDirection.X);
+            offset = VectorManipulator.RotateVector(offset, angle + baseRotation);
+            point += VectorManipulator.TransformUVinXYZ(offset);
 
             // Creates the element                   
             FamilyInstance instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, baseLevel,
                 Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
 
-            if (correctPosition)
-                CorrectHostedPosition(point, wall, instance);
-
-            return instance;
-        }
-
-        private void CorrectHostedPosition(XYZ point, Wall wall, FamilyInstance instance)
-        {
-            LocationCurve wallCurve = wall.Location as LocationCurve;
-            Line wallLine = wallCurve.Curve as Line;
-
-            // get the normal wall vector
-            XYZ wallStartPoint = wallLine.GetEndPoint(0);
-            XYZ wallEndPoint = wallLine.GetEndPoint(1);
-            XYZ wallNormal = VectorManipulator.CalculateNormal(wallStartPoint - wallEndPoint);
-
-            // get the supposed orientation of the instance
-            XYZ insertionPoint = wallStartPoint + (wallLine.Direction * instance.HostParameter);
-            XYZ correctDirection = (point - insertionPoint).Normalize();
-
             // if the initial orientation and the correct orientation are not equal, flip the instance
-            if (!wallNormal.IsAlmostEqualTo(correctDirection))
+            if (!wallNormal.IsAlmostEqualTo(correctDirection) && correctPosition)
             {
                 instance.flipFacing();
             }
+
+            return instance;
         }
 
         /// <summary>
@@ -442,13 +442,17 @@ namespace CustomizacaoMoradias.Source.Builder
             HostedProperty hp = ConvertToHosted(properties);
             FamilyInstance door = CreateHostedElement(hp, false);
 
+            /*
             XYZ facing = door.FacingOrientation;
+            facing = VectorManipulator.TransformUVinXYZ(VectorManipulator.RotateVector(facing, baseRotation));
             double angle = Math.Atan2(facing.Y, facing.X);
-            if (Math.Abs(angle - DeegreToRadians(properties.Rotation)) < 0.001)
+
+            if (Math.Abs(angle - DeegreToRadians(properties.Rotation)) > 0.001)
                 door.flipFacing();
 
-            if (properties.OpenLeft)
+            if ((door.FacingOrientation.CrossProduct(door.HandOrientation).Z < 0) ^ properties.OpenLeft)
                 door.flipHand();
+            */
 
             return door;
         }

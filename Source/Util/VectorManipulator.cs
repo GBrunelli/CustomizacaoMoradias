@@ -16,6 +16,12 @@ namespace CustomizacaoMoradias.Source.Util
             return new UV(u2, v2);
         }
 
+        public static UV RotateVector(XYZ vector, double rotation)
+        {
+            UV vector2D = ProjectInPlaneXY(vector);
+            return RotateVector(vector2D, rotation);
+        }
+
         /// <summary>
         /// Calculates de angle between the vectors (p0, p1) and (p1, p2)
         /// </summary>
@@ -75,6 +81,18 @@ namespace CustomizacaoMoradias.Source.Util
         public static XYZ CalculateNormal(XYZ vector)
         {
             return vector.CrossProduct(XYZ.BasisZ).Normalize();
+        }
+
+        public static XYZ GetClosesetPointInLine(XYZ point, Line line)
+        {
+            XYZ normal = VectorManipulator.CalculateNormal(line.Direction);
+            Line crossLine = Line.CreateUnbound(point, normal);
+            if (line.Intersect(crossLine, out var resultArray) == SetComparisonResult.Overlap)
+            {
+                var result = resultArray.get_Item(0);
+                return result.XYZPoint;
+            }
+            return null;
         }
     }
 }
