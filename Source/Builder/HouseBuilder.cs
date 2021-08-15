@@ -64,18 +64,18 @@ namespace CustomizacaoMoradias.Source.Builder
         {
             get
             {
-                List<Room> rooms = new List<Room>();      
+                List<Room> rooms = new List<Room>();
                 List<UV> roomPoints = new List<UV>();
                 foreach (PlanCircuit circuit in Circuits)
                 {
                     roomPoints.Add(circuit.GetPointInside());
                 }
 
-                foreach(UV point in roomPoints)
+                foreach (UV point in roomPoints)
                 {
                     XYZ point3D = new XYZ(point.U, point.V, baseLevel.Elevation);
                     Room room = doc.GetRoomAtPoint(point3D);
-                    if(room == null)
+                    if (room == null)
                     {
                         Room newRoom = doc.Create.NewRoom(baseLevel, point);
                         rooms.Add(newRoom);
@@ -103,7 +103,7 @@ namespace CustomizacaoMoradias.Source.Builder
         {
             this.doc = doc;
             revitDB = new RevitDataAccess(doc);
-            
+
             this.baseLevel = revitDB.GetLevel(baseLevel);
             this.topLevel = revitDB.GetLevel(topLevel);
             this.scale = scale;
@@ -119,7 +119,7 @@ namespace CustomizacaoMoradias.Source.Builder
 
             elementThread = new Thread(new ThreadStart(ElementWorker)) { Name = "Element Thread" };
             elementThread.Start();
-        }       
+        }
 
         public void ScoreWorker() { roomElementsScore = db.GetRoomElementsScore(); }
 
@@ -183,12 +183,12 @@ namespace CustomizacaoMoradias.Source.Builder
         /// Returns the Wall in the XYZ coords. Returns null if no wall was found.
         /// </returns>
         public Wall FindWall(XYZ xyz, Level level)
-        {         
+        {
             if (xyz is null)
             {
                 throw new ArgumentNullException(nameof(xyz));
             }
-            
+
             //xyz = xyz.Subtract(new XYZ(0, 0, xyz.Z));
             xyz = new XYZ(xyz.X, xyz.Y, level.Elevation);
 
@@ -228,7 +228,7 @@ namespace CustomizacaoMoradias.Source.Builder
                     catch { errorMessage += $"Parede {wall}, "; }
                 }
             }
-            if(ed.WindowProperties != null)
+            if (ed.WindowProperties != null)
             {
                 foreach (WindowProperty window in ed.WindowProperties)
                 {
@@ -236,7 +236,7 @@ namespace CustomizacaoMoradias.Source.Builder
                     catch { errorMessage += $"{window.Type}, "; }
                 }
             }
-            if(ed.DoorProperties != null)
+            if (ed.DoorProperties != null)
             {
                 foreach (DoorProperty door in ed.DoorProperties)
                 {
@@ -244,8 +244,8 @@ namespace CustomizacaoMoradias.Source.Builder
                     catch { errorMessage += $"{door.Type}, "; }
                 }
             }
-            
-            if(ed.HostedProperties != null)
+
+            if (ed.HostedProperties != null)
             {
                 foreach (HostedProperty element in ed.HostedProperties)
                 {
@@ -254,8 +254,8 @@ namespace CustomizacaoMoradias.Source.Builder
 
                 }
             }
-            
-            if(ed.FurnitureProperties != null)
+
+            if (ed.FurnitureProperties != null)
             {
                 foreach (FurnitureProperty element in ed.FurnitureProperties)
                 {
@@ -263,15 +263,15 @@ namespace CustomizacaoMoradias.Source.Builder
                     catch { errorMessage += $"{element.Type}, "; }
                 }
             }
-            
+
 
             if (errorMessage.EndsWith(", "))
             {
                 errorMessage = errorMessage.Remove(errorMessage.Length - 2, 2);
                 MessageBox.Show($"Erro ao inserir elementos: \n{errorMessage}.", "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }  
+            }
         }
-      
+
         /// <summary>
         /// Creates a piece of furniture.
         /// </summary>
@@ -303,7 +303,7 @@ namespace CustomizacaoMoradias.Source.Builder
                 FamilySymbol familySymbol = revitDB.GetFamilySymbol(fsFamilyName);
                 Autodesk.Revit.DB.Structure.StructuralType structuralType = Autodesk.Revit.DB.Structure.StructuralType.NonStructural;
                 furniture = doc.Create.NewFamilyInstance(point, familySymbol, structuralType);
-                ElementTransformUtils.RotateElement(doc, furniture.Id, axis, rotation + baseRotation);            
+                ElementTransformUtils.RotateElement(doc, furniture.Id, axis, rotation + baseRotation);
                 ElementTransformUtils.MoveElement(doc, furniture.Id, VectorManipulator.TransformUVinXYZ(offset));
             }
             catch (Exception e)
@@ -381,12 +381,12 @@ namespace CustomizacaoMoradias.Source.Builder
             FamilySymbol familySymbol = revitDB.GetFamilySymbol(fsName);
 
             Wall wall = FindWall(point, baseLevel);
-            
+
             // Creates the element                   
-            FamilyInstance instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, baseLevel, 
+            FamilyInstance instance = doc.Create.NewFamilyInstance(point, familySymbol, wall, baseLevel,
                 Autodesk.Revit.DB.Structure.StructuralType.NonStructural);
 
-            if(correctPosition)
+            if (correctPosition)
                 CorrectHostedPosition(point, wall, instance);
 
             return instance;
@@ -397,22 +397,17 @@ namespace CustomizacaoMoradias.Source.Builder
             LocationCurve wallCurve = wall.Location as LocationCurve;
             Line wallLine = wallCurve.Curve as Line;
 
+            // get the normal wall vector
             XYZ wallStartPoint = wallLine.GetEndPoint(0);
             XYZ wallEndPoint = wallLine.GetEndPoint(1);
-            XYZ wallNormal = (wallStartPoint - wallEndPoint).CrossProduct(XYZ.BasisZ).Normalize();
-            double angle = Math.Atan2(wallNormal.Y, wallNormal.X);
-
-            // get the initial orientation of the new family instance
-            var p = (instance.Location as LocationPoint).Point;
-
-            XYZ insertedDirection = VectorManipulator.TransformUVinXYZ(VectorManipulator.RotateVector(VectorManipulator.ProjectInPlaneXY(p), angle)).Normalize();
+            XYZ wallNormal = VectorManipulator.CalculateNormal(wallStartPoint - wallEndPoint);
 
             // get the supposed orientation of the instance
             XYZ insertionPoint = wallStartPoint + (wallLine.Direction * instance.HostParameter);
             XYZ correctDirection = (point - insertionPoint).Normalize();
 
             // if the initial orientation and the correct orientation are not equal, flip the instance
-            if (!insertedDirection.IsAlmostEqualTo(correctDirection))
+            if (!wallNormal.IsAlmostEqualTo(correctDirection))
             {
                 instance.flipFacing();
             }
@@ -452,9 +447,9 @@ namespace CustomizacaoMoradias.Source.Builder
             if (Math.Abs(angle - DeegreToRadians(properties.Rotation)) < 0.001)
                 door.flipFacing();
 
-            if(properties.OpenLeft)
+            if (properties.OpenLeft)
                 door.flipHand();
-            
+
             return door;
         }
 
@@ -498,7 +493,7 @@ namespace CustomizacaoMoradias.Source.Builder
         {
             SpatialElementBoundaryOptions opt = new SpatialElementBoundaryOptions
             { SpatialElementBoundaryLocation = SpatialElementBoundaryLocation.Center };
-            return  room.GetBoundarySegments(opt);
+            return room.GetBoundarySegments(opt);
         }
 
         /// <summary>
@@ -520,7 +515,7 @@ namespace CustomizacaoMoradias.Source.Builder
             foreach (Room room in Rooms)
             {
                 var loops = GetRoomLoops(room);
-                if((loops != null) && (loops.Count == 1))
+                if ((loops != null) && (loops.Count == 1))
                 {
                     CurveArray curve = BoundarySegmentToCurveArray(loops.First());
                     doc.Create.NewFloor(curve, floorType, baseLevel, false);
@@ -541,7 +536,7 @@ namespace CustomizacaoMoradias.Source.Builder
             {
                 // if there more than 1 loop, that means that this circuit represents the external area
                 var loops = GetRoomLoops(room);
-                if(loops.Count > 1)
+                if (loops.Count > 1)
                 {
                     // first of all we find the closed loop with the smaller area
                     double minArea = double.MaxValue;
@@ -588,7 +583,7 @@ namespace CustomizacaoMoradias.Source.Builder
             return curveArray;
         }
 
-        
+
 
         /// <summary>
         /// Draw lines in the current view that matches the given curve array.
@@ -646,7 +641,9 @@ namespace CustomizacaoMoradias.Source.Builder
         /// </summary>
         public void ClassifyRooms()
         {
-            foreach(Room room in Rooms)
+            scoreThread.Join();
+            roomThread.Join();
+            foreach (Room room in Rooms)
             {
                 var roomLoops = GetRoomLoops(room).Count;
                 if (roomLoops == 2)
@@ -656,16 +653,10 @@ namespace CustomizacaoMoradias.Source.Builder
                 else if (roomLoops == 1)
                 {
                     List<string> elements = GetFurniture(room);
-                    scoreThread.Join();
-                    roomThread.Join();
                     string roomName = GetRoomFromScore(elements, roomElementsScore, roomNames);
-                    if (roomName != null) 
+                    if ((roomName != null) && (roomName.Contains(roomName)))
                     {
                         room.Name = roomName;
-                    }
-                    else
-                    {
-                        room.Name = "Varanda de serviço";
                     }
                 }
             }
@@ -681,7 +672,7 @@ namespace CustomizacaoMoradias.Source.Builder
                 {
                     if (elements[i].Equals(s.ElementName))
                     {
-                        if(scoreDict.TryGetValue(s.RoomID, out int currentScore))
+                        if (scoreDict.TryGetValue(s.RoomID, out int currentScore))
                             scoreDict[s.RoomID] += s.Score;
                         else
                             scoreDict.Add(s.RoomID, s.Score);
@@ -692,7 +683,7 @@ namespace CustomizacaoMoradias.Source.Builder
             int roomId = 0, max = 0;
             foreach (var pair in scoreDict)
             {
-                if(pair.Value > max)
+                if (pair.Value > max)
                 {
                     max = pair.Value;
                     roomId = pair.Key;
@@ -767,7 +758,7 @@ namespace CustomizacaoMoradias.Source.Builder
 
             Viewport.Create(doc, viewSheet.Id, doc.ActiveView.Id, new XYZ(0, 2, 0));
         }
-        
+
         public void DimensioningBuilding(double offset, bool normalize)
         {
             Polygon housePerimiter = new Polygon(GetHousePerimeter());
@@ -787,7 +778,7 @@ namespace CustomizacaoMoradias.Source.Builder
                     curve.GetEndPoint(1).Z);
 
                 XYZ normal = new XYZ(-(p2 - p1).Y, (p2 - p1).X, 0).Normalize();
-                Transform transform = Transform.CreateTranslation(normal* offset);               
+                Transform transform = Transform.CreateTranslation(normal * offset);
 
                 Line line = Line.CreateBound(p1, p2);
                 line = line.CreateTransformed(transform) as Line;
@@ -798,7 +789,7 @@ namespace CustomizacaoMoradias.Source.Builder
                 ReferenceArray references = new ReferenceArray();
                 references.Append(modelCurve.GeometryCurve.GetEndPointReference(0));
                 references.Append(modelCurve.GeometryCurve.GetEndPointReference(1));
-                doc.Create.NewDimension(doc.ActiveView, line, references);                   
+                doc.Create.NewDimension(doc.ActiveView, line, references);
             }
         }
 
@@ -817,7 +808,7 @@ namespace CustomizacaoMoradias.Source.Builder
 
                 foreach (Wall w in walls)
                 {
-                    
+
                     Line wLine = (w.Location as LocationCurve).Curve as Line;
                     var result = wallLine.Intersect(wLine, out var resultArray);
 
@@ -833,7 +824,7 @@ namespace CustomizacaoMoradias.Source.Builder
                             connectedAt1 = true;
                     }
                 }
-                if(!(connectedAt0 && connectedAt1))
+                if (!(connectedAt0 && connectedAt1))
                 {
                     bool[] openSide = { connectedAt0, connectedAt1 };
                     (Wall, bool[]) openWall = (wall, openSide);
@@ -845,7 +836,7 @@ namespace CustomizacaoMoradias.Source.Builder
 
         private static Line GetWallLine(Wall wall)
         {
-            if (wall is null) 
+            if (wall is null)
                 return null;
             return (wall.Location as LocationCurve).Curve as Line;
         }
@@ -871,7 +862,7 @@ namespace CustomizacaoMoradias.Source.Builder
                 }
 
                 // criar o vetor e a linha
-                XYZ p0, p1;  
+                XYZ p0, p1;
                 if (!connected[0])
                 {
                     p0 = wallLine.GetEndPoint(1);
@@ -893,7 +884,7 @@ namespace CustomizacaoMoradias.Source.Builder
             if (!CalculateRoomBoundary(wallLine, candidates, p0, p1, wallVector))
             {
                 wallVector = new XYZ(-wallVector.Y, wallVector.X, wallVector.Z);
-                if(!CalculateRoomBoundary(wallLine, candidates, p0, p1, wallVector))
+                if (!CalculateRoomBoundary(wallLine, candidates, p0, p1, wallVector))
                 {
                     CalculateRoomBoundary(wallLine, candidates, p0, p1, -wallVector);
                 }
@@ -929,7 +920,7 @@ namespace CustomizacaoMoradias.Source.Builder
                 else
                     p = end;
             }
-            
+
             Line l = Line.CreateBound(p1, p);
             CurveArray array = new CurveArray();
 
@@ -960,7 +951,7 @@ namespace CustomizacaoMoradias.Source.Builder
                     closestWall = candidate;
                 }
             }
-            if (closestWall is null) 
+            if (closestWall is null)
                 return null;
             Line closestWallLine = GetWallLine(closestWall);
             return closestWallLine;

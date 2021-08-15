@@ -71,5 +71,10 @@ namespace CustomizacaoMoradias.Source.Util
             double p2z = (slope * baseVector.GetLength()) / 2;
             return new XYZ(p2x, p2y, p2z);
         }
+
+        public static XYZ CalculateNormal(XYZ vector)
+        {
+            return vector.CrossProduct(XYZ.BasisZ).Normalize();
+        }
     }
 }
