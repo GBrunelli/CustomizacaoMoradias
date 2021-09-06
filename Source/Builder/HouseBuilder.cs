@@ -57,13 +57,16 @@ namespace CustomizacaoMoradias.Source.Builder
 
         private PlanCircuitSet Circuits
         {
-            get { return doc.get_PlanTopology(baseLevel).Circuits; }
+            get 
+            {
+                return doc.get_PlanTopology(baseLevel).Circuits; 
+            }
         }
 
         private IList<Room> Rooms
         {
             get
-            {
+            {             
                 List<Room> rooms = new List<Room>();
                 List<UV> roomPoints = new List<UV>();
                 foreach (PlanCircuit circuit in Circuits)
@@ -224,9 +227,13 @@ namespace CustomizacaoMoradias.Source.Builder
             {
                 foreach (WallProperty wall in ed.WallProperties)
                 {
-                    try { CreateWall(wall, Properties.Settings.Default.WallTypeName); }
+                    try 
+                    { 
+                        CreateWall(wall, Properties.Settings.Default.WallTypeName);
+                    }
                     catch { errorMessage += $"Parede {wall}, "; }
                 }
+                SeparateRooms();
             }
             if (ed.WindowProperties != null)
             {
@@ -442,8 +449,7 @@ namespace CustomizacaoMoradias.Source.Builder
             HostedProperty hp = ConvertToHosted(properties);
             FamilyInstance door = CreateHostedElement(hp, false);
 
-            /*
-            XYZ facing = door.FacingOrientation;
+            XYZ facing = door.FacingOrientation * -1;
             facing = VectorManipulator.TransformUVinXYZ(VectorManipulator.RotateVector(facing, baseRotation));
             double angle = Math.Atan2(facing.Y, facing.X);
 
@@ -452,6 +458,11 @@ namespace CustomizacaoMoradias.Source.Builder
 
             if ((door.FacingOrientation.CrossProduct(door.HandOrientation).Z < 0) ^ properties.OpenLeft)
                 door.flipHand();
+
+            /*
+            double offset = GetFamilyOffset(properties.Type).U;
+            XYZ translation = door.HandOrientation * offset;
+            ElementTransformUtils.MoveElement(doc, door.Id, translation);
             */
 
             return door;
@@ -845,7 +856,7 @@ namespace CustomizacaoMoradias.Source.Builder
             return (wall.Location as LocationCurve).Curve as Line;
         }
 
-        public void PlaceRoomSeparatorsInOpenWalls()
+        public void SeparateRooms()
         {
             List<(Wall, bool[])> openWalls = GetOpenWalls(Walls);
 

@@ -79,8 +79,10 @@ namespace CustomizacaoMoradias.Source
         {
             if (selectorForm != null && selectorForm.Visible)
                 selectorForm.Close();
+
             if (roofForm != null && roofForm.Visible)
                 roofForm.Close();
+
             return Result.Succeeded;
         }       
 
@@ -100,6 +102,7 @@ namespace CustomizacaoMoradias.Source
                 // The dialog becomes the owner responsible for disposing them, eventually.
                 selectorForm = new PlaceElementsForm(exEvent);
                 PlaceElementsForm.form = selectorForm;
+
                 selectorForm.Show();
             }
         }

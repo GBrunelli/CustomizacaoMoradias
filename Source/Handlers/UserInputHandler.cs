@@ -15,10 +15,21 @@ namespace CustomizacaoMoradias.Source.Handlers
             UIDocument uidoc    = app.ActiveUIDocument;
             Document doc        = uidoc.Document;
 
-            float scale         = Properties.Settings.Default.Scale;
-            double overhang     = UnitUtils.ConvertToInternalUnits(Properties.Settings.Default.Overhang, UnitTypeId.Meters);
-            string levelName    = Properties.Settings.Default.BaseLevelName;
-            string topLevelName = Properties.Settings.Default.TopLevelName;
+            float scale = 0;
+            double overhang = 0;
+            string levelName = "", topLevelName = "";
+
+            try
+            {
+                scale = Properties.Settings.Default.Scale;
+                overhang = UnitUtils.ConvertToInternalUnits(Properties.Settings.Default.Overhang, UnitTypeId.Meters);
+                levelName = Properties.Settings.Default.BaseLevelName;
+                topLevelName = Properties.Settings.Default.TopLevelName;
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+            }
 
             string path         = PlaceElementsForm.filePath;
             XYZ roofVector      = PlaceElementsForm.roofSelector.SlopeVector;
@@ -34,7 +45,6 @@ namespace CustomizacaoMoradias.Source.Handlers
                 try
                 {
                     builder.BuildJSON(path);
-                    builder.PlaceRoomSeparatorsInOpenWalls();
                 }
                 catch (Exception e)
                 {
