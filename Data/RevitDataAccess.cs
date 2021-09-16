@@ -6,9 +6,9 @@ using CustomizacaoMoradias.Source.Exceptions;
 
 namespace CustomizacaoMoradias.Data
 {
-    class RevitDataAccess
+    internal class RevitDataAccess
     {
-        private Document doc;
+        private readonly Document doc;
 
         public RevitDataAccess(Document doc)
         {

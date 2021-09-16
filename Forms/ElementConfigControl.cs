@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Windows.Forms;
 using System.Globalization;
+using System.Windows.Forms;
 
 namespace CustomizacaoMoradias.Forms
 {
@@ -11,8 +10,8 @@ namespace CustomizacaoMoradias.Forms
     {
         private string lastID;
         private bool inDataSource = false;
-        CultureInfo culture = new CultureInfo("en-US");     
-        private readonly static string CONNECTION_STRING = Properties.Settings.Default.PropertiesDatabaseConnectionString;
+        private readonly CultureInfo culture = new CultureInfo("en-US");
+        private static readonly string CONNECTION_STRING = Properties.Settings.Default.PropertiesDatabaseConnectionString;
 
         public ElementConfigControl()
         {
@@ -22,7 +21,11 @@ namespace CustomizacaoMoradias.Forms
 
         private void elementDataGridView_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
-            if (inDataSource) return;
+            if (inDataSource)
+            {
+                return;
+            }
+
             if (elementDataGridView.CurrentRow != null)
             {
                 try
@@ -42,7 +45,7 @@ namespace CustomizacaoMoradias.Forms
                         PopulateDataGridView();
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     MessageBox.Show(ex.Message, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     PopulateDataGridView();
@@ -65,9 +68,13 @@ namespace CustomizacaoMoradias.Forms
                 components[0] = 0;
                 components[1] = 0;
                 return components;
-            }   
+            }
             string[] tokens = vector.Replace('(', ' ').Replace(')', ' ').Split(',');
-            if (tokens.Length != 2) throw new FormatException("Vetor formatato incorretamente");
+            if (tokens.Length != 2)
+            {
+                throw new FormatException("Vetor formatato incorretamente");
+            }
+
             components[0] = float.Parse(tokens[0], culture);
             components[1] = float.Parse(tokens[1], culture);
             return components;
@@ -82,7 +89,7 @@ namespace CustomizacaoMoradias.Forms
                 float[] components = GetVectorComponents(dgvRow.Cells["Offset"].Value.ToString());
                 sqlCmd.Parameters.AddWithValue("ElementID", dgvRow.Cells["elementIDDataGridViewTextBoxColumn"].Value);
                 sqlCmd.Parameters.AddWithValue("Name", dgvRow.Cells["nameDataGridViewTextBoxColumn"].Value.ToString());
-                sqlCmd.Parameters.AddWithValue("OffsetX", components[0]); 
+                sqlCmd.Parameters.AddWithValue("OffsetX", components[0]);
                 sqlCmd.Parameters.AddWithValue("OffsetY", components[1]);
                 sqlCmd.ExecuteNonQuery();
             }
@@ -110,7 +117,7 @@ namespace CustomizacaoMoradias.Forms
             }
         }
 
-        
+
 
         private void PopulateDataGridView()
         {
@@ -124,9 +131,9 @@ namespace CustomizacaoMoradias.Forms
                     sqlDa.Fill(dtbl);
                     dtbl.Columns.Add("Offset", typeof(string));
 
-                    foreach(DataRow row in dtbl.Rows)
+                    foreach (DataRow row in dtbl.Rows)
                     {
-                        double x = Math.Round((double)row["OffsetX"], 2); 
+                        double x = Math.Round((double)row["OffsetX"], 2);
                         double y = Math.Round((double)row["OffsetY"], 2);
                         string stringX = Convert.ToString(x, culture);
                         string stringY = Convert.ToString(y, culture);
@@ -137,7 +144,8 @@ namespace CustomizacaoMoradias.Forms
                     inDataSource = false;
                 }
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 MessageBox.Show(e.Message, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }

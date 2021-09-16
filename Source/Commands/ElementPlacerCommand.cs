@@ -1,7 +1,7 @@
 ﻿using System;
+using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using Autodesk.Revit.Attributes;
 
 namespace CustomizacaoMoradias.Source.Commands
 {

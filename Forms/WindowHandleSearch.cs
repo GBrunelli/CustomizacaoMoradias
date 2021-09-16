@@ -19,12 +19,12 @@ namespace CustomizacaoMoradias.Forms
         /// <summary>
         /// Revit main window handle
         /// </summary>
-        static public WindowHandleSearch MainWindowHandle
+        public static WindowHandleSearch MainWindowHandle
         {
             get
             {
                 // Get handle of main window
-                var revitProcess = Process.GetCurrentProcess();
+                Process revitProcess = Process.GetCurrentProcess();
                 return new WindowHandleSearch(
                   GetMainWindow(revitProcess.Id));
             }
@@ -113,11 +113,17 @@ namespace CustomizacaoMoradias.Forms
                 // on each window.
                 delegate (HWND hWnd, int lParam)
                 {
-                    if (hWnd == shellWindow) return true;
-                    if (!IsWindowVisible(hWnd)) return true;
+                    if (hWnd == shellWindow)
+                    {
+                        return true;
+                    }
 
-                    uint windowPid = 0;
-                    GetWindowThreadProcessId(hWnd, out windowPid);
+                    if (!IsWindowVisible(hWnd))
+                    {
+                        return true;
+                    }
+
+                    GetWindowThreadProcessId(hWnd, out uint windowPid);
 
                     // if window is from Pid of interest, 
                     // see if it's the Main Window
@@ -127,7 +133,9 @@ namespace CustomizacaoMoradias.Forms
                         // Parent Window of Zero, no parent.
                         HWND parentHwnd = GetParent(hWnd);
                         if (parentHwnd == IntPtr.Zero)
+                        {
                             windowsForPid.Add(hWnd);
+                        }
                     }
 
                     return true;
@@ -153,7 +161,9 @@ namespace CustomizacaoMoradias.Forms
         {
             // Safty conditions, bail if not met.
             if (handles == null || handles.Count <= 0)
+            {
                 return IntPtr.Zero;
+            }
 
             // default Null handel
             HWND mainWindow = IntPtr.Zero;
@@ -170,10 +180,13 @@ namespace CustomizacaoMoradias.Forms
                 // more than one candidate for Main Window 
                 // so find the Main Window by its Title, it 
                 // will contain "Autodesk Revit"
-                foreach (var hWnd in handles)
+                foreach (HWND hWnd in handles)
                 {
                     int length = GetWindowTextLength(hWnd);
-                    if (length == 0) continue;
+                    if (length == 0)
+                    {
+                        continue;
+                    }
 
                     StringBuilder builder = new StringBuilder(
                       length);

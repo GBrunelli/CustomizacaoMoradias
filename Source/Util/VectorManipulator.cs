@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Autodesk.Revit.DB;
 
 namespace CustomizacaoMoradias.Source.Util
 {
-    static class VectorManipulator
+    internal static class VectorManipulator
     {
         public static UV RotateVector(UV vector, double rotation)
         {
@@ -87,9 +83,9 @@ namespace CustomizacaoMoradias.Source.Util
         {
             XYZ normal = VectorManipulator.CalculateNormal(line.Direction);
             Line crossLine = Line.CreateUnbound(point, normal);
-            if (line.Intersect(crossLine, out var resultArray) == SetComparisonResult.Overlap)
+            if (line.Intersect(crossLine, out IntersectionResultArray resultArray) == SetComparisonResult.Overlap)
             {
-                var result = resultArray.get_Item(0);
+                IntersectionResult result = resultArray.get_Item(0);
                 return result.XYZPoint;
             }
             return null;

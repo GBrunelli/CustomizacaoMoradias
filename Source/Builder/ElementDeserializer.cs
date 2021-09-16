@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace CustomizacaoMoradias.Source.Builder
 {
@@ -17,7 +13,7 @@ namespace CustomizacaoMoradias.Source.Builder
     {
         public List<Coordinate> Coordinate { get; set; }
 
-        override public string ToString()
+        public override string ToString()
         {
             int x0 = Coordinate[0].X;
             int y0 = Coordinate[0].Y;
@@ -68,7 +64,7 @@ namespace CustomizacaoMoradias.Source.Builder
         public List<FurnitureProperty> FurnitureProperties { get; set; }
     }
 
-    interface IHosted
+    internal interface IHosted
     {
         Coordinate Coordinate { get; }
 

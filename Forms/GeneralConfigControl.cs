@@ -18,11 +18,11 @@ namespace CustomizacaoMoradias.Forms
             try
             {
                 settings.BaseLevelName = baseLevelTextBox.Text;
-                settings.TopLevelName  = topLevelTextBox.Text;
-                settings.FloorName     = floorTypeTextBox.Text;
-                settings.CeilingName   = ceilingTypeTextBox.Text;
-                settings.WallTypeName  = wallTypeTextBox.Text;
-                settings.Scale         = float.Parse(scaleTextBox.Text);
+                settings.TopLevelName = topLevelTextBox.Text;
+                settings.FloorName = floorTypeTextBox.Text;
+                settings.CeilingName = ceilingTypeTextBox.Text;
+                settings.WallTypeName = wallTypeTextBox.Text;
+                settings.Scale = float.Parse(scaleTextBox.Text);
                 settings.Save();
             }
             catch (Exception error)
@@ -34,12 +34,12 @@ namespace CustomizacaoMoradias.Forms
 
         private void ResetTextBoxes()
         {
-            baseLevelTextBox.Text   = settings.BaseLevelName;
-            topLevelTextBox.Text    = settings.TopLevelName;
-            floorTypeTextBox.Text   = settings.FloorName;
+            baseLevelTextBox.Text = settings.BaseLevelName;
+            topLevelTextBox.Text = settings.TopLevelName;
+            floorTypeTextBox.Text = settings.FloorName;
             ceilingTypeTextBox.Text = settings.CeilingName;
-            wallTypeTextBox.Text    = settings.WallTypeName;
-            scaleTextBox.Text       = settings.Scale.ToString();
+            wallTypeTextBox.Text = settings.WallTypeName;
+            scaleTextBox.Text = settings.Scale.ToString();
         }
     }
 }

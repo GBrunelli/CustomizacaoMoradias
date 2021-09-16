@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CustomizacaoMoradias.Data
+﻿namespace CustomizacaoMoradias.Data
 {
-    class StyleDM
+    internal class StyleDM
     {
         public int StyleID { get; set; }
 

@@ -1,10 +1,9 @@
-﻿using Autodesk.Revit.DB;
+﻿using System;
+using System.Windows.Forms;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using CustomizacaoMoradias.Forms;
 using CustomizacaoMoradias.Source.Builder;
-using System;
-using System.Collections.Generic;
-using System.Windows.Forms;
 
 namespace CustomizacaoMoradias.Source.Handlers
 {
@@ -12,8 +11,8 @@ namespace CustomizacaoMoradias.Source.Handlers
     {
         public void Execute(UIApplication app)
         {
-            UIDocument uidoc    = app.ActiveUIDocument;
-            Document doc        = uidoc.Document;
+            UIDocument uidoc = app.ActiveUIDocument;
+            Document doc = uidoc.Document;
 
             float scale = 0;
             double overhang = 0;
@@ -32,10 +31,10 @@ namespace CustomizacaoMoradias.Source.Handlers
                 PlaceElementsForm.CloseForm();
             }
 
-            string path         = PlaceElementsForm.filePath;
-            XYZ roofVector      = PlaceElementsForm.roofSelector.SlopeVector;
-            var roofDesign      = PlaceElementsForm.roofSelector.RoofStyle;
-            double slope        = RoofSelector.GetSlopeByType(roofDesign);
+            string path = PlaceElementsForm.filePath;
+            XYZ roofVector = PlaceElementsForm.roofSelector.SlopeVector;
+            RoofDesign roofDesign = PlaceElementsForm.roofSelector.RoofStyle;
+            double slope = RoofSelector.GetSlopeByType(roofDesign);
 
             HouseBuilder builder = new HouseBuilder(doc, levelName, topLevelName, scale);
 
@@ -74,7 +73,7 @@ namespace CustomizacaoMoradias.Source.Handlers
                 catch (Exception e)
                 {
                     errorMessage += $"\nErro ao classificar ambientes: \"{e.Message}\"";
-                }      
+                }
                 transaction.Commit();
             }
             using (Transaction transaction = new Transaction(doc, "Contruir Telhado"))
@@ -88,12 +87,14 @@ namespace CustomizacaoMoradias.Source.Handlers
                 catch (Exception e)
                 {
                     errorMessage += $"\nErro ao construir telhado: \"{e.Message}\"";
-                }                
+                }
                 transaction.Commit();
             }
 
             if (errorMessage.Length > 1)
+            {
                 MessageBox.Show(errorMessage, "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
 
             PlaceElementsForm.CloseForm();
         }

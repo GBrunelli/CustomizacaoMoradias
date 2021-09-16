@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Reflection;
-using Autodesk.Revit.UI;
-using System.Windows.Media.Imaging;
-using System.Runtime.InteropServices;
-using System.Windows.Media;
 using System.Drawing;
-using System.Windows.Interop;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Interop;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using Autodesk.Revit.UI;
 using CustomizacaoMoradias.Forms;
-using CustomizacaoMoradias.Source;
 using CustomizacaoMoradias.Source.Handlers;
 
 namespace CustomizacaoMoradias.Source
@@ -38,7 +37,7 @@ namespace CustomizacaoMoradias.Source
 
             // Creates the standalone panel
             RibbonPanel standaloneRibbonPanel = application.CreateRibbonPanel("Customização de Moradias", "Funções");
-            
+
             // Floor button
             PushButtonData floorButtonData = new PushButtonData("floorButton", "Criar Piso", path, "CustomizacaoMoradias.Source.Commands.FloorCommand");
             PushButton floorButton = standaloneRibbonPanel.AddItem(floorButtonData) as PushButton;
@@ -78,13 +77,17 @@ namespace CustomizacaoMoradias.Source
         public Result OnShutdown(UIControlledApplication application)
         {
             if (selectorForm != null && selectorForm.Visible)
+            {
                 selectorForm.Close();
+            }
 
             if (roofForm != null && roofForm.Visible)
+            {
                 roofForm.Close();
+            }
 
             return Result.Succeeded;
-        }       
+        }
 
         // The external command invokes this on the end-user's request
         public void ShowPlaceElementsForm()
@@ -123,14 +126,14 @@ namespace CustomizacaoMoradias.Source
         public static extern bool DeleteObject([In] IntPtr hObject);
         public static ImageSource ImageSourceFromBitmap(Bitmap bmp)
         {
-            var handle = bmp.GetHbitmap();
+            IntPtr handle = bmp.GetHbitmap();
             try
             {
                 return Imaging.CreateBitmapSourceFromHBitmap(handle, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
             }
-            finally 
-            { 
-                DeleteObject(handle); 
+            finally
+            {
+                DeleteObject(handle);
             }
         }
     }

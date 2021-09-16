@@ -1,8 +1,6 @@
 ﻿namespace CustomizacaoMoradias
 {
-
-
-    partial class PropertiesDatabaseDataSet
+    public partial class PropertiesDatabaseDataSet
     {
     }
 }

@@ -1,49 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 
 namespace CustomizacaoMoradias.Source.Util
 {
-    class Polygon
+    internal class Polygon
     {
 
         private CurveArray curveArray;
 
-        public IList<UV> Vertices 
-        { 
-            get 
-            {
-                return GetPoints().ToList();
-            } 
-        }
+        public IList<UV> Vertices => GetPoints().ToList();
 
-        public IList<UV> Notches
-        {
-            get
-            {
-                return GetNotches(GetPoints());
-            }
-        }
+        public IList<UV> Notches => GetNotches(GetPoints());
 
-        public CurveArray CurveArray
-        {
-            get
-            {
-                return curveArray;
-            }
-        }
+        public CurveArray CurveArray => curveArray;
 
-        public UV Centroid
-        {
-            get
-            {
-                return CalculatePolygonCentroid(GetPoints());
-            }
-        }
+        public UV Centroid => CalculatePolygonCentroid(GetPoints());
 
 
         public Polygon(CurveArray curveArray)
@@ -84,7 +58,10 @@ namespace CustomizacaoMoradias.Source.Util
         private List<UV> GetNotches(CircularLinkedList<UV> points)
         {
             List<UV> notches = new List<UV>();
-            if (points.Count < 5) return notches;
+            if (points.Count < 5)
+            {
+                return notches;
+            }
 
             CircularLinkedListNode<UV> node = points.Head;
             do
@@ -94,7 +71,10 @@ namespace CustomizacaoMoradias.Source.Util
                 UV p2 = node.Next.Next.Value;
                 double angle = VectorManipulator.CalculatesAngle(p0, p1, p2);
                 if (angle > Math.PI)
+                {
                     notches.Add(p1);
+                }
+
                 node = node.Next;
             } while (node != points.Head);
 
@@ -291,12 +271,16 @@ namespace CustomizacaoMoradias.Source.Util
             }
 
             // insert the new point in the list
-            var node = FindPoint(points, previousPoint);
+            CircularLinkedListNode<UV> node = FindPoint(points, previousPoint);
             newNode = points.AddAfter(node, newPoint);
             if (newNode.Next.Value.IsAlmostEqualTo(newNode.Value))
+            {
                 points.Remove(newNode.Next.Value);
+            }
             else if (newNode.Previous.Value.IsAlmostEqualTo(newNode.Value))
+            {
                 points.Remove(newNode.Previous.Value);
+            }
 
             return newNode;
         }
@@ -322,9 +306,13 @@ namespace CustomizacaoMoradias.Source.Util
                 newNode = points.AddAfter(node, intersectionPoint);
             }
             if (newNode.Next.Value.IsAlmostEqualTo(newNode.Value))
+            {
                 points.Remove(newNode.Next.Value);
+            }
             else if (newNode.Previous.Value.IsAlmostEqualTo(newNode.Value))
+            {
                 points.Remove(newNode.Previous.Value);
+            }
 
             return newNode;
         }
@@ -384,7 +372,10 @@ namespace CustomizacaoMoradias.Source.Util
             {
                 UV point = node.Value;
                 if (point.IsAlmostEqualTo(key, 0.01))
+                {
                     return node;
+                }
+
                 node = node.Next;
             } while (node != points.Head);
             return null;
@@ -471,16 +462,19 @@ namespace CustomizacaoMoradias.Source.Util
         /// <returns>Returns a List of 2D coordinates that represents the offseted polygon.</returns>
         private static CircularLinkedList<UV> OffsetPolygon(CircularLinkedList<UV> vertices, double offset, List<Line> unchangedLines)
         {
-            if (offset == 0) return vertices;
+            if (offset == 0)
+            {
+                return vertices;
+            }
 
             CircularLinkedList<UV> adjusted_points = new CircularLinkedList<UV>();
             CircularLinkedListNode<UV> node = vertices.Head;
             do
             {
                 //find the points before and after our target point.
-                var vertexI = node.Previous.Value;
-                var vertexJ = node.Value;
-                var vertexK = node.Next.Value;
+                UV vertexI = node.Previous.Value;
+                UV vertexJ = node.Value;
+                UV vertexK = node.Next.Value;
 
                 //the next step is to push out each point based on the position of its surrounding points and then
                 //figure out the intersections of the pushed out points             
@@ -547,8 +541,8 @@ namespace CustomizacaoMoradias.Source.Util
         public bool Normalize()
         {
             bool normalized = true;
-            var points = GetPoints();
-            var node = points.Head;
+            CircularLinkedList<UV> points = GetPoints();
+            CircularLinkedListNode<UV> node = points.Head;
 
             do
             {
@@ -568,7 +562,9 @@ namespace CustomizacaoMoradias.Source.Util
             curveArray = CreateCurveArrayFromPoints(points);
 
             if (!normalized)
+            {
                 Normalize();
+            }
 
             return normalized;
         }
@@ -580,7 +576,7 @@ namespace CustomizacaoMoradias.Source.Util
 
         private UV CalculatePolygonCentroid(CircularLinkedList<UV> vertices)
         {
-            var node = vertices.Head;
+            CircularLinkedListNode<UV> node = vertices.Head;
             UV sum = UV.Zero;
             do
             {
@@ -604,7 +600,7 @@ namespace CustomizacaoMoradias.Source.Util
 
             foreach (Curve curve in curveArray)
             {
-                var result = cutLine.Intersect(curve, out var resultArray);
+                SetComparisonResult result = cutLine.Intersect(curve, out IntersectionResultArray resultArray);
                 if (result == SetComparisonResult.Overlap)
                 {
                     UV newPoint = VectorManipulator.ProjectInPlaneXY(resultArray.get_Item(0).XYZPoint);
@@ -632,9 +628,15 @@ namespace CustomizacaoMoradias.Source.Util
             CircularLinkedListNode<UV> p0Node = FindPoint(points, p0);
             CircularLinkedListNode<UV> p1Node = FindPoint(points, p1);
             if (p0Node.Next.Equals(p1Node))
+            {
                 return points.AddAfter(p0Node, newPoint);
+            }
+
             if (p1Node.Next.Equals(p0Node))
+            {
                 return points.AddAfter(p1Node, newPoint);
+            }
+
             throw new ArgumentException("The points are not sequential.");
         }
     }

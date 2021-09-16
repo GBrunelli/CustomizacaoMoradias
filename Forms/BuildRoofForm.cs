@@ -11,26 +11,14 @@ namespace CustomizacaoMoradias.Forms
         public static BuildRoofForm form;
         public RoofSelector roofSelector;
 
-        public static XYZ SlopeVector
-        {
-            get
-            {
-                return form.roofSelector.SlopeVector;
-            }
-        }
+        public static XYZ SlopeVector => form.roofSelector.SlopeVector;
 
-        public static RoofDesign RoofDesign
-        {
-            get
-            {
-                return form.roofSelector.RoofStyle;
-            }
-        }
+        public static RoofDesign RoofDesign => form.roofSelector.RoofStyle;
 
-        private ExternalEvent exEvent;
+        private readonly ExternalEvent exEvent;
 
         public BuildRoofForm(ExternalEvent exEvent)
-        {       
+        {
             InitializeComponent();
             this.exEvent = exEvent;
         }

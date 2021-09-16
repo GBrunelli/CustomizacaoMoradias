@@ -14,15 +14,15 @@ public enum RoofDesign
 
 namespace CustomizacaoMoradias.Source.Builder
 {
-    class RoofCreator
+    internal class RoofCreator
     {
 
 
-        private Document document;
-        private Level baseLevel;
-        private Level roofLevel;
-        private HouseBuilder hb;
-        private RevitDataAccess revitDB;
+        private readonly Document document;
+        private readonly Level baseLevel;
+        private readonly Level roofLevel;
+        private readonly HouseBuilder hb;
+        private readonly RevitDataAccess revitDB;
 
         public RoofCreator(Document document, Level baseLevel, Level roofLevel, HouseBuilder hb, RevitDataAccess revitDB)
         {
@@ -104,7 +104,7 @@ namespace CustomizacaoMoradias.Source.Builder
         {
             Polygon roofPolygon = new Polygon(footPrint);
             List<Line> cutLines = new List<Line>();
-            
+
             XYZ divisionDirection = new XYZ(-slopeDirection.Y, slopeDirection.X, 0);
 
             List<CurveArray> convexFootPrint = roofPolygon.DividePolygonInHalf(divisionDirection, out Line cutLine);
@@ -138,7 +138,7 @@ namespace CustomizacaoMoradias.Source.Builder
             }
             CreateParapetWall(footPrint);
         }
-       
+
 
         private void CreateParapetWall(CurveArray curveArray)
         {
@@ -370,7 +370,9 @@ namespace CustomizacaoMoradias.Source.Builder
                         document.Delete(deleteWall.Id);
                     }
                     if (insert)
+                    {
                         gableWalls.Add(newGableWall);
+                    }
                 }
             }
         }

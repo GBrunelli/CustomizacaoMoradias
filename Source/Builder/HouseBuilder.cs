@@ -49,24 +49,18 @@ namespace CustomizacaoMoradias.Source.Builder
         private Thread elementThread;
         private List<ElementDM> elements;
 
-        private List<Wall> Walls = new List<Wall>();
+        private readonly List<Wall> Walls = new List<Wall>();
 
         private double scale;
 
-        private double baseRotation = Math.PI / 2;
+        private readonly double baseRotation = Math.PI / 2;
 
-        private PlanCircuitSet Circuits
-        {
-            get 
-            {
-                return doc.get_PlanTopology(baseLevel).Circuits; 
-            }
-        }
+        private PlanCircuitSet Circuits => doc.get_PlanTopology(baseLevel).Circuits;
 
         private IList<Room> Rooms
         {
             get
-            {             
+            {
                 List<Room> rooms = new List<Room>();
                 List<UV> roomPoints = new List<UV>();
                 foreach (PlanCircuit circuit in Circuits)
@@ -219,7 +213,10 @@ namespace CustomizacaoMoradias.Source.Builder
         public void BuildJSON(string path)
         {
             if (path is null)
+            {
                 throw new ArgumentNullException(nameof(path));
+            }
+
             string jsonText = File.ReadAllText(path);
             ElementDeserializer ed = JsonConvert.DeserializeObject<ElementDeserializer>(jsonText);
             string errorMessage = "";
@@ -227,8 +224,8 @@ namespace CustomizacaoMoradias.Source.Builder
             {
                 foreach (WallProperty wall in ed.WallProperties)
                 {
-                    try 
-                    { 
+                    try
+                    {
                         CreateWall(wall, Properties.Settings.Default.WallTypeName);
                     }
                     catch { errorMessage += $"Parede {wall}, "; }
@@ -328,7 +325,9 @@ namespace CustomizacaoMoradias.Source.Builder
             foreach (ElementDM e in elements)
             {
                 if (e.ElementID.Trim().Equals(type))
+                {
                     return new UV(e.OffsetX, e.OffsetY);
+                }
             }
             return null;
         }
@@ -430,7 +429,9 @@ namespace CustomizacaoMoradias.Source.Builder
             foreach (ElementDM e in elements)
             {
                 if (e.ElementID.Trim().Equals(familyType))
+                {
                     return e.Name;
+                }
             }
             return null;
         }
@@ -454,10 +455,14 @@ namespace CustomizacaoMoradias.Source.Builder
             double angle = Math.Atan2(facing.Y, facing.X);
 
             if (Math.Abs(angle - DeegreToRadians(properties.Rotation)) > 0.001)
+            {
                 door.flipFacing();
+            }
 
             if ((door.FacingOrientation.CrossProduct(door.HandOrientation).Z < 0) ^ properties.OpenLeft)
+            {
                 door.flipHand();
+            }
 
             /*
             double offset = GetFamilyOffset(properties.Type).U;
@@ -529,7 +534,7 @@ namespace CustomizacaoMoradias.Source.Builder
 
             foreach (Room room in Rooms)
             {
-                var loops = GetRoomLoops(room);
+                IList<IList<BoundarySegment>> loops = GetRoomLoops(room);
                 if ((loops != null) && (loops.Count == 1))
                 {
                     CurveArray curve = BoundarySegmentToCurveArray(loops.First());
@@ -550,7 +555,7 @@ namespace CustomizacaoMoradias.Source.Builder
             foreach (Room room in Rooms)
             {
                 // if there more than 1 loop, that means that this circuit represents the external area
-                var loops = GetRoomLoops(room);
+                IList<IList<BoundarySegment>> loops = GetRoomLoops(room);
                 if (loops.Count > 1)
                 {
                     // first of all we find the closed loop with the smaller area
@@ -606,7 +611,11 @@ namespace CustomizacaoMoradias.Source.Builder
         /// <param name="curveArray"></param>
         private void DrawCurveArray(CurveArray curveArray)
         {
-            if (curveArray is null) return;
+            if (curveArray is null)
+            {
+                return;
+            }
+
             View currentView = doc.ActiveView;
             foreach (Curve curve in curveArray)
             {
@@ -619,7 +628,11 @@ namespace CustomizacaoMoradias.Source.Builder
 
         private void DrawCurveArray(Line line)
         {
-            if (line is null) return;
+            if (line is null)
+            {
+                return;
+            }
+
             CurveArray curveArray = new CurveArray();
             curveArray.Append(line);
             DrawCurveArray(curveArray);
@@ -660,7 +673,7 @@ namespace CustomizacaoMoradias.Source.Builder
             roomThread.Join();
             foreach (Room room in Rooms)
             {
-                var roomLoops = GetRoomLoops(room).Count;
+                int roomLoops = GetRoomLoops(room).Count;
                 if (roomLoops == 2)
                 {
                     room.Name = "Exterior";
@@ -692,15 +705,19 @@ namespace CustomizacaoMoradias.Source.Builder
                     if (elements[i].Equals(s.ElementName))
                     {
                         if (scoreDict.TryGetValue(s.RoomID, out int currentScore))
+                        {
                             scoreDict[s.RoomID] += s.Score;
+                        }
                         else
+                        {
                             scoreDict.Add(s.RoomID, s.Score);
+                        }
                     }
                 }
             }
 
             int roomId = 0, max = 0;
-            foreach (var pair in scoreDict)
+            foreach (KeyValuePair<int, int> pair in scoreDict)
             {
                 if (pair.Value > max)
                 {
@@ -714,7 +731,9 @@ namespace CustomizacaoMoradias.Source.Builder
                 foreach (RoomDM room in rooms)
                 {
                     if (room.RoomID == roomId)
+                    {
                         return room.Name;
+                    }
                 }
             }
             return null;
@@ -782,7 +801,9 @@ namespace CustomizacaoMoradias.Source.Builder
         {
             Polygon housePerimiter = new Polygon(GetHousePerimeter());
             if (normalize)
+            {
                 housePerimiter.Normalize();
+            }
 
             foreach (Curve curve in housePerimiter.CurveArray)
             {
@@ -829,7 +850,7 @@ namespace CustomizacaoMoradias.Source.Builder
                 {
 
                     Line wLine = (w.Location as LocationCurve).Curve as Line;
-                    var result = wallLine.Intersect(wLine, out var resultArray);
+                    SetComparisonResult result = wallLine.Intersect(wLine, out IntersectionResultArray resultArray);
 
                     if ((result != SetComparisonResult.Disjoint) && (result != SetComparisonResult.Equal))
                     {
@@ -838,9 +859,13 @@ namespace CustomizacaoMoradias.Source.Builder
                         XYZ intersectionPoint = intersection.XYZPoint;
 
                         if (intersectionPoint.IsAlmostEqualTo(p0))
+                        {
                             connectedAt0 = true;
+                        }
                         else if (intersectionPoint.IsAlmostEqualTo(p1))
+                        {
                             connectedAt1 = true;
+                        }
                     }
                 }
                 if (!(connectedAt0 && connectedAt1))
@@ -856,7 +881,10 @@ namespace CustomizacaoMoradias.Source.Builder
         private static Line GetWallLine(Wall wall)
         {
             if (wall is null)
+            {
                 return null;
+            }
+
             return (wall.Location as LocationCurve).Curve as Line;
         }
 
@@ -864,7 +892,7 @@ namespace CustomizacaoMoradias.Source.Builder
         {
             List<(Wall, bool[])> openWalls = GetOpenWalls(Walls);
 
-            foreach (var openWall in openWalls)
+            foreach ((Wall, bool[]) openWall in openWalls)
             {
                 // inital filtering
                 (Wall wall, bool[] connected) = openWall;
@@ -873,7 +901,7 @@ namespace CustomizacaoMoradias.Source.Builder
                 foreach (Wall w in Walls)
                 {
                     Line wLine = GetWallLine(w);
-                    var result = wallLine.Intersect(wLine);
+                    SetComparisonResult result = wallLine.Intersect(wLine);
                     if (result == SetComparisonResult.Disjoint)
                     {
                         candidates.Add(w);
@@ -916,7 +944,10 @@ namespace CustomizacaoMoradias.Source.Builder
             List<Wall> candidates2 = FilterWalls(candidates, unbound, p0, p1);
             Line closestWallLine = GetClosestLine(p0, candidates2);
             if (closestWallLine != null)
+            {
                 return CreateRoomBoundary(wallLine, p1, closestWallLine);
+            }
+
             return false;
         }
 
@@ -935,9 +966,13 @@ namespace CustomizacaoMoradias.Source.Builder
                 XYZ start = closestWallLine.GetEndPoint(0);
                 XYZ end = closestWallLine.GetEndPoint(1);
                 if (start.DistanceTo(p1) < end.DistanceTo(p1))
+                {
                     p = start;
+                }
                 else
+                {
                     p = end;
+                }
             }
 
             Line l = Line.CreateBound(p1, p);
@@ -971,7 +1006,10 @@ namespace CustomizacaoMoradias.Source.Builder
                 }
             }
             if (closestWall is null)
+            {
                 return null;
+            }
+
             Line closestWallLine = GetWallLine(closestWall);
             return closestWallLine;
         }
@@ -983,7 +1021,7 @@ namespace CustomizacaoMoradias.Source.Builder
             foreach (Wall candidate in candidates)
             {
                 Line candidateLine = GetWallLine(candidate);
-                var result = unbounded.Intersect(candidateLine, out var resultArray);
+                SetComparisonResult result = unbounded.Intersect(candidateLine, out IntersectionResultArray resultArray);
                 if ((result == SetComparisonResult.Overlap) && (resultArray.get_Item(0).UVPoint.U > 0))
                 {
                     candidates2.Add(candidate);

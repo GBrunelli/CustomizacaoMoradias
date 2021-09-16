@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 
 namespace CustomizacaoMoradias.Source.Exceptions
 {
-    class LevelNotFoundException : Exception
+    internal class LevelNotFoundException : Exception
     {
         public LevelNotFoundException()
         {
@@ -22,7 +22,7 @@ namespace CustomizacaoMoradias.Source.Exceptions
         }
     }
 
-    class RoofNotDefinedException : Exception
+    internal class RoofNotDefinedException : Exception
     {
         public RoofNotDefinedException()
         {

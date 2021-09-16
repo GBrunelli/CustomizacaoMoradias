@@ -8,7 +8,7 @@ namespace CustomizacaoMoradias.Source.Builder
         public int Score { get; set; }
     }
 
-    class RoomClassifier
+    internal class RoomClassifier
     {
         public RoomClassifier()
         {
@@ -21,10 +21,12 @@ namespace CustomizacaoMoradias.Source.Builder
 
         public int GetElementScore(string elementName)
         {
-            foreach(RoomElement roomElement in Element)
+            foreach (RoomElement roomElement in Element)
             {
                 if (roomElement.Name.Equals(elementName))
+                {
                     return roomElement.Score;
+                }
             }
             return 0;
         }

@@ -1,6 +1,6 @@
-﻿using Autodesk.Revit.UI;
-using System;
+﻿using System;
 using System.Windows.Forms;
+using Autodesk.Revit.UI;
 using CustomizacaoMoradias.Forms;
 using CustomizacaoMoradias.Source.Builder;
 
@@ -8,7 +8,7 @@ namespace CustomizacaoMoradias
 {
     public partial class PlaceElementsForm : Form
     {
-        private ExternalEvent exEvent;
+        private readonly ExternalEvent exEvent;
         public static PlaceElementsForm form;
         public static string filePath;
         public static RoofSelector roofSelector;
@@ -37,7 +37,7 @@ namespace CustomizacaoMoradias
 
         private void cancelButton_Click(object sender, EventArgs e)
         {
-            Close();          
+            Close();
         }
 
         private void openButton_Click(object sender, EventArgs e)
@@ -46,7 +46,7 @@ namespace CustomizacaoMoradias
             filePath = fileTextBox.Text;
         }
 
-        private void fileTextBox_TextChanged(object sender, EventArgs e) 
+        private void fileTextBox_TextChanged(object sender, EventArgs e)
         {
             filePath = fileTextBox.Text;
         }

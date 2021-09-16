@@ -2,7 +2,7 @@
 
 namespace CustomizacaoMoradias.Data
 {
-    class ElementDM
+    internal class ElementDM
     {
         public string ElementID { get; set; }
 

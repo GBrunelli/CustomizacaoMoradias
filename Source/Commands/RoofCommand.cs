@@ -1,7 +1,7 @@
-﻿using Autodesk.Revit.DB;
-using Autodesk.Revit.UI;
+﻿using System;
 using Autodesk.Revit.Attributes;
-using System;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.UI;
 
 namespace CustomizacaoMoradias.Source.Commands
 {
@@ -18,12 +18,12 @@ namespace CustomizacaoMoradias.Source.Commands
                 PlaceElementsApplication.thisApp.ShowRoofSelectorForm();
                 return Result.Succeeded;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 message = e.Message;
                 return Result.Failed;
             }
-            
+
         }
     }
 }

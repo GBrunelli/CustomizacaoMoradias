@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Data;
-using System.Windows.Forms;
 using System.Data.SqlClient;
+using System.Windows.Forms;
 
 namespace CustomizacaoMoradias.Forms
 {
     public partial class RoomConfigControl : UserControl
     {
-        string connectionString = Properties.Settings.Default.PropertiesDatabaseConnectionString;
-
-        bool inDataSource = false;
+        private readonly string connectionString = Properties.Settings.Default.PropertiesDatabaseConnectionString;
+        private bool inDataSource = false;
 
         public RoomConfigControl()
         {
@@ -19,9 +18,12 @@ namespace CustomizacaoMoradias.Forms
 
         private void roomDataGridView_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
-            if (inDataSource) return;
+            if (inDataSource)
+            {
+                return;
+            }
 
-            if(roomDataGridView.CurrentRow != null)
+            if (roomDataGridView.CurrentRow != null)
             {
                 DataGridViewRow dgvRow = roomDataGridView.CurrentRow;
                 if (dgvRow.Cells["nameDataGridViewTextBoxColumn"].Value == DBNull.Value)
@@ -31,11 +33,11 @@ namespace CustomizacaoMoradias.Forms
                 else
                 {
                     ChangeSelectedRow(dgvRow);
-                }  
+                }
             }
             PopulateDataGridView();
         }
-        
+
 
         private void roomDataGridView_UserDeletedRow(object sender, DataGridViewRowEventArgs e)
         {
@@ -53,10 +55,14 @@ namespace CustomizacaoMoradias.Forms
 
                 // Insert
                 if (dgvRow.Cells["roomIDDataGridViewTextBoxColumn"].Value == DBNull.Value)
+                {
                     sqlCmd.Parameters.AddWithValue("RoomID", 0);
+                }
                 // Update  
                 else
+                {
                     sqlCmd.Parameters.AddWithValue("RoomID", Convert.ToInt32((dgvRow.Cells["roomIDDataGridViewTextBoxColumn"].Value)));
+                }
 
                 sqlCmd.Parameters.AddWithValue("Name", dgvRow.Cells["nameDataGridViewTextBoxColumn"].Value == DBNull.Value ?
                     "" : dgvRow.Cells["nameDataGridViewTextBoxColumn"].Value.ToString());

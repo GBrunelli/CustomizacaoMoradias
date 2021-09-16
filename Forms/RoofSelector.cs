@@ -24,12 +24,9 @@ namespace CustomizacaoMoradias.Forms
 
         private EdgeState _state;
 
-        public EdgeState State 
-        { 
-            get
-            {
-                return _state;
-            }
+        public EdgeState State
+        {
+            get => _state;
 
             set
             {
@@ -37,57 +34,57 @@ namespace CustomizacaoMoradias.Forms
                 switch (_state)
                 {
                     case EdgeState.EdgeVertical:
-                        edgeBottom.BackColor       = NotSelected;
-                        edgeUp.BackColor           = NotSelected;
-                        edgeRight.BackColor        = Selected;
-                        edgeLeft.BackColor         = Selected;
+                        edgeBottom.BackColor = NotSelected;
+                        edgeUp.BackColor = NotSelected;
+                        edgeRight.BackColor = Selected;
+                        edgeLeft.BackColor = Selected;
                         middleHorizontal.BackColor = NotSelected;
-                        middleVertical.BackColor   = NotSelected;
+                        middleVertical.BackColor = NotSelected;
                         break;
 
                     case EdgeState.EdgeHorizontal:
-                        edgeBottom.BackColor       = Selected;
-                        edgeUp.BackColor           = Selected;
-                        edgeRight.BackColor        = NotSelected;
-                        edgeLeft.BackColor         = NotSelected;
+                        edgeBottom.BackColor = Selected;
+                        edgeUp.BackColor = Selected;
+                        edgeRight.BackColor = NotSelected;
+                        edgeLeft.BackColor = NotSelected;
                         middleHorizontal.BackColor = NotSelected;
-                        middleVertical.BackColor   = NotSelected;                   
+                        middleVertical.BackColor = NotSelected;
                         break;
 
-                    case EdgeState.MidVertical:   
-                        edgeBottom.BackColor       = NotSelected;
-                        edgeUp.BackColor           = NotSelected;
-                        edgeRight.BackColor        = NotSelected;
-                        edgeLeft.BackColor         = NotSelected;
+                    case EdgeState.MidVertical:
+                        edgeBottom.BackColor = NotSelected;
+                        edgeUp.BackColor = NotSelected;
+                        edgeRight.BackColor = NotSelected;
+                        edgeLeft.BackColor = NotSelected;
                         middleHorizontal.BackColor = NotSelected;
-                        middleVertical.BackColor   = Selected;
+                        middleVertical.BackColor = Selected;
                         break;
 
-                    case EdgeState.MidHorizontal:   
-                        edgeBottom.BackColor       = NotSelected;
-                        edgeUp.BackColor           = NotSelected;
-                        edgeRight.BackColor        = NotSelected;
-                        edgeLeft.BackColor         = NotSelected;
+                    case EdgeState.MidHorizontal:
+                        edgeBottom.BackColor = NotSelected;
+                        edgeUp.BackColor = NotSelected;
+                        edgeRight.BackColor = NotSelected;
+                        edgeLeft.BackColor = NotSelected;
                         middleHorizontal.BackColor = Selected;
-                        middleVertical.BackColor   = NotSelected;
+                        middleVertical.BackColor = NotSelected;
                         break;
 
-                    case EdgeState.AllEdges:   
-                        edgeBottom.BackColor       = Selected;
-                        edgeUp.BackColor           = Selected;
-                        edgeRight.BackColor        = Selected;
-                        edgeLeft.BackColor         = Selected;
+                    case EdgeState.AllEdges:
+                        edgeBottom.BackColor = Selected;
+                        edgeUp.BackColor = Selected;
+                        edgeRight.BackColor = Selected;
+                        edgeLeft.BackColor = Selected;
                         middleHorizontal.BackColor = NotSelected;
-                        middleVertical.BackColor   = NotSelected;
+                        middleVertical.BackColor = NotSelected;
                         break;
 
                     case EdgeState.None:
-                        edgeBottom.BackColor       = NotSelected;
-                        edgeUp.BackColor           = NotSelected;
-                        edgeRight.BackColor        = NotSelected;
-                        edgeLeft.BackColor         = NotSelected;
+                        edgeBottom.BackColor = NotSelected;
+                        edgeUp.BackColor = NotSelected;
+                        edgeRight.BackColor = NotSelected;
+                        edgeLeft.BackColor = NotSelected;
                         middleHorizontal.BackColor = NotSelected;
-                        middleVertical.BackColor   = NotSelected;
+                        middleVertical.BackColor = NotSelected;
                         break;
                 }
             }
@@ -130,7 +127,7 @@ namespace CustomizacaoMoradias.Forms
 
         public RoofDesign RoofStyle
         {
-            get 
+            get
             {
                 switch (State)
                 {
@@ -146,7 +143,7 @@ namespace CustomizacaoMoradias.Forms
                         return RoofDesign.Hip;
                 }
                 return RoofDesign.Hip;
-            }  
+            }
         }
 
         public RoofSelector()

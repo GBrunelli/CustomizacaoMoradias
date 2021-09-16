@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CustomizacaoMoradias.Data
+﻿namespace CustomizacaoMoradias.Data
 {
-    class Element_RoomDM
+    internal class Element_RoomDM
     {
         public int RoomID { get; set; }
 

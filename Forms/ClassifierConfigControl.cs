@@ -1,28 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.Data.SqlClient;
+using System.Windows.Forms;
 
 namespace CustomizacaoMoradias.Forms
 {
     public partial class ClassifierConfigControl : UserControl
     {
 
-        private readonly static string CONNECTION_STRING = Properties.Settings.Default.PropertiesDatabaseConnectionString;
+        private static readonly string CONNECTION_STRING = Properties.Settings.Default.PropertiesDatabaseConnectionString;
         public ClassifierConfigControl()
         {
             InitializeComponent();
         }
 
-        private void PopulateComboBox(string table, 
-            DataGridViewComboBoxColumn comboBoxColumn, 
-            string valueMember, 
+        private void PopulateComboBox(string table,
+            DataGridViewComboBoxColumn comboBoxColumn,
+            string valueMember,
             string displayMember)
         {
             using (SqlConnection sqlCon = new SqlConnection(CONNECTION_STRING))
@@ -69,12 +63,16 @@ namespace CustomizacaoMoradias.Forms
                 bool roomID = dgvRow.Cells["cbxRoom"].Value != DBNull.Value;
                 bool score = dgvRow.Cells["txtScore"].Value != DBNull.Value;
 
-                if(elementID && roomID && score)
+                if (elementID && roomID && score)
                 {
-                    if (dgvRow.Cells["txtScore"].Value.ToString().Trim() == "0")                 
+                    if (dgvRow.Cells["txtScore"].Value.ToString().Trim() == "0")
+                    {
                         DeleteSelectedRow(dgvRow);
+                    }
                     else
+                    {
                         ChangeSelectedRow(dgvRow);
+                    }
 
                     PopulateDataGridView();
                 }

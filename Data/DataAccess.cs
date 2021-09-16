@@ -5,9 +5,9 @@ using Dapper;
 
 namespace CustomizacaoMoradias.Data
 {
-    class DataAccess
+    internal class DataAccess
     {
-        string connectionString = Properties.Settings.Default.PropertiesDatabaseConnectionString;
+        private readonly string connectionString = Properties.Settings.Default.PropertiesDatabaseConnectionString;
 
         public List<RoomDM> GetRooms()
         {
