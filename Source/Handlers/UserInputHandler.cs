@@ -29,6 +29,7 @@ namespace CustomizacaoMoradias.Source.Handlers
             catch (Exception e)
             {
                 MessageBox.Show(e.Message);
+                PlaceElementsForm.CloseForm();
             }
 
             string path         = PlaceElementsForm.filePath;

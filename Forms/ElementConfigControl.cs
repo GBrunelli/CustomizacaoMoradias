@@ -9,10 +9,9 @@ namespace CustomizacaoMoradias.Forms
 {
     public partial class ElementConfigControl : UserControl
     {
-        private bool inDataSource = false;
-
         private string lastID;
-
+        private bool inDataSource = false;
+        CultureInfo culture = new CultureInfo("en-US");     
         private readonly static string CONNECTION_STRING = Properties.Settings.Default.PropertiesDatabaseConnectionString;
 
         public ElementConfigControl()
@@ -24,7 +23,6 @@ namespace CustomizacaoMoradias.Forms
         private void elementDataGridView_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
             if (inDataSource) return;
-
             if (elementDataGridView.CurrentRow != null)
             {
                 try
@@ -61,12 +59,17 @@ namespace CustomizacaoMoradias.Forms
 
         private float[] GetVectorComponents(string vector)
         {
-            CultureInfo provider = new CultureInfo("en-US");
+            float[] components = new float[2];
+            if (vector.Length == 0)
+            {
+                components[0] = 0;
+                components[1] = 0;
+                return components;
+            }   
             string[] tokens = vector.Replace('(', ' ').Replace(')', ' ').Split(',');
             if (tokens.Length != 2) throw new FormatException("Vetor formatato incorretamente");
-            float[] components = new float[2];
-            components[0] = float.Parse(tokens[0], provider);
-            components[1] = float.Parse(tokens[1], provider);
+            components[0] = float.Parse(tokens[0], culture);
+            components[1] = float.Parse(tokens[1], culture);
             return components;
         }
 
@@ -98,7 +101,7 @@ namespace CustomizacaoMoradias.Forms
                         sqlCmd.Parameters.AddWithValue("@ElementID", lastID);
                         sqlCmd.ExecuteNonQuery();
                     }
-                }               
+                }
             }
             catch (SqlException)
             {
@@ -125,7 +128,9 @@ namespace CustomizacaoMoradias.Forms
                     {
                         double x = Math.Round((double)row["OffsetX"], 2); 
                         double y = Math.Round((double)row["OffsetY"], 2);
-                        row["Offset"] = $"({Convert.ToString(x, new CultureInfo("en-US"))}, {Convert.ToString(y, new CultureInfo("en-US"))})";
+                        string stringX = Convert.ToString(x, culture);
+                        string stringY = Convert.ToString(y, culture);
+                        row["Offset"] = $"({stringX}, {stringY})";
                     }
                     inDataSource = true;
                     elementDataGridView.DataSource = dtbl;

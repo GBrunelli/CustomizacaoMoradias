@@ -673,6 +673,10 @@ namespace CustomizacaoMoradias.Source.Builder
                     {
                         room.Name = roomName;
                     }
+                    else
+                    {
+                        room.Name = "Circulação";
+                    }
                 }
             }
         }
