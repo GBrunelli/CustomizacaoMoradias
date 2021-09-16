@@ -32,6 +32,8 @@ namespace CustomizacaoMoradias.Source.Builder
     [Journaling(JournalingMode.NoCommandData)]
     public class HouseBuilder
     {
+        private readonly List<Line> roomBoundaries = new List<Line>();
+
         private readonly DataAccess db = new DataAccess();
         private RevitDataAccess revitDB;
 
@@ -908,7 +910,6 @@ namespace CustomizacaoMoradias.Source.Builder
                     }
                 }
 
-                // criar o vetor e a linha
                 XYZ p0, p1;
                 if (!connected[0])
                 {
@@ -947,13 +948,11 @@ namespace CustomizacaoMoradias.Source.Builder
             {
                 return CreateRoomBoundary(wallLine, p1, closestWallLine);
             }
-
             return false;
         }
 
         private bool CreateRoomBoundary(Line wallLine, XYZ p1, Line closestWallLine)
         {
-            // cria o separador de ambientes
             XYZ p;
             try
             {
@@ -976,18 +975,40 @@ namespace CustomizacaoMoradias.Source.Builder
             }
 
             Line l = Line.CreateBound(p1, p);
-            CurveArray array = new CurveArray();
 
-            array.Append(l);
-            View view = revitDB.GetLevelView(baseLevel.Name);
+            if (!AlreadyExistsRoomBoundary(l))
+            {
+                CurveArray array = new CurveArray();
+                array.Append(l);
+                View view = revitDB.GetLevelView(baseLevel.Name);
 
-            WallType wallType = revitDB.GetWallType(Properties.Settings.Default.WallTypeName);
-            double height = UnitUtils.ConvertToInternalUnits(2.8, UnitTypeId.Meters);
-            Wall wall = Wall.Create(doc, l, wallType.Id, baseLevel.Id, height, 0, false, false);
-            wall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(topLevel.Id);
-            wall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET).Set(UnitUtils.ConvertToInternalUnits(2.5, UnitTypeId.Meters));
+                WallType wallType = revitDB.GetWallType(Properties.Settings.Default.WallTypeName);
+                double height = UnitUtils.ConvertToInternalUnits(2.8, UnitTypeId.Meters);
+                Wall wall = Wall.Create(doc, l, wallType.Id, baseLevel.Id, height, 0, false, false);
+                wall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(topLevel.Id);
+                wall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET).Set(UnitUtils.ConvertToInternalUnits(2.5, UnitTypeId.Meters));
 
-            return (doc.Create.NewRoomBoundaryLines(view.SketchPlane, array, view) != null);
+                return (doc.Create.NewRoomBoundaryLines(view.SketchPlane, array, view) != null);
+            }
+            return false; 
+        }
+
+        private bool AlreadyExistsRoomBoundary(Line l)
+        {
+            XYZ p0 = l.GetEndPoint(0);
+            XYZ p1 = l.GetEndPoint(1);
+            foreach (Line line in roomBoundaries)
+            {
+                XYZ lineP0 = line.GetEndPoint(0);
+                XYZ lineP1 = line.GetEndPoint(1);
+
+                if( (p0.IsAlmostEqualTo(lineP0) && p1.IsAlmostEqualTo(lineP1)) || 
+                    (p1.IsAlmostEqualTo(lineP0) && p0.IsAlmostEqualTo(lineP1)) )
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private static Line GetClosestLine(XYZ p0, List<Wall> candidates2)
